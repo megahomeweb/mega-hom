@@ -31,7 +31,7 @@ const Card = ({ img, title, description, currentPrice, href }: CardProps) => {
           <span className="text-black hover:text-brand">
             <h3 className="sm:text-xl font-semibold">{title}</h3>
           </span>
-          <p>{description}</p>
+          <p className="line-clamp-2 sm:line-clamp-3">{description}</p>
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm sm:text-base">
