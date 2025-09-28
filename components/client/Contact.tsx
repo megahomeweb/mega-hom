@@ -18,11 +18,11 @@ const Contact = () => {
           murojat uchun:
         </h3>
         <div className="sm:text-xl">
-          <a href="tel:+998942960000" className="block">
-            +998 94 296 0000
+          <a href="tel:+998880039000" className="block">
+            +998 88 003 0000
           </a>
-          <a href="tel:+998883244000" className="block">
-            +998 88 324 4000
+          <a href="tel:+998880049000" className="block">
+            +998 88 004 9000
           </a>
         </div>
         <p className="text-sm sm:text-base">
