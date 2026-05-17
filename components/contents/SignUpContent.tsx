@@ -62,7 +62,7 @@ const SignUpContent = () => {
             const userRefrence = collection(fireDB, "user")
 
             // Add User Detail
-            addDoc(userRefrence, user);
+            await addDoc(userRefrence, user);
 
             setUserSignup({
                 name: "",
