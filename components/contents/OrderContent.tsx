@@ -12,7 +12,7 @@ import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
 import ImportExport from "../admin/ImportExport";
-import { ordersToCSV, ordersToJSON } from "@/utils/importExport";
+import { ordersToCSV } from "@/utils/importExport";
 
 const OrderContent = () => {
   const { orders, fetchAllOrders, loadingOrders } = useOrderStore();
@@ -26,11 +26,7 @@ const OrderContent = () => {
       <div className="flex flex-wrap gap-3 justify-between items-center">
         <h2 className="text-xl sm:text-2xl font-bold capitalize">All Orders</h2>
         {orders.length > 0 && (
-          <ImportExport
-            entityLabel="orders"
-            onExportCSV={() => ordersToCSV(orders)}
-            onExportJSON={() => ordersToJSON(orders)}
-          />
+          <ImportExport entityLabel="orders" onExportCSV={() => ordersToCSV(orders)} />
         )}
       </div>
       <div className="w-full h-0.5 bg-gray-300 my-2 rounded-full"></div>

@@ -120,14 +120,28 @@ export function parseCSV(input: string): string[][] {
   return rows;
 }
 
-/** Build a header-indexed accessor for a CSV matrix. */
+/** Build a header-indexed accessor for a CSV matrix. Accepts header aliases
+ *  so files exported in older/localized formats still import cleanly. */
 function rowReader(headers: string[]) {
   const lower = headers.map((h) => h.trim().toLowerCase());
-  return (row: string[], name: string): string => {
-    const idx = lower.indexOf(name.toLowerCase());
-    return idx >= 0 ? (row[idx] ?? "") : "";
+  return (row: string[], names: string | string[]): string => {
+    const aliases = Array.isArray(names) ? names : [names];
+    for (const name of aliases) {
+      const idx = lower.indexOf(name.toLowerCase());
+      if (idx >= 0) return row[idx] ?? "";
+    }
+    return "";
   };
 }
+
+/** Friendly Yes/No for boolean columns (re-parsed by parseBool on import). */
+const yesNo = (value: unknown): string => (value ? "Yes" : "No");
+
+/** "YYYY-MM-DD HH:MM" from a Timestamp / Date / seconds object (readable + sortable). */
+const formatDateTime = (value: unknown): string => {
+  const iso = serializeTimestamp(value);
+  return iso ? iso.replace("T", " ").slice(0, 16) : "";
+};
 
 const looksLikeJSON = (text: string, filename: string): boolean => {
   const t = text.trim();
@@ -158,18 +172,20 @@ export interface ImportProduct {
   productImageUrl: ImportImage[];
 }
 
+// Human-first column order (business fields first, the technical key last) —
+// mirrors how Shopify/WooCommerce lay out their product CSVs. Image URLs are
+// intentionally omitted: images are preserved server-side on update, so the
+// editable sheet stays clean.
 export const PRODUCT_CSV_HEADERS = [
-  "id",
-  "title",
-  "price",
-  "quantity",
-  "category",
-  "subCategory",
-  "description",
-  "isNew",
-  "isBest",
-  "date",
-  "images",
+  "Title",
+  "Price",
+  "Quantity",
+  "Category",
+  "Subcategory",
+  "Description",
+  "New",
+  "Best",
+  "Product ID",
 ] as const;
 
 const toImages = (value: unknown): ImportImage[] => {
@@ -218,39 +234,18 @@ export function productsToCSV(products: ProductT[]): string {
   const rows: unknown[][] = [PRODUCT_CSV_HEADERS as unknown as string[]];
   for (const p of products) {
     rows.push([
-      p.id ?? "",
       p.title ?? "",
       p.price ?? "",
       p.quantity ?? "",
       p.category ?? "",
       p.subCategory ?? "",
       p.description ?? "",
-      p.isNew ? "true" : "false",
-      p.isBest ? "true" : "false",
-      typeof p.date === "string" ? p.date : serializeTimestamp(p.date),
-      (p.productImageUrl ?? []).map((im) => im.url).join(" | "),
+      yesNo(p.isNew),
+      yesNo(p.isBest),
+      p.id ?? "",
     ]);
   }
   return toCSV(rows);
-}
-
-export function productsToJSON(products: ProductT[]): string {
-  const plain = products.map((p) => ({
-    id: p.id,
-    title: p.title,
-    price: p.price,
-    quantity: p.quantity,
-    category: p.category,
-    subCategory: p.subCategory,
-    description: p.description,
-    isNew: !!p.isNew,
-    isBest: !!p.isBest,
-    date: typeof p.date === "string" ? p.date : serializeTimestamp(p.date),
-    time: serializeTimestamp(p.time),
-    storageFileId: p.storageFileId ?? "",
-    productImageUrl: p.productImageUrl ?? [],
-  }));
-  return JSON.stringify(plain, null, 2);
 }
 
 export function parseProductsFile(text: string, filename: string): ImportProduct[] {
@@ -267,17 +262,16 @@ export function parseProductsFile(text: string, filename: string): ImportProduct
     .filter((r) => r.some((cell) => cell.trim() !== ""))
     .map((r) =>
       normalizeProduct({
-        id: read(r, "id"),
-        title: read(r, "title"),
-        price: read(r, "price"),
-        quantity: read(r, "quantity"),
-        category: read(r, "category"),
-        subCategory: read(r, "subCategory"),
-        description: read(r, "description"),
-        isNew: read(r, "isNew"),
-        isBest: read(r, "isBest"),
-        date: read(r, "date"),
-        images: read(r, "images"),
+        id: read(r, ["Product ID", "id"]),
+        title: read(r, ["Title", "Name", "Nomi"]),
+        price: read(r, ["Price", "Narxi", "Regular price", "Variant Price"]),
+        quantity: read(r, ["Quantity", "Qty", "Soni", "Stock"]),
+        category: read(r, ["Category", "Categories", "Kategoriya"]),
+        subCategory: read(r, ["Subcategory", "Sub Category", "Subkategoriya"]),
+        description: read(r, ["Description", "Tavsif", "Body"]),
+        isNew: read(r, ["New", "Yangi", "isNew"]),
+        isBest: read(r, ["Best", "Top", "isBest"]),
+        images: read(r, ["Images", "Image Src"]),
       })
     );
 }
@@ -308,19 +302,11 @@ function normalizeCategory(rec: Record<string, unknown>): ImportCategory {
 }
 
 export function categoriesToCSV(categories: CategoryI[]): string {
-  const rows: unknown[][] = [["id", "name", "subcategory"]];
+  const rows: unknown[][] = [["Name", "Subcategories", "Category ID"]];
   for (const c of categories) {
-    rows.push([c.id ?? "", c.name ?? "", (c.subcategory ?? []).join(" | ")]);
+    rows.push([c.name ?? "", (c.subcategory ?? []).join(" | "), c.id ?? ""]);
   }
   return toCSV(rows);
-}
-
-export function categoriesToJSON(categories: CategoryI[]): string {
-  return JSON.stringify(
-    categories.map((c) => ({ id: c.id, name: c.name, subcategory: c.subcategory ?? [] })),
-    null,
-    2
-  );
 }
 
 export function parseCategoriesFile(text: string, filename: string): ImportCategory[] {
@@ -337,9 +323,9 @@ export function parseCategoriesFile(text: string, filename: string): ImportCateg
     .filter((r) => r.some((cell) => cell.trim() !== ""))
     .map((r) =>
       normalizeCategory({
-        id: read(r, "id"),
-        name: read(r, "name"),
-        subcategory: read(r, "subcategory"),
+        id: read(r, ["Category ID", "id"]),
+        name: read(r, ["Name", "Nomi"]),
+        subcategory: read(r, ["Subcategories", "Subcategory", "Subkategoriya"]),
       })
     );
 }
@@ -349,39 +335,22 @@ export function parseCategoriesFile(text: string, filename: string): ImportCateg
 
 export function ordersToCSV(orders: Order[]): string {
   const rows: unknown[][] = [
-    [
-      "id",
-      "date",
-      "clientName",
-      "clientLastName",
-      "clientPhone",
-      "totalQuantity",
-      "totalPrice",
-      "items",
-    ],
+    ["Date", "Customer", "Phone", "Items", "Total Quantity", "Total Price (UZS)", "Order ID"],
   ];
   for (const o of orders) {
     const items = (o.basketItems ?? [])
       .map((it) => `${it.title} x${it.quantity ?? 1}`)
       .join(" | ");
+    const customer = `${o.clientName ?? ""} ${o.clientLastName ?? ""}`.trim();
     rows.push([
-      o.id ?? "",
-      serializeTimestamp(o.date),
-      o.clientName ?? "",
-      o.clientLastName ?? "",
+      formatDateTime(o.date),
+      customer,
       o.clientPhone ?? "",
+      items,
       o.totalQuantity ?? "",
       o.totalPrice ?? "",
-      items,
+      o.id ?? "",
     ]);
   }
   return toCSV(rows);
-}
-
-export function ordersToJSON(orders: Order[]): string {
-  return JSON.stringify(
-    orders.map((o) => ({ ...o, date: serializeTimestamp(o.date) })),
-    null,
-    2
-  );
 }

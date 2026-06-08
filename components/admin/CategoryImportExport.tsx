@@ -2,12 +2,7 @@
 import { collection, doc, writeBatch } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import useCategoryStore from "@/zustand/useCategoryStore";
-import {
-  categoriesToCSV,
-  categoriesToJSON,
-  ImportCategory,
-  parseCategoriesFile,
-} from "@/utils/importExport";
+import { categoriesToCSV, ImportCategory, parseCategoriesFile } from "@/utils/importExport";
 import ImportExport, { ImportResult } from "./ImportExport";
 
 const FIRESTORE_BATCH_LIMIT = 400;
@@ -56,11 +51,11 @@ const CategoryImportExport = () => {
   return (
     <ImportExport<ImportCategory>
       entityLabel="categories"
+      importAccept=".csv"
       onExportCSV={() => categoriesToCSV(categories)}
-      onExportJSON={() => categoriesToJSON(categories)}
       parseFile={parseCategoriesFile}
       commitImport={commitImport}
-      importHint="Subkategoriyalarni '|' bilan ajrating (masalan: stol | stul). id boʼlsa kategoriya yangilanadi, boʼlmasa yangisi qoʼshiladi."
+      importHint="Subkategoriyalarni '|' bilan ajrating (masalan: stol | stul). 'Category ID' boʼlsa kategoriya yangilanadi, boʼsh boʼlsa yangisi qoʼshiladi."
     />
   );
 };
