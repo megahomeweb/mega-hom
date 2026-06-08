@@ -11,6 +11,8 @@ import { IoIosArrowDown } from "react-icons/io";
 import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
+import ImportExport from "../admin/ImportExport";
+import { ordersToCSV, ordersToJSON } from "@/utils/importExport";
 
 const OrderContent = () => {
   const { orders, fetchAllOrders, loadingOrders } = useOrderStore();
@@ -21,7 +23,16 @@ const OrderContent = () => {
 
   return (
     <>
-      <h2 className="text-xl sm:text-2xl font-bold capitalize">All Orders</h2>
+      <div className="flex flex-wrap gap-3 justify-between items-center">
+        <h2 className="text-xl sm:text-2xl font-bold capitalize">All Orders</h2>
+        {orders.length > 0 && (
+          <ImportExport
+            entityLabel="orders"
+            onExportCSV={() => ordersToCSV(orders)}
+            onExportJSON={() => ordersToJSON(orders)}
+          />
+        )}
+      </div>
       <div className="w-full h-0.5 bg-gray-300 my-2 rounded-full"></div>
       <div className="mt-10 space-y-4 lg:px-4">
         {loadingOrders && (
