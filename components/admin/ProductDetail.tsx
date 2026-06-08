@@ -11,6 +11,7 @@ import { FormattedPrice } from '@/utils'
 import { fireStorage } from "@/firebase/FirebaseConfig";
 import Image from "next/image";
 import ProductRow from "./ProductRow";
+import ProductImportExport from "./ProductImportExport";
 
 const ProductDetail = () => {
     const { products, loading, fetchProducts, deleteProduct } = useProductStore();
@@ -36,15 +37,18 @@ const ProductDetail = () => {
 
   return (
     <div>
-      <div className="py-5 flex justify-between items-center">
+      <div className="py-5 flex flex-wrap gap-3 justify-between items-center">
         {/* text  */}
         <h1 className=" text-xl text-pink-300 font-bold">All Product</h1>
-        {/* Add Product Button  */}
-        <Link href={"/admin-dashboard/add-product"}>
-          <button className="px-5 py-2 bg-pink-50 border border-pink-100 rounded-lg">
-            Add Product
-          </button>
-        </Link>
+        {/* Import / Export + Add Product  */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <ProductImportExport />
+          <Link href={"/admin-dashboard/add-product"}>
+            <button className="px-5 py-2 bg-pink-50 border border-pink-100 rounded-lg">
+              Add Product
+            </button>
+          </Link>
+        </div>
       </div>
       {/* Loading  */}
       <div className="flex justify-center relative top-20">

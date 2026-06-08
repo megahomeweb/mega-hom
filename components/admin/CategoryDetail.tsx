@@ -5,6 +5,7 @@ import Loader from "../Loader";
 import { useEffect } from "react";
 import toast from "react-hot-toast";
 import { CategoryI } from "@/lib/types";
+import CategoryImportExport from "./CategoryImportExport";
 
 const CategoryDetail = () => {
   const { categories, fetchCategories, loading, deleteCategory } = useCategoryStore();
@@ -23,15 +24,18 @@ const CategoryDetail = () => {
   return (
     <div>
       <div>
-        <div className="py-5 flex justify-between items-center">
+        <div className="py-5 flex flex-wrap gap-3 justify-between items-center">
           {/* text  */}
           <h1 className=" text-xl text-pink-300 font-bold">All Category</h1>
-          {/* Add Product Button  */}
-          <Link href={"/admin-dashboard/add-category"}>
-            <button className="px-5 py-2 bg-pink-50 border border-pink-100 rounded-lg">
-              Add Category
-            </button>
-          </Link>
+          {/* Import / Export + Add Category  */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <CategoryImportExport />
+            <Link href={"/admin-dashboard/add-category"}>
+              <button className="px-5 py-2 bg-pink-50 border border-pink-100 rounded-lg">
+                Add Category
+              </button>
+            </Link>
+          </div>
         </div>
         {/* Loading  */}
         <div className="flex justify-center relative top-20">

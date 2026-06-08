@@ -1,164 +1,176 @@
 "use client";
 import React, { useState } from "react";
 import toast from "react-hot-toast";
+import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, fireDB } from "../../firebase/FirebaseConfig";
-import {
-  collection,
-  DocumentData,
-  onSnapshot,
-  query,
-  where,
-} from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import Loader from "../Loader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-interface User {
+interface StoredUser {
   name: string;
   uid: string;
-  time: {
-    seconds: number;
-    nanoseconds: number;
-  };
-  date: string;
-  role: string;
   email: string;
+  role: "admin" | "user";
+  date?: string;
 }
+
+const friendlyAuthError = (code: string): string => {
+  switch (code) {
+    case "auth/invalid-credential":
+    case "auth/wrong-password":
+    case "auth/user-not-found":
+      return "Email yoki parol noto'g'ri";
+    case "auth/invalid-email":
+      return "Email manzili noto'g'ri formatda";
+    case "auth/too-many-requests":
+      return "Juda ko'p urinish. Biroz kuting va qayta urining";
+    case "auth/user-disabled":
+      return "Bu hisob bloklangan";
+    case "auth/network-request-failed":
+      return "Internet aloqasini tekshiring";
+    case "auth/unauthorized-domain":
+      return "Bu domen Firebase'da ruxsat etilmagan (Firebase Console → Authentication → Settings → Authorized domains)";
+    case "auth/operation-not-allowed":
+      return "Email/Parol orqali kirish Firebase'da yoqilmagan";
+    default:
+      return `Kirishda xatolik: ${code}`;
+  }
+};
 
 const LoginContent = () => {
   const [loading, setLoading] = useState(false);
-  const navigate = useRouter();
-  // User Signup State
-  const [userLogin, setUserLogin] = useState({
-    email: "",
-    password: "",
-  });
+  const router = useRouter();
+  const [form, setForm] = useState({ email: "", password: "" });
 
-  const isUser = (data: DocumentData): data is User => {
-    return (
-      data && typeof data.uid === "string" && typeof data.role === "string"
-    );
-  };
-
-  /**========================================================================
-   *========================================================================**/
-
-  const userLoginFunction = async () => {
-    // validation
-    if (userLogin.email === "" || userLogin.password === "") {
-      return toast.error("All Fields are required");
+  const handleLogin = async () => {
+    if (!form.email.trim() || !form.password) {
+      toast.error("Email va parolni kiriting");
+      return;
     }
 
     setLoading(true);
     try {
-      const users = await signInWithEmailAndPassword(
+      const cred = await signInWithEmailAndPassword(
         auth,
-        userLogin.email,
-        userLogin.password
+        form.email.trim(),
+        form.password
       );
 
+      let stored: StoredUser;
       try {
-        const q = query(
-          collection(fireDB, "user"),
-          where("uid", "==", users?.user?.uid)
+        const snap = await getDocs(
+          query(collection(fireDB, "user"), where("uid", "==", cred.user.uid))
         );
-        const data = onSnapshot(q, (QuerySnapshot) => {
-          let user: User | null = null;
-          QuerySnapshot.forEach((doc) => {
-            const docData = doc.data();
-            if (isUser(docData)) {
-              user = docData;
-            }
-          });
-          // QuerySnapshot.forEach((doc) => user = doc.data());
-          if (user) {
-            localStorage.setItem("users", JSON.stringify(user));
-            setUserLogin({
-              email: "",
-              password: "",
-            });
-            toast.success("Login Successfully");
 
-            navigate.push("/admin-dashboard");
-            // if(user.role === "user") {
-            //     navigate.push('/');
-            // }else{
-            // }
-          } else {
-            toast.error("User not found or invalid data");
-          }
-          setLoading(false);
-        });
-        return () => data;
-      } catch (error: any) {
-        setLoading(false);
-        toast.error(error.message);
+        if (snap.empty) {
+          // Auth account exists but no Firestore profile — most common cause
+          // of "correct password but error". Fall back gracefully.
+          stored = {
+            name: cred.user.displayName || cred.user.email || "User",
+            uid: cred.user.uid,
+            email: cred.user.email || "",
+            role: "user",
+          };
+          toast.error(
+            "Hisob topildi, lekin Firestore'da 'user' hujjati yo'q. Admin uchun rol qo'lda qo'shilishi kerak."
+          );
+        } else {
+          const data = snap.docs[0].data() as Partial<StoredUser>;
+          stored = {
+            name: data.name || cred.user.email || "User",
+            uid: data.uid || cred.user.uid,
+            email: data.email || cred.user.email || "",
+            role: data.role === "admin" ? "admin" : "user",
+          };
+        }
+      } catch (firestoreErr) {
+        // Firestore rules or network — don't lock the user out of their account.
+        console.error("Firestore profile lookup failed:", firestoreErr);
+        toast.error(
+          "Profil ma'lumotini olishda xatolik (Firestore qoidalari yoki tarmoq)"
+        );
+        stored = {
+          name: cred.user.email || "User",
+          uid: cred.user.uid,
+          email: cred.user.email || "",
+          role: "user",
+        };
       }
-    } catch (error: any) {
-      toast.error(error.message);
+
+      localStorage.setItem("users", JSON.stringify(stored));
+      toast.success("Muvaffaqiyatli kirdingiz");
+      setForm({ email: "", password: "" });
+
+      router.push(stored.role === "admin" ? "/admin-dashboard" : "/");
+    } catch (err) {
+      const code =
+        err instanceof FirebaseError ? err.code : "auth/unknown-error";
+      toast.error(friendlyAuthError(code));
+      console.error("Login error:", err);
+    } finally {
       setLoading(false);
     }
   };
+
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-center min-h-screen bg-body px-4">
       {loading && <Loader />}
-      {/* Login Form  */}
-      <div className="login_Form bg-pink-50 px-8 py-6 border border-pink-100 rounded-xl shadow-md">
-        {/* Top Heading  */}
-        <div className="mb-5">
-          <h2 className="text-center text-2xl font-bold text-pink-500 "></h2>
-        </div>
-        {/* Input One  */}
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleLogin();
+        }}
+        className="login_Form bg-white w-full max-w-sm px-8 py-7 border border-gray-100 rounded-xl shadow-lg"
+      >
+        <h2 className="text-center text-2xl font-bold text-brand mb-1">
+          Kirish
+        </h2>
+        <p className="text-center text-sm text-gray-500 mb-6">
+          Hisobingizga kiring
+        </p>
+
         <div className="mb-3">
           <input
             type="email"
             name="email"
-            placeholder="Email Address"
-            value={userLogin.email}
-            onChange={(e) => {
-              setUserLogin({
-                ...userLogin,
-                email: e.target.value,
-              });
-            }}
-            className="bg-pink-50 border border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-200"
+            autoComplete="email"
+            placeholder="Email manzil"
+            value={form.email}
+            onChange={(e) => setForm({ ...form, email: e.target.value })}
+            className="bg-white border border-gray-200 focus:border-brand focus:ring-1 focus:ring-brand px-3 py-2 w-full rounded-md outline-none placeholder-gray-400"
           />
         </div>
-        {/* Input Two  */}
+
         <div className="mb-5">
           <input
             type="password"
-            placeholder="Password"
-            value={userLogin.password}
-            onChange={(e) => {
-              setUserLogin({
-                ...userLogin,
-                password: e.target.value,
-              });
-            }}
-            className="bg-pink-50 border border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-200"
+            name="password"
+            autoComplete="current-password"
+            placeholder="Parol"
+            value={form.password}
+            onChange={(e) => setForm({ ...form, password: e.target.value })}
+            className="bg-white border border-gray-200 focus:border-brand focus:ring-1 focus:ring-brand px-3 py-2 w-full rounded-md outline-none placeholder-gray-400"
           />
         </div>
-        {/* Signup Button  */}
-        <div className="mb-5">
-          <button
-            type="button"
-            onClick={userLoginFunction}
-            className="bg-pink-500 hover:bg-pink-600 w-full text-white text-center py-2 font-bold rounded-md "
-          >
-            Login
-          </button>
-        </div>
-        <div>
-          <h2 className="text-black">
-            Don&apos;t Have an account{" "}
-            <Link className=" text-pink-500 font-bold" href={"/sign-up"}>
-              Signup
-            </Link>
-          </h2>
-        </div>
-      </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="bg-brand hover:bg-brand/90 disabled:opacity-60 w-full text-white py-2.5 font-semibold rounded-md transition-colors"
+        >
+          {loading ? "Kirilmoqda..." : "Kirish"}
+        </button>
+
+        <p className="text-sm text-gray-600 mt-5 text-center">
+          Hisobingiz yo&apos;qmi?{" "}
+          <Link className="text-brand font-semibold" href="/sign-up">
+            Ro&apos;yxatdan o&apos;ting
+          </Link>
+        </p>
+      </form>
     </div>
   );
 };
