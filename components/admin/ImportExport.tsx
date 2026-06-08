@@ -14,10 +14,8 @@ export interface ImportResult {
 interface ImportExportProps<T> {
   /** Used for filenames + toasts, e.g. "products". */
   entityLabel: string;
-  /** Returns CSV text to download. Omit to hide the CSV button. */
+  /** Returns CSV text to download. Omit to hide the export button. */
   onExportCSV?: () => string;
-  /** Returns JSON text to download. Omit to hide the JSON button. */
-  onExportJSON?: () => string;
   /** Accept attribute for the file picker. */
   importAccept?: string;
   /** Parse uploaded file text into records. Throws on bad format. Omit to hide Import. */
@@ -38,8 +36,7 @@ const todayStamp = (): string => {
 export default function ImportExport<T>({
   entityLabel,
   onExportCSV,
-  onExportJSON,
-  importAccept = ".csv,.json",
+  importAccept = ".csv",
   parseFile,
   commitImport,
   importHint,
@@ -50,14 +47,11 @@ export default function ImportExport<T>({
   const [busy, setBusy] = useState(false);
   const canImport = Boolean(parseFile && commitImport);
 
-  const exportText = (kind: "csv" | "json") => {
-    const make = kind === "csv" ? onExportCSV : onExportJSON;
-    if (!make) return;
+  const handleExportCSV = () => {
+    if (!onExportCSV) return;
     try {
-      const content = make();
-      const mime = kind === "csv" ? "text/csv;charset=utf-8" : "application/json;charset=utf-8";
-      downloadTextFile(`${entityLabel}-${todayStamp()}.${kind}`, content, mime);
-      toast.success(`${entityLabel} ${kind.toUpperCase()} yuklab olindi`);
+      downloadTextFile(`${entityLabel}-${todayStamp()}.csv`, onExportCSV(), "text/csv;charset=utf-8");
+      toast.success(`${entityLabel} CSV yuklab olindi`);
     } catch (err) {
       console.error("Export failed:", err);
       toast.error("Eksport vaqtida xatolik");
@@ -113,13 +107,8 @@ export default function ImportExport<T>({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {onExportCSV && (
-        <button type="button" disabled={disabled} onClick={() => exportText("csv")} className={exportBtn}>
+        <button type="button" disabled={disabled} onClick={handleExportCSV} className={exportBtn}>
           <FiDownload className="text-base" /> Export CSV
-        </button>
-      )}
-      {onExportJSON && (
-        <button type="button" disabled={disabled} onClick={() => exportText("json")} className={exportBtn}>
-          <FiDownload className="text-base" /> Export JSON
         </button>
       )}
       {canImport && (
