@@ -6,6 +6,7 @@ import { BsCartDash } from "react-icons/bs";
 import SubmitModal from "../Modal";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
+import NoPhoto from "../NoPhoto";
 
 const CartProductContent = () => {
   const [open, setOpen] = useState(false);
@@ -17,12 +18,16 @@ const CartProductContent = () => {
         {cartProducts.map((cart) => (
           <div key={cart.id} className="flex flex-wrap gap-5 items-center">
             <div className="relative size-44 overflow-hidden rounded-md">
-              <Image
-                fill
-                className="absolute size-full object-cover"
-                src={cart.productImageUrl[0].url}
-                alt=""
-              />
+              {cart.productImageUrl?.[0]?.url ? (
+                <Image
+                  fill
+                  className="absolute size-full object-cover"
+                  src={cart.productImageUrl[0].url}
+                  alt={cart.title}
+                />
+              ) : (
+                <NoPhoto className="absolute inset-0" />
+              )}
             </div>
             <div className="flex flex-col gap-2 font-medium">
               <h3>{cart.title}</h3>

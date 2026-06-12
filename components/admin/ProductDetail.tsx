@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Loader from "../Loader";
 import { CiEdit } from "react-icons/ci";
 import { MdDeleteForever } from "react-icons/md";
+import { BsQrCode } from "react-icons/bs";
 import useProductStore from "@/zustand/useProductStore";
 import toast from "react-hot-toast";
 import { ProductT } from "@/lib/types";
@@ -12,9 +13,12 @@ import { fireStorage } from "@/firebase/FirebaseConfig";
 import Image from "next/image";
 import ProductRow from "./ProductRow";
 import ProductImportExport from "./ProductImportExport";
+import ProductQRCode from "./ProductQRCode";
+import NoPhoto from "@/components/NoPhoto";
 
 const ProductDetail = () => {
     const { products, loading, fetchProducts, deleteProduct } = useProductStore();
+    const [qrProduct, setQrProduct] = useState<ProductT | null>(null);
 
     useEffect(() => {
       fetchProducts();
@@ -43,6 +47,12 @@ const ProductDetail = () => {
         {/* Import / Export + Add Product  */}
         <div className="flex items-center gap-2 flex-wrap">
           <ProductImportExport />
+          <Link
+            href={"/admin-dashboard/qr-codes"}
+            className="px-3 py-2 text-sm bg-white border border-pink-200 text-pink-500 rounded-lg hover:bg-pink-50 inline-flex items-center gap-1.5"
+          >
+            <BsQrCode className="text-base" /> QR kodlar
+          </Link>
           <Link href={"/admin-dashboard/add-product"}>
             <button className="px-5 py-2 bg-pink-50 border border-pink-100 rounded-lg">
               Add Product
@@ -85,6 +95,9 @@ const ProductDetail = () => {
                 isBest
               </th>
               <th scope="col" className="h-12 px-4 lg:px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100">
+                QR
+              </th>
+              <th scope="col" className="h-12 px-4 lg:px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100">
                 Action
               </th>
               <th scope="col" className="h-12 px-4 lg:px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100">
@@ -100,7 +113,11 @@ const ProductDetail = () => {
                   </td>
                   <td className="h-12 px-4 lg:px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
                     <div className="flex justify-center">
-                      <Image width={80} height={80} className="w-20" src={productImageUrl[0].url} alt="" />
+                      {productImageUrl?.[0]?.url ? (
+                        <Image width={80} height={80} className="w-20" src={productImageUrl[0].url} alt="" />
+                      ) : (
+                        <NoPhoto className="w-20 h-20 rounded" />
+                      )}
                     </div>
                   </td>
                   <td className="h-12 px-4 lg:px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
@@ -117,6 +134,11 @@ const ProductDetail = () => {
                   </td>
                   <ProductRow item={item} />
                   <td className="h-12 px-4 lg:px-6 transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500">
+                    <button onClick={() => setQrProduct(item)} title="QR kod">
+                      <BsQrCode className="text-slate-600 text-xl mx-auto cursor-pointer hover:text-pink-500" />
+                    </button>
+                  </td>
+                  <td className="h-12 px-4 lg:px-6 transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500">
                     <Link href={`/admin-dashboard/update-product/${id}`}><CiEdit className="text-green-500 text-2xl mx-auto cursor-pointer" /></Link>
                   </td>
                   <td className="h-12 px-4 lg:px-6 transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500">
@@ -130,6 +152,9 @@ const ProductDetail = () => {
           </tbody>
         </table>
       </div>
+
+      {/* QR kod oynasi */}
+      {qrProduct && <ProductQRCode product={qrProduct} onClose={() => setQrProduct(null)} />}
     </div>
   );
 };

@@ -1,6 +1,7 @@
 import { ImageT } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
+import NoPhoto from "@/components/NoPhoto";
 import { FormattedPrice } from '@/utils'
 import React from "react";
 
@@ -19,12 +20,16 @@ const Card = ({ img, title, description, currentPrice, href }: CardProps) => {
       className="flex flex-col h-full rounded border divide-y overflow-hidden shadow-sm"
     >
       <div className="relative w-full h-44 sm:h-72 shrink-0">
-        <Image
-          src={img[0].url ? img[0].url : `/sample.webp`}
-          alt={title}
-          fill
-          className="w-full h-full object-cover"
-        />
+        {img?.[0]?.url ? (
+          <Image
+            src={img[0].url}
+            alt={title}
+            fill
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <NoPhoto className="absolute inset-0" />
+        )}
       </div>
       <div className="flex flex-col gap-3 justify-between h-full p-3 sm:p-4">
         <div className="space-y-1">
