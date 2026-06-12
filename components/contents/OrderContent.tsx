@@ -12,6 +12,7 @@ import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
 import ImportExport from "../admin/ImportExport";
+import NoPhoto from "../NoPhoto";
 import { ordersToCSV } from "@/utils/importExport";
 
 const OrderContent = () => {
@@ -119,7 +120,11 @@ const OrderContent = () => {
                                   </td>
                                   <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
                                     <div className="flex justify-center">
-                                      <Image width={80} height={80} className="w-20" src={productImageUrl[0].url} alt="" />
+                                      {productImageUrl?.[0]?.url ? (
+                                        <Image width={80} height={80} className="w-20" src={productImageUrl[0].url} alt="" />
+                                      ) : (
+                                        <NoPhoto className="w-20 h-20 rounded" />
+                                      )}
                                     </div>
                                   </td>
                                   <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">

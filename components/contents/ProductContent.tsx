@@ -5,6 +5,7 @@ import useCartProductStore from '@/zustand/useCartStore'
 import useProductStore from '@/zustand/useProductStore'
 import Image from 'next/image'
 import Link from 'next/link'
+import NoPhoto from '@/components/NoPhoto'
 import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -59,7 +60,11 @@ const ProductContent = ({productID}: {productID:string}) => {
       </Link>
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-20 py-6">
         <div className="relative max-w-md w-full sm:w-[448px] h-64 sm:h-[448px] rounded-xl overflow-hidden">
-          <Image className="absolute w-full h-full sm:object-cover" fill src={product.productImageUrl[0].url} alt='' />
+          {product.productImageUrl?.[0]?.url ? (
+            <Image className="absolute w-full h-full sm:object-cover" fill src={product.productImageUrl[0].url} alt={product.title} />
+          ) : (
+            <NoPhoto className="absolute inset-0" />
+          )}
         </div>
         <div className="space-y-8">
           <div className='space-y-4'>

@@ -2,6 +2,7 @@ import { ProductT } from "@/lib/types";
 import useProductStore from "@/zustand/useProductStore";
 import Image from "next/image";
 import Link from "next/link";
+import NoPhoto from "@/components/NoPhoto";
 import React, { FocusEvent, KeyboardEvent, useEffect, useState } from "react";
 
 const SearchContent = () => {
@@ -92,7 +93,11 @@ const SearchContent = () => {
               >
                 <Link href={`/product/${command.id}`} key={command.id} className='flex items-center gap-4'>
                     <div className='rounded-lg w-12 h-12 relative overflow-hidden'>
-                      <Image fill alt='rahbar' src={command.productImageUrl.length != 0 ? command.productImageUrl[0].url : ""} className="w-full h-full object-cover" />
+                      {command.productImageUrl?.[0]?.url ? (
+                        <Image fill alt={command.title} src={command.productImageUrl[0].url} className="w-full h-full object-cover" />
+                      ) : (
+                        <NoPhoto className="absolute inset-0" />
+                      )}
                     </div>
 
                     <span className='text-xs'>
