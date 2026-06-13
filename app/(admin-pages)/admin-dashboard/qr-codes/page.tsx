@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import QRCode from "qrcode";
+import JsBarcode from "jsbarcode";
 import { FiPrinter } from "react-icons/fi";
 import { GoArrowLeft } from "react-icons/go";
 import Loader from "@/components/Loader";
@@ -9,12 +10,31 @@ import useProductStore from "@/zustand/useProductStore";
 import { productUrl } from "@/lib/site";
 import { FormattedPrice } from "@/utils";
 
-// Hamma mahsulot uchun bitta chop etiladigan QR varaq: har bir kartani qirqib,
-// doʼkondagi mahsulotga yopishtirish mumkin. Mijoz skaner qilsa — megahome.uz
-// dagi shu mahsulot sahifasi ochiladi.
+// Chop etiladigan yorliq varaq: har bir mahsulot uchun QR (mijoz skaner qilsa
+// megahome.uz dagi sahifa ochiladi) + Code128 SHTRIX-KOD (do'kon kassasida
+// skaner qilib savatga qo'shish uchun). Kartani qirqib mahsulotga yopishtiring.
+const makeBarcode = (value: string): string => {
+  try {
+    const canvas = document.createElement("canvas");
+    JsBarcode(canvas, value, {
+      format: "CODE128",
+      displayValue: true,
+      fontSize: 12,
+      height: 40,
+      width: 1.5,
+      margin: 4,
+    });
+    return canvas.toDataURL("image/png");
+  } catch (err) {
+    console.error("barcode failed:", err);
+    return "";
+  }
+};
+
 const QRCodesPage = () => {
   const { products, loading, fetchProducts } = useProductStore();
   const [codes, setCodes] = useState<Record<string, string>>({});
+  const [bars, setBars] = useState<Record<string, string>>({});
 
   useEffect(() => {
     fetchProducts();
@@ -36,7 +56,10 @@ const QRCodesPage = () => {
           return [p.id, dataUrl] as const;
         })
       );
-      if (!cancelled) setCodes(Object.fromEntries(entries));
+      if (cancelled) return;
+      setCodes(Object.fromEntries(entries));
+      // Code128 barcode of the product's barcode value (falls back to the id).
+      setBars(Object.fromEntries(products.map((p) => [p.id, makeBarcode(p.barcode || p.id)] as const)));
     };
     if (products.length) generate().catch((err) => console.error("QR sheet failed:", err));
     return () => {
@@ -56,10 +79,11 @@ const QRCodesPage = () => {
             <GoArrowLeft className="text-xl" />
             <span>Admin panelga qaytish</span>
           </Link>
-          <h1 className="text-xl font-bold text-pink-500">Mahsulot QR kodlari</h1>
+          <h1 className="text-xl font-bold text-pink-500">QR va shtrix-kodlar</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Varaqni chop eting, kartochkalarni qirqib mahsulotlarga yopishtiring — mijoz skaner
-            qilsa saytdagi mahsulot sahifasi ochiladi.
+            Varaqni chop eting, kartochkalarni qirqib mahsulotlarga yopishtiring. <b>QR</b> — mijoz
+            skaner qilsa saytdagi mahsulot sahifasi ochiladi; <b>shtrix-kod</b> — do'kon kassasida
+            (POS) skaner qilib savatga qo'shish uchun.
           </p>
         </div>
         <button
@@ -98,6 +122,10 @@ const QRCodesPage = () => {
               {p.title}
             </p>
             <p className="text-[11px] text-slate-500">{FormattedPrice(p.price)} UZS</p>
+            {bars[p.id] && (
+              // eslint-disable-next-line @next/next/no-img-element -- data URL, no optimizer needed
+              <img src={bars[p.id]} alt={`shtrix-kod: ${p.title}`} className="w-full mt-1" />
+            )}
             <p className="text-[10px] text-slate-400 mt-0.5">megahome.uz</p>
           </div>
         ))}
