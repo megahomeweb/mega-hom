@@ -9,7 +9,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { IoIosArrowDown } from "react-icons/io";
-import { FiPrinter } from "react-icons/fi";
+import { FiPrinter, FiTrash2 } from "react-icons/fi";
 import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
@@ -20,10 +20,11 @@ import NoPhoto from "../NoPhoto";
 import { Order } from "@/lib/types";
 import { ordersToCSV } from "@/utils/importExport";
 import { ORDER_STATUSES, OrderStatus, orderStatusMeta } from "@/lib/orderStatus";
+import { isAdminPlus } from "@/lib/roles";
 import { formatPhone } from "@/utils/phone";
 
 const OrderContent = () => {
-  const { orders, fetchAllOrders, loadingOrders, updateOrderStatus } = useOrderStore();
+  const { orders, fetchAllOrders, loadingOrders, updateOrderStatus, deleteOrder } = useOrderStore();
   const me = useRole();
   const [tab, setTab] = useState<"all" | OrderStatus>("all");
 
@@ -50,6 +51,18 @@ const OrderContent = () => {
       toast.success("Holat yangilandi");
     } catch {
       toast.error("Holatni yangilab boʼlmadi");
+    }
+  };
+
+  const handleDeleteOrder = async (id: string) => {
+    if (typeof window !== "undefined" && !window.confirm("Buyurtmani oʼchirilsinmi? Bu amalni qaytarib boʼlmaydi.")) {
+      return;
+    }
+    try {
+      await deleteOrder(id);
+      toast.success("Buyurtma oʼchirildi");
+    } catch {
+      toast.error("Oʼchirib boʼlmadi");
     }
   };
 
@@ -210,6 +223,19 @@ const OrderContent = () => {
                       >
                         <FiPrinter className="text-sm" />
                       </button>
+                      {isAdminPlus(me?.role) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteOrder(order.id);
+                          }}
+                          title="Buyurtmani oʼchirish"
+                          className="inline-flex items-center justify-center size-8 rounded-full border border-red-200 text-red-500 hover:bg-red-50"
+                        >
+                          <FiTrash2 className="text-sm" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <Transition
