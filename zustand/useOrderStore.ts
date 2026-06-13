@@ -1,5 +1,5 @@
 import {create} from "zustand";
-import { collection, doc, addDoc, query, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, addDoc, query, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { Order } from "@/lib/types";
 import { DEFAULT_ORDER_STATUS, OrderStatus } from "@/lib/orderStatus";
@@ -11,6 +11,7 @@ interface StoreState {
   addOrder: (order: Order) => Promise<void>;
   fetchAllOrders: () => void;
   updateOrderStatus: (id: string, status: OrderStatus, actor?: string) => Promise<void>;
+  deleteOrder: (id: string) => Promise<void>;
 }
 
 export const useOrderStore = create<StoreState>((set) => ({
@@ -43,13 +44,22 @@ export const useOrderStore = create<StoreState>((set) => ({
     set({ loadingOrders: true });
     try {
       const q = query(collection(fireDB, "orders"));
-      const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
-        const OrderArray: Order[] = [];
-        QuerySnapshot.forEach((d) => {
-          OrderArray.push({ ...(d.data() as Order), id: d.id });
-        });
-        set({ orders: OrderArray, loadingOrders: false });
-      });
+      const unsubscribe = onSnapshot(
+        q,
+        (QuerySnapshot) => {
+          const OrderArray: Order[] = [];
+          QuerySnapshot.forEach((d) => {
+            OrderArray.push({ ...(d.data() as Order), id: d.id });
+          });
+          set({ orders: OrderArray, loadingOrders: false });
+        },
+        (err) => {
+          // Surface read failures instead of hanging on the loader forever
+          // (e.g. a non-admin session, or rules denying the read).
+          console.error("Orders subscription error:", err);
+          set({ loadingOrders: false });
+        }
+      );
       return () => unsubscribe();
     } catch (error) {
       console.error("Error fetching orders: ", error);
@@ -74,5 +84,11 @@ export const useOrderStore = create<StoreState>((set) => ({
       console.error("Error updating order status: ", error);
       throw error;
     }
+  },
+
+  // Remove an order (admin+ only — e.g. spam or a test order).
+  deleteOrder: async (id: string) => {
+    await deleteDoc(doc(fireDB, "orders", id));
+    set((state) => ({ orders: state.orders.filter((o) => o.id !== id) }));
   },
 }));

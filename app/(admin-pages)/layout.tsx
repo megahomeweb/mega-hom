@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import AdminGuard from "@/components/admin/AdminGuard";
+import OrderNotifier from "@/components/admin/OrderNotifier";
 
 export const metadata: Metadata = {
   title: "Mega Home — Admin panel",
@@ -11,5 +12,10 @@ export default function AdminLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AdminGuard>{children}</AdminGuard>;
+  return (
+    <AdminGuard>
+      <OrderNotifier />
+      {children}
+    </AdminGuard>
+  );
 }

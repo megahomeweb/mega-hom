@@ -1,5 +1,5 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { getFirestore, initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
@@ -24,6 +24,15 @@ const firebaseConfig = {
 
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-export const fireDB = getFirestore(app);
+// ignoreUndefinedProperties: writes silently drop undefined fields instead of
+// throwing "Unsupported field value: undefined" — defensive against any record
+// (order line items, imported products) that carries an undefined field.
+export const fireDB = (() => {
+  try {
+    return initializeFirestore(app, { ignoreUndefinedProperties: true });
+  } catch {
+    return getFirestore(app); // already initialized (HMR) → reuse
+  }
+})();
 export const auth = getAuth(app);
 export const fireStorage = getStorage(app);
