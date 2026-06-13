@@ -39,6 +39,8 @@ export interface Order {
   totalPrice: number;
   totalQuantity: number;
   status?: OrderStatus;
+  lastChangedBy?: string;     // display-only "who last touched this" hint
+  lastChangedAt?: Timestamp;
 }
 
 export interface  userT {

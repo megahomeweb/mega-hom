@@ -1,6 +1,7 @@
 'use client'
 import CategoryDetail from "@/components/admin/CategoryDetail";
 import ProductDetail from "@/components/admin/ProductDetail";
+import DashboardKPIs from "@/components/admin/DashboardKPIs";
 import { useRole } from "@/components/admin/RoleContext";
 import { ROLE_LABELS, Role, isAdminPlus, isManagerPlus } from "@/lib/roles";
 import { auth } from "@/firebase/FirebaseConfig";
@@ -87,7 +88,9 @@ const Admin = () => {
       </div>
 
       {canCatalog ? (
-        <TabGroup className="px-5">
+        <>
+          <DashboardKPIs />
+          <TabGroup className="px-5">
           <TabList className="flex flex-wrap text-center justify-center">
             {/* Total Products */}
             <Tab className="p-4 cursor-pointer outline-none">
@@ -122,7 +125,8 @@ const Admin = () => {
             <TabPanel><ProductDetail /></TabPanel>
             <TabPanel><CategoryDetail /></TabPanel>
           </TabPanels>
-        </TabGroup>
+          </TabGroup>
+        </>
       ) : (
         <div className="px-5">
           <div className="max-w-md mx-auto text-center bg-pink-50 border border-pink-100 rounded-xl p-8 mt-10">

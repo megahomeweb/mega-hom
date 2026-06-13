@@ -9,18 +9,22 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { IoIosArrowDown } from "react-icons/io";
+import { FiPrinter } from "react-icons/fi";
 import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
 import ImportExport from "../admin/ImportExport";
 import ContactButtons from "../admin/ContactButtons";
+import { useRole } from "../admin/RoleContext";
 import NoPhoto from "../NoPhoto";
+import { Order } from "@/lib/types";
 import { ordersToCSV } from "@/utils/importExport";
 import { ORDER_STATUSES, OrderStatus, orderStatusMeta } from "@/lib/orderStatus";
 import { formatPhone } from "@/utils/phone";
 
 const OrderContent = () => {
   const { orders, fetchAllOrders, loadingOrders, updateOrderStatus } = useOrderStore();
+  const me = useRole();
   const [tab, setTab] = useState<"all" | OrderStatus>("all");
 
   useEffect(() => {
@@ -42,11 +46,70 @@ const OrderContent = () => {
 
   const handleStatus = async (id: string, status: OrderStatus) => {
     try {
-      await updateOrderStatus(id, status);
+      await updateOrderStatus(id, status, me?.name);
       toast.success("Holat yangilandi");
     } catch {
       toast.error("Holatni yangilab boʼlmadi");
     }
+  };
+
+  // Printable packing slip — built with DOM nodes (textContent escapes the
+  // customer-provided values; no innerHTML on user data).
+  const printOrderSlip = (order: Order) => {
+    const win = window.open("", "_blank", "width=420,height=640");
+    if (!win) {
+      toast.error("Brauzer oynani bloklab qoʼydi — popup ruxsatini yoqing");
+      return;
+    }
+    const d = win.document;
+    d.title = `Buyurtma — ${order.clientName ?? ""}`;
+    const style = d.createElement("style");
+    style.textContent =
+      "body{font-family:-apple-system,Arial,sans-serif;padding:20px;color:#1e293b}" +
+      "h1{font-size:18px;margin:0 0 4px}.muted{color:#64748b;font-size:12px;margin:2px 0}" +
+      "table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}" +
+      "th,td{text-align:left;border-bottom:1px solid #e2e8f0;padding:6px 4px}" +
+      ".tot{font-weight:700;font-size:15px;margin-top:12px;text-align:right}";
+    d.head.appendChild(style);
+
+    const h = d.createElement("h1");
+    h.textContent = "megahome.uz — Buyurtma";
+    const cust = d.createElement("p");
+    cust.className = "muted";
+    cust.textContent = `${order.clientName ?? ""} ${order.clientLastName ?? ""} · ${formatPhone(order.clientPhone)}`;
+    const dt = d.createElement("p");
+    dt.className = "muted";
+    dt.textContent = order.date?.seconds ? new Date(order.date.seconds * 1000).toLocaleString() : "";
+    d.body.append(h, cust, dt);
+
+    const table = d.createElement("table");
+    const headRow = d.createElement("tr");
+    ["Mahsulot", "Soni", "Narx"].forEach((label) => {
+      const thEl = d.createElement("th");
+      thEl.textContent = label;
+      headRow.appendChild(thEl);
+    });
+    const thead = d.createElement("thead");
+    thead.appendChild(headRow);
+    const tbody = d.createElement("tbody");
+    (order.basketItems ?? []).forEach((it) => {
+      const tr = d.createElement("tr");
+      const c1 = d.createElement("td");
+      c1.textContent = it.title ?? "";
+      const c2 = d.createElement("td");
+      c2.textContent = String(it.quantity ?? 1);
+      const c3 = d.createElement("td");
+      c3.textContent = `${FormattedPrice(it.price ?? 0)} UZS`;
+      tr.append(c1, c2, c3);
+      tbody.appendChild(tr);
+    });
+    table.append(thead, tbody);
+    const tot = d.createElement("p");
+    tot.className = "tot";
+    tot.textContent = `Jami: ${FormattedPrice(order.totalPrice)} UZS`;
+    d.body.append(table, tot);
+
+    win.print();
   };
 
   return (
@@ -136,6 +199,17 @@ const OrderContent = () => {
                         ))}
                       </select>
                       <ContactButtons phone={order.clientPhone} />
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          printOrderSlip(order);
+                        }}
+                        title="Chop etish (chek)"
+                        className="inline-flex items-center justify-center size-8 rounded-full border border-slate-200 text-slate-500 hover:bg-slate-50"
+                      >
+                        <FiPrinter className="text-sm" />
+                      </button>
                     </div>
                   </div>
                   <Transition
@@ -226,6 +300,11 @@ const OrderContent = () => {
                           </tbody>
                         </table>
                       </div>
+                      {order.lastChangedBy && (
+                        <p className="text-xs text-slate-400 mt-2">
+                          Oxirgi oʼzgarish: {order.lastChangedBy}
+                        </p>
+                      )}
                     </DisclosurePanel>
                   </Transition>
                 </div>
