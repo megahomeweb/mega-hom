@@ -1,83 +1,55 @@
-import Image from 'next/image'
-import Link from 'next/link'
-import React from 'react'
+"use client";
+import Image from "next/image";
+import Link from "next/link";
+import { useEffect } from "react";
+import useCategoryStore from "@/zustand/useCategoryStore";
+
+// Renders the REAL categories from Firestore (was hardcoded IDs before, which
+// broke when categories changed). Every category becomes a tile linking to its
+// listing page /products/<categoryId>. Icons + colors are cycled so newly
+// added categories always render a proper, on-brand tile.
+const ICON_POOL = [
+  "/dishes.svg",
+  "/decors.svg",
+  "/appliances.svg",
+  "/luggage.svg",
+  "/safe.svg",
+  "/chair.svg",
+];
+const COLOR_POOL = ["bg-yellow-500", "bg-red-400", "bg-pink-500", "bg-amber-500"];
 
 const Populars = () => {
-  return (
-  <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6">
-    <h2 className="text-4xl font-bold pb-5">
-      Ommabop
-    </h2>
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 lg:grid-rows-[110px_110px] gap-2">
-      <Link href="/products/9g5mt9ntJsxEE7PRm7fU" className="relative group overflow-hidden lg:row-span-2 flex items-center gap-3 flex-wrap sm:gap-5 lg:block rounded bg-yellow-500 hover:shadow-brand transition-all ease-in-out p-4 sm:p-5">
-        <Image src="/dishes.svg" width={128} height={128} alt="dishes" className="w-14 sm:w-16 lg:w-32" />
-        <div>
-          <h3 className="text-white font-medium text-lg">
-            Oshxona toplamlari
-          </h3>
-          {/* <span className="text-gray-300">
-            345 dona
-          </span> */}
-        </div>
-      </Link>
-      <Link href="/products/W1lr9cg7j7Q0wjBjN0bF" className="flex items-center gap-3 flex-wrap sm:gap-5 rounded bg-red-400 hover:shadow-brand transition-all ease-in-out p-4 sm:p-5">
-        <Image src="/decors.svg" width={128} height={128} alt="dishes" className="w-12 sm:w-16" />
-        <div>
-          <h3 className="text-white font-medium text-lg">
-            Dekorlar
-          </h3>
-          {/* <span className="text-gray-300">
-            345 dona
-          </span> */}
-        </div>
-      </Link>
-      <Link href="/products/NfkKS5J9awr8t8am6XJ0" className="flex items-center gap-3 flex-wrap sm:gap-5 rounded bg-red-400 hover:shadow-brand transition-all ease-in-out p-4 sm:p-5">
-        <Image src="/safe.svg" width={128} height={128} alt="dishes" className="w-12 sm:w-16" />
-        <div>
-          <h3 className="text-white font-medium text-lg">
-            Seyflar
-          </h3>
-          {/* <span className="text-gray-300">
-            345 dona
-          </span> */}
-        </div>
-      </Link>
-      <Link href="/products/JCy2yI1ogObMuiN9gkBq" className="relative group overflow-hidden lg:row-span-2 flex items-center gap-3 flex-wrap sm:gap-5 lg:block rounded bg-yellow-500 hover:shadow-brand transition-all ease-in-out p-4 sm:p-5">
-        <Image src="/appliances.svg" width={128} height={128} alt="dishes" className="w-12 sm:w-16 lg:w-32" />
-        <div>
-          <h3 className="text-white font-medium text-lg">
-            Maishiy texnika
-          </h3>
-          {/* <span className="text-gray-300">
-            345 400na
-          </span> */}
-        </div>
-      </Link>
-      <Link href="/products/CxT0dlz4yFqk431LfbuO" className="flex items-center gap-3 flex-wrap sm:gap-5 rounded bg-red-400 hover:shadow-brand transition-all ease-in-out p-4 sm:p-5">
-        <Image src="/luggage.svg" width={128} height={128} alt="dishes" className="w-12 sm:w-16" />
-        <div>
-          <h3 className="text-white font-medium text-lg">
-            Chamadonlar
-          </h3>
-          {/* <span className="text-gray-300">
-            345 dona
-          </span> */}
-        </div>
-      </Link>
-      <Link href="https://www.kursiy.uz/" target='_blank' className="flex items-center gap-3 flex-wrap sm:gap-5 rounded bg-red-400 hover:shadow-brand transition-all ease-in-out p-4 sm:p-5">
-        <Image src="/chair.svg" width={128} height={128} alt="dishes" className="w-12 sm:w-16" />
-        <div>
-          <h3 className="text-white font-medium text-lg">
-            Kreslolar
-          </h3>
-          {/* <span className="text-gray-300">
-            345 dona
-          </span> */}
-        </div>
-      </Link>
-    </div>
-  </div>
-  )
-}
+  const { categories, fetchCategories } = useCategoryStore();
 
-export default Populars
+  useEffect(() => {
+    fetchCategories();
+  }, [fetchCategories]);
+
+  if (!categories.length) return null;
+
+  return (
+    <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6">
+      <h2 className="text-3xl sm:text-4xl font-bold pb-5">Kategoriyalar</h2>
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3">
+        {categories.map((cat, i) => (
+          <Link
+            key={cat.id}
+            href={`/products/${cat.id}`}
+            className={`flex items-center gap-3 sm:gap-5 rounded ${COLOR_POOL[i % COLOR_POOL.length]} hover:shadow-brand transition-all ease-in-out p-4 sm:p-5`}
+          >
+            <Image
+              src={ICON_POOL[i % ICON_POOL.length]}
+              width={64}
+              height={64}
+              alt=""
+              className="w-12 sm:w-16 shrink-0"
+            />
+            <h3 className="text-white font-medium text-lg capitalize">{cat.name}</h3>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export default Populars;
