@@ -1,14 +1,34 @@
 import {create} from "zustand";
 import { collection, deleteDoc, doc, addDoc, query, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
-import { Order } from "@/lib/types";
+import { ImageT, Order } from "@/lib/types";
 import { DEFAULT_ORDER_STATUS, OrderStatus } from "@/lib/orderStatus";
+
+export interface StoreSaleItem {
+  id: string;
+  title: string;
+  price: number;
+  quantity: number;
+  category: string;
+  productImageUrl: ImageT[];
+}
+export interface StoreSaleInput {
+  basketItems: StoreSaleItem[];
+  totalPrice: number;
+  totalQuantity: number;
+  clientName: string;
+  clientLastName: string;
+  clientPhone: string;
+  cashierUid: string;
+  paymentMethod: string;
+}
 
 interface StoreState {
   orders: Order[];
   currentOrder: Order | null;
   loadingOrders: boolean;
   addOrder: (order: Order) => Promise<void>;
+  addStoreSale: (sale: StoreSaleInput) => Promise<void>;
   fetchAllOrders: () => void;
   updateOrderStatus: (id: string, status: OrderStatus, actor?: string) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
@@ -84,6 +104,17 @@ export const useOrderStore = create<StoreState>((set) => ({
       console.error("Error updating order status: ", error);
       throw error;
     }
+  },
+
+  // Record a completed in-store (POS) sale. channel:"store" + status:"sotildi"
+  // are pinned here (and validated by the orders create rule).
+  addStoreSale: async (sale: StoreSaleInput) => {
+    await addDoc(collection(fireDB, "orders"), {
+      ...sale,
+      channel: "store",
+      status: "sotildi",
+      date: new Date(),
+    });
   },
 
   // Remove an order (admin+ only — e.g. spam or a test order).

@@ -34,12 +34,23 @@ service cloud.firestore {
         ? roleRank(profile().get('role', 'user'))
         : -1;
     }
-    function isValidNewOrder() {
+    // Anonymous storefront checkout: a NEW web order (status yangi / no channel).
+    function isValidWebOrder() {
       let d = request.resource.data;
       return d.clientPhone is string
         && d.basketItems is list
         && d.totalPrice is number
-        && (!('status' in d) || d.status == 'yangi');
+        && (!('status' in d) || d.status == 'yangi')
+        && (!('channel' in d) || d.channel == 'web');
+    }
+    // In-store POS sale: created by staff+, already completed (sotildi).
+    function isValidStoreSale() {
+      let d = request.resource.data;
+      return callerRank() >= 1
+        && d.channel == 'store'
+        && d.basketItems is list
+        && d.totalPrice is number
+        && d.status == 'sotildi';
     }
 
     // Products & categories — public storefront read; manager+ writes.
@@ -56,7 +67,7 @@ service cloud.firestore {
     // only admin+ deletes.
     match /orders/{id} {
       allow read: if callerRank() >= 1;
-      allow create: if isValidNewOrder();
+      allow create: if isValidWebOrder() || isValidStoreSale();
       allow update: if callerRank() >= 1;
       allow delete: if callerRank() >= 3;
     }

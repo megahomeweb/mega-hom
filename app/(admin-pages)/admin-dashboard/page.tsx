@@ -45,6 +45,9 @@ const Admin = () => {
         <div className="flex items-center justify-between bg-pink-50 px-5 py-2 border border-pink-100 rounded-lg">
           <h1 className="text-2xl font-bold text-pink-500">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
+            <Link className="font-medium text-pink-500 hover:text-pink-700" href={'/admin-dashboard/pos'}>
+              Kassa
+            </Link>
             {canStaff && (
               <Link className="font-medium text-pink-500 hover:text-pink-700" href={'/admin-dashboard/staff'}>
                 Xodimlar
@@ -131,13 +134,21 @@ const Admin = () => {
         <div className="px-5">
           <div className="max-w-md mx-auto text-center bg-pink-50 border border-pink-100 rounded-xl p-8 mt-10">
             <h2 className="text-lg font-bold text-pink-600 mb-2">Salom, {me?.name}!</h2>
-            <p className="text-slate-600 mb-4">Siz xodim sifatida buyurtmalar holatini boshqarasiz.</p>
-            <Link
-              href="/admin-dashboard/orders"
-              className="inline-block px-5 py-2.5 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600"
-            >
-              Buyurtmalarga oʼtish
-            </Link>
+            <p className="text-slate-600 mb-4">Siz xodim sifatida kassa va buyurtmalar bilan ishlaysiz.</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              <Link
+                href="/admin-dashboard/pos"
+                className="inline-block px-5 py-2.5 bg-pink-500 text-white font-semibold rounded-lg hover:bg-pink-600"
+              >
+                Kassa (POS)
+              </Link>
+              <Link
+                href="/admin-dashboard/orders"
+                className="inline-block px-5 py-2.5 bg-white border border-pink-200 text-pink-600 font-semibold rounded-lg hover:bg-pink-50"
+              >
+                Buyurtmalar
+              </Link>
+            </div>
           </div>
         </div>
       )}
