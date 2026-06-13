@@ -18,13 +18,19 @@ const BestSellers = () => {
     fetchProducts()
   }, [fetchProducts]);
 
-  if (loading || products.length == 0) {
+  const best = products.filter((p) => p.isBest);
+
+  // Only show the loader while genuinely loading; hide the whole section when
+  // nothing is flagged "Best" (no more empty heading + empty carousel).
+  if (loading && products.length === 0) {
     return (
       <div className="flex items-center justify-center h-40">
         <Loader />
       </div>
     );
   }
+
+  if (!best.length) return null;
 
   return (
     <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6">
@@ -53,7 +59,7 @@ const BestSellers = () => {
           modules={[Navigation, Autoplay]}
           className="swiperBestSellers !static"
         >
-          {products.filter(p => p.isBest).map((card, index) => (
+          {best.map((card, index) => (
             <SwiperSlide key={index} className="!flex !flex-col !h-auto">
               <Card
                 img={card.productImageUrl}
@@ -68,14 +74,14 @@ const BestSellers = () => {
           <button
             type="button"
             onClick={() => swiperRef.current?.slidePrev()}
-            className={`${products.filter(p => p.isBest).length <= 4 && 'lg:hidden'} disabled:opacity-40 sm:absolute top-1/2 sm:-translate-y-1/2 -left-5 bg-white rounded-full border border-brand text-brand rotate-90 z-50 p-1.5 shadow-md mt-5`}
+            className={`${best.length <= 4 && 'lg:hidden'} disabled:opacity-40 sm:absolute top-1/2 sm:-translate-y-1/2 -left-5 bg-white rounded-full border border-brand text-brand rotate-90 z-50 p-1.5 shadow-md mt-5`}
           >
              <IconChevron />
           </button>
           <button
             type="button"
             onClick={() => swiperRef.current?.slideNext()}
-            className={`${products.filter(p => p.isBest).length <= 4 && 'lg:hidden'} disabled:opacity-40 sm:absolute top-1/2 sm:-translate-y-1/2 -right-5 bg-white rounded-full border border-brand text-brand -rotate-90 z-50 p-1.5 shadow-md mt-5 ml-3`}
+            className={`${best.length <= 4 && 'lg:hidden'} disabled:opacity-40 sm:absolute top-1/2 sm:-translate-y-1/2 -right-5 bg-white rounded-full border border-brand text-brand -rotate-90 z-50 p-1.5 shadow-md mt-5 ml-3`}
           >
             <IconChevron />
           </button>
