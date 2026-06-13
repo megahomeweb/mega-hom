@@ -6,6 +6,7 @@ import Image from "next/image";
 import useCategoryStore from "@/zustand/useCategoryStore";
 import Loader from "../Loader";
 import SearchContent from "../SearchContent";
+import AccountMenu from "./AccountMenu";
 
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -28,18 +29,7 @@ const Header = () => {
             <SearchContent />
           </div>
 
-          <Link
-            href="/login"
-            aria-label="Login / Kirish"
-            className="shrink-0 inline-flex items-center gap-2 rounded-md border border-brand text-brand hover:bg-brand hover:text-white transition-colors px-3 py-2 text-sm font-semibold"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
-              <polyline points="10 17 15 12 10 7" />
-              <line x1="15" x2="3" y1="12" y2="12" />
-            </svg>
-            <span className="hidden sm:inline">Kirish</span>
-          </Link>
+          <AccountMenu />
         </div>
 
         <div className="relative bg-brand">
