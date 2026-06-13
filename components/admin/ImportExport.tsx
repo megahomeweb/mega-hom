@@ -295,6 +295,14 @@ export default function ImportExport<T>({
 
                 {importHint && <p className="text-xs text-slate-500 mt-3">{importHint}</p>}
 
+                {plan !== null && plan.create + plan.update === 0 && (
+                  <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mt-3">
+                    Hozircha import qilinadigan qator yoʼq. Kamida bitta ustun
+                    (masalan, <b>Nomi</b>) belgilangan va toʼldirilganini tekshiring —
+                    keyin “Import qilish”ni bossangiz, sabablari koʼrsatiladi.
+                  </p>
+                )}
+
                 <div className="flex justify-end gap-2 mt-5">
                   <button
                     type="button"
@@ -306,7 +314,7 @@ export default function ImportExport<T>({
                   </button>
                   <button
                     type="button"
-                    disabled={busy || (plan !== null && plan.create + plan.update === 0)}
+                    disabled={busy}
                     onClick={runImport}
                     className="px-4 py-2 rounded-md bg-pink-500 text-white font-semibold hover:bg-pink-600 disabled:opacity-60"
                   >

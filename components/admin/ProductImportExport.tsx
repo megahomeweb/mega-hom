@@ -37,6 +37,7 @@ const ProductImportExport = () => {
     items.forEach((rec, i) => {
       const rowNum = i + 2; // +2 → matches the row number the user sees in Excel (row 1 = headers)
 
+      // Row whose Product ID matches the store → update only the filled-in cells.
       if (rec.id && existingIds.has(rec.id)) {
         const data = buildProductWrite(rec, enabled);
         if (!Object.keys(data).length) {
@@ -48,44 +49,43 @@ const ProductImportExport = () => {
         return;
       }
 
-      if (!rec.id) {
-        const provided = buildProductWrite(rec, enabled);
-        if (!provided.title) {
-          skipped++;
-          errors.push(`Qator ${rowNum}: yangi mahsulot uchun kamida nomi (Title) kerak`);
-          return;
-        }
-        ops.push({
-          ref: doc(collection(fireDB, "products")),
-          merge: false,
-          data: {
-            // defaults first, then whatever the file provided on top
-            price: 0,
-            quantity: 0,
-            category: "",
-            subCategory: "",
-            description: "",
-            isNew: false,
-            isBest: false,
-            ...provided,
-            productImageUrl: rec.images ?? [],
-            storageFileId: uuidv4(),
-            time: Timestamp.now(),
-            date: new Date().toLocaleString("en-US", {
-              month: "short",
-              day: "2-digit",
-              year: "numeric",
-            }),
-          },
-        });
-        created++;
+      // Any other row (blank ID, or an ID that isn't in the store) → new product.
+      // Only a Title is required; a stale/unknown ID is reported but not blocked.
+      const provided = buildProductWrite(rec, enabled);
+      if (!provided.title) {
+        skipped++;
+        errors.push(`Qator ${rowNum}: yangi mahsulot uchun kamida nomi (Title) kerak — oʼtkazib yuborildi`);
         return;
       }
-
-      skipped++;
-      errors.push(
-        `Qator ${rowNum}: bunday "Product ID" topilmadi — yangilash uchun ID eksportdagi bilan bir xil boʼlsin, yangi mahsulot qoʼshish uchun esa ID katagini boʼsh qoldiring`
-      );
+      ops.push({
+        ref: doc(collection(fireDB, "products")),
+        merge: false,
+        data: {
+          // defaults first, then whatever the file provided on top
+          price: 0,
+          quantity: 0,
+          category: "",
+          subCategory: "",
+          description: "",
+          isNew: false,
+          isBest: false,
+          ...provided,
+          productImageUrl: rec.images ?? [],
+          storageFileId: uuidv4(),
+          time: Timestamp.now(),
+          date: new Date().toLocaleString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+          }),
+        },
+      });
+      created++;
+      if (rec.id) {
+        errors.push(
+          `Qator ${rowNum} ("${provided.title}"): "${rec.id}" IDʼli mahsulot topilmadi — yangi mahsulot sifatida qoʼshildi`
+        );
+      }
     });
 
     for (let i = 0; i < ops.length; i += FIRESTORE_BATCH_LIMIT) {

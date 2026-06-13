@@ -369,7 +369,11 @@ export function buildProductWrite(
   return data;
 }
 
-/** Dry-run of the import — powers the live preview in the confirm dialog. */
+/** Dry-run of the import — powers the live preview in the confirm dialog.
+ *  A row whose Product ID matches the store is an update; any other row
+ *  (blank ID, or an ID that isn't in the store) becomes a new product as long
+ *  as a Title is provided. This mirrors the category importer and guarantees
+ *  the "Import qilish" button is never a dead end when a file has real rows. */
 export function planProductImport(
   items: ImportProduct[],
   existingIds: Set<string>,
@@ -382,7 +386,7 @@ export function planProductImport(
     if (rec.id && existingIds.has(rec.id)) {
       if (Object.keys(buildProductWrite(rec, enabled)).length) update++;
       else skip++;
-    } else if (!rec.id && enabled.has("title") && rec.title) {
+    } else if (enabled.has("title") && rec.title) {
       create++;
     } else {
       skip++;
