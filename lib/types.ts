@@ -44,6 +44,9 @@ export interface Order {
   status?: OrderStatus;
   lastChangedBy?: string;     // display-only "who last touched this" hint
   lastChangedAt?: Timestamp;
+  channel?: "web" | "store";  // where the sale came from (default web)
+  cashierUid?: string;        // staff who rang up an in-store (POS) sale
+  paymentMethod?: string;     // e.g. "naqd" (cash) — POS sales
 }
 
 export interface  userT {

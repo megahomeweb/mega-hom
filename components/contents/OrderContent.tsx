@@ -185,7 +185,20 @@ const OrderContent = () => {
                   <div className="flex items-center justify-between gap-3 w-full px-4 py-2 bg-white shadow-lg rounded-lg border border-gray-200">
                     <DisclosureButton className="flex items-center gap-4 text-left flex-1 min-w-0">
                       <div className="min-w-0">
-                        <h3 className="font-medium capitalize truncate">{order.clientName} {order.clientLastName}</h3>
+                        <h3 className="font-medium capitalize truncate flex items-center gap-2">
+                          <span className="truncate">
+                            {order.clientName || order.clientLastName
+                              ? `${order.clientName ?? ""} ${order.clientLastName ?? ""}`.trim()
+                              : order.channel === "store"
+                                ? "Doʼkon sotuvi"
+                                : "Mijoz"}
+                          </span>
+                          {order.channel === "store" && (
+                            <span className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded bg-teal-100 text-teal-700">
+                              Doʼkon
+                            </span>
+                          )}
+                        </h3>
                         <p className="text-sm text-gray-500">{formatPhone(order.clientPhone)}</p>
                       </div>
                       <p className="text-sm text-gray-500 hidden md:block whitespace-nowrap">
