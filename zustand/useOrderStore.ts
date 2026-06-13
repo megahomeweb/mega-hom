@@ -1,5 +1,5 @@
 import {create} from "zustand";
-import { collection, doc, addDoc, query, onSnapshot, updateDoc } from "firebase/firestore";
+import { collection, doc, addDoc, query, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { Order } from "@/lib/types";
 import { DEFAULT_ORDER_STATUS, OrderStatus } from "@/lib/orderStatus";
@@ -10,7 +10,7 @@ interface StoreState {
   loadingOrders: boolean;
   addOrder: (order: Order) => Promise<void>;
   fetchAllOrders: () => void;
-  updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
+  updateOrderStatus: (id: string, status: OrderStatus, actor?: string) => Promise<void>;
 }
 
 export const useOrderStore = create<StoreState>((set) => ({
@@ -59,11 +59,16 @@ export const useOrderStore = create<StoreState>((set) => ({
 
   // Move an order along the fulfillment pipeline (admin action). Single-field
   // updateDoc — the onSnapshot subscription live-refreshes the list for everyone.
-  updateOrderStatus: async (id: string, status: OrderStatus) => {
+  updateOrderStatus: async (id: string, status: OrderStatus, actor?: string) => {
     try {
-      await updateDoc(doc(fireDB, "orders", id), { status });
+      await updateDoc(
+        doc(fireDB, "orders", id),
+        actor
+          ? { status, lastChangedBy: actor, lastChangedAt: serverTimestamp() }
+          : { status, lastChangedAt: serverTimestamp() }
+      );
       set((state) => ({
-        orders: state.orders.map((o) => (o.id === id ? { ...o, status } : o)),
+        orders: state.orders.map((o) => (o.id === id ? { ...o, status, lastChangedBy: actor ?? o.lastChangedBy } : o)),
       }));
     } catch (error) {
       console.error("Error updating order status: ", error);
