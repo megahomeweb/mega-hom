@@ -3,7 +3,7 @@ import Link from 'next/link';
 import React, { useState } from 'react'
 import Loader from '../Loader';
 import toast from 'react-hot-toast';
-import { Timestamp, addDoc, collection } from "firebase/firestore";
+import { Timestamp, doc, setDoc } from "firebase/firestore";
 import { auth, fireDB } from "../../firebase/FirebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from 'next/navigation';
@@ -58,11 +58,10 @@ const SignUpContent = () => {
                 )
             }
 
-            // create user Refrence
-            const userRefrence = collection(fireDB, "user")
-
-            // Add User Detail
-            await addDoc(userRefrence, user);
+            // Key the user doc by uid (doc.id === uid) so Firestore Security
+            // Rules can read the caller's role via get(/user/$(uid)); rules
+            // cannot run the where("uid","==") query the app used before.
+            await setDoc(doc(fireDB, "user", users.user.uid), user);
 
             setUserSignup({
                 name: "",

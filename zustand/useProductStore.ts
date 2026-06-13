@@ -74,11 +74,12 @@ const useProductStore = create<ProductStore>((set) => ({
     }
   },
 
-  // Update a product
+  // Update a product. merge:true so a partial write (e.g. a future inline
+  // single-field edit) can never blank the fields it didn't include.
   updateProduct: async (id: string, updatedProduct: ProductT) => {
     set({ loading: true });
     try {
-      await setDoc(doc(fireDB, 'products', id), updatedProduct);
+      await setDoc(doc(fireDB, 'products', id), updatedProduct, { merge: true });
       set({ product: updatedProduct, loading: false });
     } catch (error) {
       console.error('Error updating product:', error);

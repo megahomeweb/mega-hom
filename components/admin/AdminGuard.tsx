@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { auth, fireDB } from "@/firebase/FirebaseConfig";
 import Loader from "@/components/Loader";
 
@@ -21,11 +21,29 @@ const AdminGuard = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
-        const snap = await getDocs(
-          query(collection(fireDB, "user"), where("uid", "==", user.uid))
-        );
-        const profile = snap.empty ? null : snap.docs[0].data();
-        if (profile && profile.role === "admin") {
+        // Prefer the uid-keyed user doc (doc.id === uid). Fall back to the
+        // legacy auto-id doc found by the uid field, and self-heal it into a
+        // uid-keyed doc so future reads — and Firestore Security Rules — can
+        // resolve the role directly (rules cannot run where-queries).
+        const directRef = doc(fireDB, "user", user.uid);
+        const directSnap = await getDoc(directRef);
+        let profile = directSnap.exists() ? directSnap.data() : null;
+
+        if (!profile) {
+          const legacy = await getDocs(
+            query(collection(fireDB, "user"), where("uid", "==", user.uid))
+          );
+          if (!legacy.empty) {
+            profile = legacy.docs[0].data();
+            try {
+              await setDoc(directRef, profile, { merge: true });
+            } catch (healErr) {
+              console.warn("AdminGuard self-heal skipped:", healErr);
+            }
+          }
+        }
+
+        if (profile && profile.role === "admin" && profile.disabled !== true) {
           setStatus("ok");
         } else {
           setStatus("redirecting");

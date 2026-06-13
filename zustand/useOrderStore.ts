@@ -1,7 +1,8 @@
 import {create} from "zustand";
-import { collection, getDocs, getDoc, doc, addDoc, query, onSnapshot } from "firebase/firestore";
+import { collection, doc, addDoc, query, onSnapshot, updateDoc } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
-import { Order, ProductT } from "@/lib/types";
+import { Order } from "@/lib/types";
+import { DEFAULT_ORDER_STATUS, OrderStatus } from "@/lib/orderStatus";
 
 interface StoreState {
   orders: Order[];
@@ -9,7 +10,7 @@ interface StoreState {
   loadingOrders: boolean;
   addOrder: (order: Order) => Promise<void>;
   fetchAllOrders: () => void;
-  // fetchSingleOrder: (orderId: string) => Promise<void>;
+  updateOrderStatus: (id: string, status: OrderStatus) => Promise<void>;
 }
 
 export const useOrderStore = create<StoreState>((set) => ({
@@ -17,20 +18,23 @@ export const useOrderStore = create<StoreState>((set) => ({
   currentOrder: null,
   loadingOrders: true,
 
-  // Add a new order to Firestore and update the state
+  // Add a new order to Firestore and update the state. Every order starts in
+  // the "yangi" (new) state so the fulfillment pipeline + filter tabs work.
   addOrder: async (order: Order) => {
     try {
       const ordersCollectionRef = collection(fireDB, "orders");
       const docRef = await addDoc(ordersCollectionRef, {
         ...order,
+        status: DEFAULT_ORDER_STATUS,
         date: new Date(),
       });
       set((state) => {
-        const newOrder = { ...order, id: docRef.id };
+        const newOrder = { ...order, status: DEFAULT_ORDER_STATUS, id: docRef.id };
         return { orders: [...state.orders, newOrder] };
       });
     } catch (error) {
       console.error("Error adding order to Firebase: ", error);
+      throw error; // let the checkout surface a failure instead of silently "succeeding"
     }
   },
 
@@ -40,31 +44,30 @@ export const useOrderStore = create<StoreState>((set) => ({
     try {
       const q = query(collection(fireDB, "orders"));
       const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
-        let OrderArray: any = [];
-        QuerySnapshot.forEach((doc) => {
-          OrderArray.push({ ...doc.data(), id: doc.id });
+        const OrderArray: Order[] = [];
+        QuerySnapshot.forEach((d) => {
+          OrderArray.push({ ...(d.data() as Order), id: d.id });
         });
         set({ orders: OrderArray, loadingOrders: false });
       });
-      return () => unsubscribe(); 
+      return () => unsubscribe();
     } catch (error) {
       console.error("Error fetching orders: ", error);
       set({ loadingOrders: false });
     }
   },
 
-  // Fetch a single order by its ID and update the state
-  // fetchSingleOrder: async (orderId: string) => {
-  //   try {
-  //     const orderDoc = await getDoc(doc(fireDB, "orders", orderId));
-  //     if (orderDoc.exists()) {
-  //       set({ currentOrder: { id: orderDoc.id, ...orderDoc.data() } });
-  //     } else {
-  //       console.error("Order not found");
-  //       set({ currentOrder: null });
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching order by ID: ", error);
-  //   }
-  // },
+  // Move an order along the fulfillment pipeline (admin action). Single-field
+  // updateDoc — the onSnapshot subscription live-refreshes the list for everyone.
+  updateOrderStatus: async (id: string, status: OrderStatus) => {
+    try {
+      await updateDoc(doc(fireDB, "orders", id), { status });
+      set((state) => ({
+        orders: state.orders.map((o) => (o.id === id ? { ...o, status } : o)),
+      }));
+    } catch (error) {
+      console.error("Error updating order status: ", error);
+      throw error;
+    }
+  },
 }));
