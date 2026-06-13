@@ -7,7 +7,8 @@
 //  - a blank cell or a missing column NEVER overwrites existing data;
 //  - bad rows are skipped one by one — one mistake never blocks the whole file.
 
-import { CategoryI, Order, ProductT } from "@/lib/types";
+import { CategoryI, CustomerT, Order, ProductT } from "@/lib/types";
+import { normalizePhone } from "./phone";
 
 /* --------------------------------- generic --------------------------------- */
 
@@ -491,6 +492,140 @@ export function planCategoryImport(
       create++;
     } else {
       skip++;
+    }
+  }
+  return { create, update, skip };
+}
+
+/* -------------------------------- customers -------------------------------- */
+// Customers are keyed by normalized phone. Export carries computed metrics
+// (read-only); import only writes the editable enrichment (name/city/tags/note)
+// into the `customers` collection. Metrics columns are ignored on import.
+
+export interface ImportCustomer {
+  phone: string; // normalized key
+  name?: string;
+  city?: string;
+  tags?: string[];
+  note?: string;
+}
+
+export const CUSTOMER_FIELDS = [
+  { key: "name", label: "Ism" },
+  { key: "city", label: "Shahar" },
+  { key: "tags", label: "Teglar" },
+  { key: "note", label: "Izoh" },
+] as const;
+
+export type CustomerFieldKey = (typeof CUSTOMER_FIELDS)[number]["key"];
+
+function normalizeImportCustomer(rec: Record<string, unknown>): ImportCustomer {
+  let tags: string[] | undefined;
+  if (Array.isArray(rec.tags)) tags = rec.tags.map((t) => String(t).trim()).filter(Boolean);
+  else if (optStr(rec.tags) !== undefined)
+    tags = String(rec.tags)
+      .split(/[,|]/)
+      .map((t) => t.trim())
+      .filter(Boolean);
+  return {
+    phone: normalizePhone(rec.phone),
+    name: optStr(rec.name),
+    city: optStr(rec.city),
+    tags,
+    note: optStr(rec.note),
+  };
+}
+
+export function customersToCSV(customers: CustomerT[]): string {
+  const rows: unknown[][] = [
+    [
+      "Name",
+      "Phone",
+      "City",
+      "Tags",
+      "Note",
+      "Order Count",
+      "Total Spent (UZS)",
+      "Avg Ticket (UZS)",
+      "First Order",
+      "Last Order",
+    ],
+  ];
+  for (const c of customers) {
+    rows.push([
+      c.name ?? "",
+      c.displayPhone ?? "",
+      c.city ?? "",
+      (c.tags ?? []).join(", "),
+      c.note ?? "",
+      c.orderCount ?? 0,
+      c.totalSpent ?? 0,
+      c.avgTicket ?? 0,
+      c.firstOrderAt ? new Date(c.firstOrderAt).toISOString().slice(0, 10) : "",
+      c.lastOrderAt ? new Date(c.lastOrderAt).toISOString().slice(0, 10) : "",
+    ]);
+  }
+  return toCSV(rows);
+}
+
+export function parseCustomersFile(text: string, filename: string): ImportCustomer[] {
+  const jsonRecords = tryParseJSONRecords(text, filename);
+  if (jsonRecords) return jsonRecords.map(normalizeImportCustomer).filter((c) => c.phone);
+
+  const rows = parseCSV(text);
+  if (rows.length < 2) return [];
+  const read = rowReader(rows[0]);
+  return rows
+    .slice(1)
+    .filter((r) => r.some((cell) => cell.trim() !== ""))
+    .map((r) =>
+      normalizeImportCustomer({
+        phone: read(r, ["Phone", "Telefon", "Телефон", "phone"]),
+        name: read(r, ["Name", "Ism", "Имя", "Mijoz"]),
+        city: read(r, ["City", "Shahar", "Город"]),
+        tags: read(r, ["Tags", "Teglar", "Теги"]),
+        note: read(r, ["Note", "Izoh", "Заметка", "Примечание"]),
+      })
+    )
+    .filter((c) => c.phone); // drop rows without a usable phone
+}
+
+export function detectCustomerColumns(items: ImportCustomer[]): ColumnOption[] {
+  return CUSTOMER_FIELDS.map((f) => ({
+    key: f.key,
+    label: f.label,
+    count: items.filter((it) => it[f.key] !== undefined).length,
+  }));
+}
+
+export function buildCustomerWrite(
+  rec: ImportCustomer,
+  enabled: Set<string>
+): Partial<Record<CustomerFieldKey, unknown>> {
+  const data: Partial<Record<CustomerFieldKey, unknown>> = {};
+  for (const { key } of CUSTOMER_FIELDS) {
+    if (!enabled.has(key)) continue;
+    const v = rec[key];
+    if (v !== undefined) data[key] = v;
+  }
+  return data;
+}
+
+export function planCustomerImport(
+  items: ImportCustomer[],
+  existingPhones: Set<string>,
+  enabled: Set<string>
+): ImportPlan {
+  let create = 0;
+  let update = 0;
+  let skip = 0;
+  for (const rec of items) {
+    if (!rec.phone || !Object.keys(buildCustomerWrite(rec, enabled)).length) {
+      skip++;
+    } else if (existingPhones.has(rec.phone)) {
+      update++;
+    } else {
+      create++;
     }
   }
   return { create, update, skip };

@@ -49,3 +49,21 @@ export interface  userT {
   time: Timestamp;
   date: string;
 }
+
+// Derived customer (computed from orders, keyed by normalized phone; enriched
+// by the optional `customers` collection). Never stored as-is.
+export interface CustomerT {
+  phone: string;        // normalized key, e.g. 998901234567 ("no-phone" bucket otherwise)
+  displayPhone: string; // pretty +998 .. (or "Telefonsiz")
+  name: string;
+  orderCount: number;
+  totalSpent: number;
+  totalItems: number;
+  avgTicket: number;
+  firstOrderAt: number | null; // ms epoch
+  lastOrderAt: number | null;  // ms epoch
+  orders: Order[];
+  tags: string[];
+  note: string;
+  city: string;
+}
