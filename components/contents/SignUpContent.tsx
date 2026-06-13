@@ -7,6 +7,7 @@ import { Timestamp, doc, setDoc } from "firebase/firestore";
 import { auth, fireDB } from "../../firebase/FirebaseConfig";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { useRouter } from 'next/navigation';
+import GoogleAuthButton from "./GoogleAuthButton";
 
 type role = "admin" | "user"
 
@@ -145,7 +146,7 @@ const SignUpContent = () => {
                     />
                 </div>
                 {/* Signup Button  */}
-                <div className="mb-5">
+                <div className="mb-3">
                     <button
                         type='button'
                         onClick={userSignupFunction}
@@ -153,6 +154,14 @@ const SignUpContent = () => {
                     >
                         Sign up
                     </button>
+                </div>
+                <div className="flex items-center gap-3 mb-4">
+                    <span className="h-px bg-pink-200 flex-1" />
+                    <span className="text-xs text-pink-300">yoki</span>
+                    <span className="h-px bg-pink-200 flex-1" />
+                </div>
+                <div className="mb-5">
+                    <GoogleAuthButton disabled={loading} />
                 </div>
                 <div>
                     <h2 className='text-black'>Have an account <Link className=' text-pink-500 font-bold' href={'/login'}>Login</Link></h2>
