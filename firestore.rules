@@ -1,0 +1,79 @@
+rules_version = '2';
+
+// megahome.uz Firestore security rules.
+//
+// The real security boundary for the admin panel. The client-side AdminGuard is
+// only UX — without these rules anyone could read customer phone numbers, delete
+// products/orders, or self-promote to admin by writing their own user doc.
+//
+// Role is read from the caller's UID-KEYED user doc: user/<uid>. The app keys
+// new user docs by uid (signup + self-heal on login); rules CANNOT run the
+// where("uid","==") query the app used before, which is why that migration is a
+// hard prerequisite for these rules. Deploy order:
+//   1) ship the app  2) the owner logs in once (self-heals user/<uid>, role:admin)
+//   3) THEN deploy these rules.  See firebase.json / the PR notes.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function userDoc() {
+      return get(/databases/$(database)/documents/user/$(request.auth.uid)).data;
+    }
+    function hasProfile() {
+      return isSignedIn() && exists(/databases/$(database)/documents/user/$(request.auth.uid));
+    }
+    // .get(key, default) so a missing 'role'/'disabled' field can't throw
+    // (a thrown rule denies) — the admin doc may not carry a 'disabled' field.
+    function isActiveAdmin() {
+      return hasProfile()
+        && userDoc().get('role', '') == 'admin'
+        && userDoc().get('disabled', false) != true;
+    }
+    function isValidNewOrder() {
+      let d = request.resource.data;
+      return d.clientPhone is string
+        && d.basketItems is list
+        && d.totalPrice is number
+        && (!('status' in d) || d.status == 'yangi');
+    }
+
+    // Products & categories — public storefront read; only admins write.
+    match /products/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+    match /categories/{id} {
+      allow read: if true;
+      allow write: if isActiveAdmin();
+    }
+
+    // Orders — anyone may place an order (anonymous checkout), but only admins
+    // can read (orders hold customer PII), or update/delete (status changes).
+    match /orders/{id} {
+      allow read: if isActiveAdmin();
+      allow create: if isValidNewOrder();
+      allow update, delete: if isActiveAdmin();
+    }
+
+    // Staff accounts — read your own doc or any if admin. A signed-in user may
+    // create ONLY their own doc and ONLY as role 'user' (blocks self-promotion
+    // at signup / via the SDK); only admins change roles or disable accounts.
+    match /user/{uid} {
+      allow read: if isSignedIn() && (request.auth.uid == uid || isActiveAdmin());
+      allow create: if isSignedIn()
+                    && request.auth.uid == uid
+                    && request.resource.data.role == 'user';
+      allow update, delete: if isActiveAdmin();
+    }
+
+    // Customers CRM (future) — internal PII (phones, notes); admin-only.
+    match /customers/{phone} {
+      allow read, write: if isActiveAdmin();
+    }
+
+    // Anything not matched above is denied by default.
+  }
+}

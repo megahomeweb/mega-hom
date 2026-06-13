@@ -5,6 +5,7 @@ import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 import React, { Dispatch, SetStateAction, useState } from "react";
 import toast from "react-hot-toast";
+import { FormattedPrice } from "@/utils";
 import Loader from "./Loader";
 
 interface props {
@@ -62,20 +63,36 @@ const SubmitModal = ({ setOpen }: props) => {
     };
       
     try {
-      setLoading(true)
+      setLoading(true);
+      // Critical: persist the order. addOrder throws on failure, so a real
+      // failure lands in catch instead of silently "succeeding".
       await addOrder(submitData);
-      await fetch('/api/sendOrderEmail', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(submitData),
-      });
+
+      // Best-effort owner notification — must never block or fail checkout.
+      try {
+        await fetch("/api/notify-order", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true,
+          body: JSON.stringify({
+            customer: `${firstName} ${lastName}`.trim(),
+            phone: phoneNumber,
+            total: FormattedPrice(totalPrice),
+            items: cartProducts.map((p) => ({ title: p.title, quantity: p.quantity })),
+          }),
+        });
+      } catch (notifyErr) {
+        console.warn("Order notification skipped:", notifyErr);
+      }
+
       clearBasket();
-      setLoading(false)
-      toast.success("Add order successfully");
+      setLoading(false);
+      toast.success("Buyurtma yuborildi");
       navigate.push("/");
     } catch (error) {
-      console.log(error);
-      toast.error("Add order failed");
+      console.error(error);
+      setLoading(false);
+      toast.error("Buyurtmani yuborib boʼlmadi");
     }
   };
 

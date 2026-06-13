@@ -1,4 +1,5 @@
 import { Timestamp } from "firebase/firestore";
+import { OrderStatus } from "./orderStatus";
 
 export interface ProductT {
   id: string;
@@ -36,6 +37,7 @@ export interface Order {
   basketItems: ProductT[];
   totalPrice: number;
   totalQuantity: number;
+  status?: OrderStatus;
 }
 
 export interface  userT {

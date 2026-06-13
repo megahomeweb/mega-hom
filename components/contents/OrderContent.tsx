@@ -6,21 +6,48 @@ import {
   DisclosurePanel,
   Transition,
 } from "@headlessui/react";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
 import { IoIosArrowDown } from "react-icons/io";
 import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
 import ImportExport from "../admin/ImportExport";
+import ContactButtons from "../admin/ContactButtons";
 import NoPhoto from "../NoPhoto";
 import { ordersToCSV } from "@/utils/importExport";
+import { ORDER_STATUSES, OrderStatus, orderStatusMeta } from "@/lib/orderStatus";
+import { formatPhone } from "@/utils/phone";
 
 const OrderContent = () => {
-  const { orders, fetchAllOrders, loadingOrders } = useOrderStore();
+  const { orders, fetchAllOrders, loadingOrders, updateOrderStatus } = useOrderStore();
+  const [tab, setTab] = useState<"all" | OrderStatus>("all");
 
   useEffect(() => {
     fetchAllOrders()
   }, [fetchAllOrders]);
+
+  // Counts per status (missing/unknown status counts as "yangi") drive the tabs.
+  const counts = useMemo(() => {
+    const c: Record<string, number> = { all: orders.length };
+    for (const s of ORDER_STATUSES) c[s.key] = 0;
+    for (const o of orders) c[orderStatusMeta(o.status).key]++;
+    return c;
+  }, [orders]);
+
+  const visibleOrders = useMemo(
+    () => (tab === "all" ? orders : orders.filter((o) => orderStatusMeta(o.status).key === tab)),
+    [orders, tab]
+  );
+
+  const handleStatus = async (id: string, status: OrderStatus) => {
+    try {
+      await updateOrderStatus(id, status);
+      toast.success("Holat yangilandi");
+    } catch {
+      toast.error("Holatni yangilab boʼlmadi");
+    }
+  };
 
   return (
     <>
@@ -31,32 +58,86 @@ const OrderContent = () => {
         )}
       </div>
       <div className="w-full h-0.5 bg-gray-300 my-2 rounded-full"></div>
-      <div className="mt-10 space-y-4 lg:px-4">
+
+      {/* Status filter tabs with live counts */}
+      {orders.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-4">
+          <button
+            type="button"
+            onClick={() => setTab("all")}
+            className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+              tab === "all"
+                ? "bg-pink-500 text-white border-pink-500"
+                : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+            }`}
+          >
+            Hammasi <span className="opacity-70">{counts.all}</span>
+          </button>
+          {ORDER_STATUSES.map((s) => (
+            <button
+              key={s.key}
+              type="button"
+              onClick={() => setTab(s.key)}
+              className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
+                tab === s.key
+                  ? "bg-pink-500 text-white border-pink-500"
+                  : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+              }`}
+            >
+              {s.label} <span className="opacity-70">{counts[s.key]}</span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-6 space-y-4 lg:px-4">
         {loadingOrders && (
           <div className="flex items-center justify-center">
             <Loader />
           </div>
         )}
 
-        {orders.length > 0 && orders.map((order) => (
+        {!loadingOrders && orders.length > 0 && visibleOrders.length === 0 && (
+          <p className="text-center text-slate-400 py-10">Bu holatda buyurtma yoʼq.</p>
+        )}
+
+        {visibleOrders.length > 0 && visibleOrders.map((order) => (
           <div key={order.id}>
             <Disclosure>
               {({ open }) => (
                 <div>
-                  <DisclosureButton className="flex items-center justify-between w-full px-4 py-2 text-left bg-white shadow-lg rounded-lg border border-gray-200">
-                    <div className="flex items-end gap-4">
-                      <div>
-                        <h3 className="font-medium capitalize">{order.clientName} {order.clientLastName}</h3>
-                        <p className="text-sm text-gray-500">{order.clientPhone}</p>
+                  <div className="flex items-center justify-between gap-3 w-full px-4 py-2 bg-white shadow-lg rounded-lg border border-gray-200">
+                    <DisclosureButton className="flex items-center gap-4 text-left flex-1 min-w-0">
+                      <div className="min-w-0">
+                        <h3 className="font-medium capitalize truncate">{order.clientName} {order.clientLastName}</h3>
+                        <p className="text-sm text-gray-500">{formatPhone(order.clientPhone)}</p>
                       </div>
-                      <p className="text-sm text-gray-500">Sana Vaqt: {new Date(order.date.seconds * 1000).toLocaleString()}</p> 
+                      <p className="text-sm text-gray-500 hidden md:block whitespace-nowrap">
+                        {new Date(order.date.seconds * 1000).toLocaleString()}
+                      </p>
+                      <IoIosArrowDown
+                        className={`text-xl transition-all duration-300 ml-auto shrink-0 ${
+                          open ? "" : "-rotate-180"
+                        }`}
+                      />
+                    </DisclosureButton>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <select
+                        value={orderStatusMeta(order.status).key}
+                        onChange={(e) => handleStatus(order.id, e.target.value as OrderStatus)}
+                        onClick={(e) => e.stopPropagation()}
+                        title="Buyurtma holati"
+                        className={`text-xs font-semibold rounded-full border px-2.5 py-1 outline-none cursor-pointer ${orderStatusMeta(order.status).badge}`}
+                      >
+                        {ORDER_STATUSES.map((s) => (
+                          <option key={s.key} value={s.key} className="bg-white text-slate-700">
+                            {s.label}
+                          </option>
+                        ))}
+                      </select>
+                      <ContactButtons phone={order.clientPhone} />
                     </div>
-                    <IoIosArrowDown
-                      className={`text-xl transition-all duration-300 ${
-                        open ? "" : "-rotate-180"
-                      }`}
-                    />
-                  </DisclosureButton>
+                  </div>
                   <Transition
                     show={open}
                     enter="transition-all duration-300 ease-in-out"

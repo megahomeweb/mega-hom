@@ -15,10 +15,33 @@ import ProductRow from "./ProductRow";
 import ProductImportExport from "./ProductImportExport";
 import ProductQRCode from "./ProductQRCode";
 import NoPhoto from "@/components/NoPhoto";
+import { productUrl } from "@/lib/site";
+import { FiLink } from "react-icons/fi";
 
 const ProductDetail = () => {
     const { products, loading, fetchProducts, deleteProduct } = useProductStore();
     const [qrProduct, setQrProduct] = useState<ProductT | null>(null);
+    const [search, setSearch] = useState("");
+
+    // Live in-memory filter by title or category — the precondition for almost
+    // every product action at a few hundred SKUs.
+    const visible = products.filter((p) => {
+      const q = search.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        (p.title ?? "").toLowerCase().includes(q) ||
+        (p.category ?? "").toLowerCase().includes(q)
+      );
+    });
+
+    const copyLink = async (id: string) => {
+      try {
+        await navigator.clipboard.writeText(productUrl(id));
+        toast.success("Havola nusxalandi");
+      } catch {
+        toast.error("Nusxalab boʼlmadi");
+      }
+    };
 
     useEffect(() => {
       fetchProducts();
@@ -60,6 +83,21 @@ const ProductDetail = () => {
           </Link>
         </div>
       </div>
+
+      {/* Search  */}
+      <div className="mb-4">
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Mahsulot izlash (nomi yoki kategoriya)..."
+          className="w-full sm:max-w-md px-3 py-2 border border-pink-200 rounded-lg outline-none focus:ring-1 focus:ring-pink-300 text-slate-700 placeholder-slate-400"
+        />
+        {search && (
+          <p className="text-xs text-slate-400 mt-1">{visible.length} ta mahsulot topildi</p>
+        )}
+      </div>
+
       {/* Loading  */}
       <div className="flex justify-center relative top-20">
         {loading && <Loader />}
@@ -95,7 +133,7 @@ const ProductDetail = () => {
                 isBest
               </th>
               <th scope="col" className="h-12 px-4 lg:px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100">
-                QR
+                QR / Havola
               </th>
               <th scope="col" className="h-12 px-4 lg:px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100">
                 Action
@@ -104,10 +142,10 @@ const ProductDetail = () => {
                 Action
               </th>
             </tr>
-            {products.map((item, index) => {
+            {visible.map((item, index) => {
               const { id, title, price, category, date, productImageUrl } = item;
               return (
-                <tr key={index} className="text-pink-300">
+                <tr key={id} className="text-pink-300">
                   <td className="h-12 px-4 lg:px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 ">
                     {index + 1}.
                   </td>
@@ -134,9 +172,14 @@ const ProductDetail = () => {
                   </td>
                   <ProductRow item={item} />
                   <td className="h-12 px-4 lg:px-6 transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500">
-                    <button onClick={() => setQrProduct(item)} title="QR kod">
-                      <BsQrCode className="text-slate-600 text-xl mx-auto cursor-pointer hover:text-pink-500" />
-                    </button>
+                    <div className="flex items-center justify-center gap-3">
+                      <button onClick={() => setQrProduct(item)} title="QR kod">
+                        <BsQrCode className="text-slate-600 text-xl cursor-pointer hover:text-pink-500" />
+                      </button>
+                      <button onClick={() => copyLink(id)} title="Havolani nusxalash">
+                        <FiLink className="text-slate-600 text-xl cursor-pointer hover:text-pink-500" />
+                      </button>
+                    </div>
                   </td>
                   <td className="h-12 px-4 lg:px-6 transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500">
                     <Link href={`/admin-dashboard/update-product/${id}`}><CiEdit className="text-green-500 text-2xl mx-auto cursor-pointer" /></Link>

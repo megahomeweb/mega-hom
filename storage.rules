@@ -1,0 +1,18 @@
+rules_version = '2';
+
+// megahome.uz Cloud Storage rules.
+// Product images are shown on the public storefront (public read) but may only
+// be uploaded/changed/deleted by an admin. Admin is verified against the same
+// UID-keyed user doc the Firestore rules use, so the same migration applies.
+// Everything outside products/ is denied by default.
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && firestore.get(/databases/(default)/documents/user/$(request.auth.uid)).data.get('role', '') == 'admin'
+        && firestore.get(/databases/(default)/documents/user/$(request.auth.uid)).data.get('disabled', false) != true;
+    }
+  }
+}

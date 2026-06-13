@@ -4,7 +4,7 @@ import toast from "react-hot-toast";
 import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, fireDB } from "../../firebase/FirebaseConfig";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import Loader from "../Loader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -61,11 +61,30 @@ const LoginContent = () => {
 
       let stored: StoredUser;
       try {
-        const snap = await getDocs(
-          query(collection(fireDB, "user"), where("uid", "==", cred.user.uid))
-        );
+        // Prefer the uid-keyed user doc; fall back to the legacy auto-id doc
+        // (matched by the uid field) and self-heal it to a uid-keyed doc so
+        // future reads and Security Rules resolve the role directly.
+        const directRef = doc(fireDB, "user", cred.user.uid);
+        const directSnap = await getDoc(directRef);
+        let data: Partial<StoredUser> | null = directSnap.exists()
+          ? (directSnap.data() as Partial<StoredUser>)
+          : null;
 
-        if (snap.empty) {
+        if (!data) {
+          const snap = await getDocs(
+            query(collection(fireDB, "user"), where("uid", "==", cred.user.uid))
+          );
+          if (!snap.empty) {
+            data = snap.docs[0].data() as Partial<StoredUser>;
+            try {
+              await setDoc(directRef, data, { merge: true });
+            } catch (healErr) {
+              console.warn("Login self-heal skipped:", healErr);
+            }
+          }
+        }
+
+        if (!data) {
           // Auth account exists but no Firestore profile — most common cause
           // of "correct password but error". Fall back gracefully.
           stored = {
@@ -78,7 +97,6 @@ const LoginContent = () => {
             "Hisob topildi, lekin Firestore'da 'user' hujjati yo'q. Admin uchun rol qo'lda qo'shilishi kerak."
           );
         } else {
-          const data = snap.docs[0].data() as Partial<StoredUser>;
           stored = {
             name: data.name || cred.user.email || "User",
             uid: data.uid || cred.user.uid,
