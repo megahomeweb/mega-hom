@@ -7,8 +7,17 @@ import { ProductT } from "@/lib/types";
 import { productUrl } from "@/lib/site";
 
 // Mijoz telefonida skaner qilganda toʼgʼridan-toʼgʼri megahome.uz dagi mahsulot
-// sahifasiga oʼtadi. 600px PNG — naklейka/printer uchun yetarli aniqlik.
-const QR_PIXELS = 600;
+// sahifasiga oʼtadi. Chop etish (sticker) uchun sifatli sozlamalar:
+//  - 800px PNG → ~6-7 sm stikerда ham toza (300 DPI)
+//  - errorCorrectionLevel "H" (30%) → stiker yirtilsa/iflos boʼlsa ham oʼqiydi
+//  - margin 4 → QR standartidagi "quiet zone", ishonchli skaner uchun shart
+const QR_PIXELS = 800;
+const QR_OPTS = {
+  width: QR_PIXELS,
+  margin: 4,
+  errorCorrectionLevel: "H" as const,
+  color: { dark: "#1e293b", light: "#ffffff" },
+};
 
 interface ProductQRCodeProps {
   product: ProductT;
@@ -20,12 +29,7 @@ const ProductQRCode = ({ product, onClose }: ProductQRCodeProps) => {
   const url = productUrl(product.id);
 
   useEffect(() => {
-    QRCode.toDataURL(url, {
-      width: QR_PIXELS,
-      margin: 2,
-      errorCorrectionLevel: "M",
-      color: { dark: "#1e293b", light: "#ffffff" },
-    })
+    QRCode.toDataURL(url, QR_OPTS)
       .then(setDataUrl)
       .catch((err) => {
         console.error("QR generation failed:", err);
