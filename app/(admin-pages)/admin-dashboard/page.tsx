@@ -62,6 +62,9 @@ const Admin = () => {
             Admin Dashboard
           </h1>
           <div className="flex items-center gap-4">
+            <Link className="font-medium text-pink-500 hover:text-pink-700" href={'/admin-dashboard/customers'}>
+              Mijozlar
+            </Link>
             <Link className="font-medium text-pink-500 hover:text-pink-700" href={'/admin-dashboard/orders'}>
               Orders
             </Link>
