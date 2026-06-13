@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { collection, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, onSnapshot, query, updateDoc } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { userT } from "@/lib/types";
 
@@ -14,6 +14,7 @@ interface StaffStoreState {
   fetchStaff: () => void;
   setRole: (id: string, role: string) => Promise<void>;
   setDisabled: (id: string, disabled: boolean) => Promise<void>;
+  removeStaff: (id: string) => Promise<void>;
 }
 
 const useStaffStore = create<StaffStoreState>((set) => {
@@ -45,6 +46,10 @@ const useStaffStore = create<StaffStoreState>((set) => {
     },
     setDisabled: async (id, disabled) => {
       await updateDoc(doc(fireDB, "user", id), { disabled });
+    },
+    removeStaff: async (id) => {
+      // Rules permit this only for admin+ on a non-self, lower-or-equal-rank doc.
+      await deleteDoc(doc(fireDB, "user", id));
     },
   };
 });

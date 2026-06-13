@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { GoArrowLeft } from "react-icons/go";
+import { FiTrash2 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import Loader from "../Loader";
 import useStaffStore, { StaffUser } from "@/zustand/useStaffStore";
@@ -12,7 +13,7 @@ const th = "h-12 px-4 lg:px-6 text-md font-bold border-l first:border-l-0 border
 const td = "h-12 px-4 lg:px-6 text-md border-t border-l first:border-l-0 border-pink-100 text-slate-500";
 
 const StaffContent = () => {
-  const { staff, loading, fetchStaff, setRole, setDisabled } = useStaffStore();
+  const { staff, loading, fetchStaff, setRole, setDisabled, removeStaff } = useStaffStore();
   const me = useRole();
   const [search, setSearch] = useState("");
 
@@ -43,6 +44,17 @@ const StaffContent = () => {
       toast.success(`${s.name || s.email}: ${ROLE_LABELS[role]}`);
     } catch {
       toast.error("Rolni oʼzgartirib boʼlmadi (ruxsat yetarli emas)");
+    }
+  };
+  const removeOne = async (s: StaffUser) => {
+    if (typeof window !== "undefined" && !window.confirm(`${s.name || s.email} hisobini butunlay oʼchirilsinmi?`)) {
+      return;
+    }
+    try {
+      await removeStaff(s.id);
+      toast.success("Xodim oʼchirildi");
+    } catch {
+      toast.error("Oʼchirib boʼlmadi (ruxsat yetarli emas)");
     }
   };
   const toggleDisabled = async (s: StaffUser) => {
@@ -108,6 +120,7 @@ const StaffContent = () => {
                 <th className={th}>Rol</th>
                 <th className={th}>Holat</th>
                 <th className={th}>Qoʼshilgan</th>
+                <th className={th}></th>
               </tr>
               {visible.map((s, i) => {
                 const manage = canManage(s);
@@ -155,6 +168,17 @@ const StaffContent = () => {
                       )}
                     </td>
                     <td className={td}>{typeof s.date === "string" ? s.date : "—"}</td>
+                    <td className={td}>
+                      {manage && (
+                        <button
+                          onClick={() => removeOne(s)}
+                          title="Xodimni oʼchirish"
+                          className="text-red-500 hover:text-red-600"
+                        >
+                          <FiTrash2 className="text-lg" />
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 );
               })}
