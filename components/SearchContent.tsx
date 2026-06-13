@@ -19,7 +19,7 @@ const SearchContent = () => {
     if(query.length >= 1){
       setFilteredCommands(
         products.filter((command) =>
-          command.title.toLowerCase().includes(query.toLowerCase())
+          command.title.toLowerCase().includes(query.toLowerCase()) && !command.isHidden
         )
       );
     }else{

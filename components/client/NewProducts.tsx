@@ -20,7 +20,7 @@ const NewProducts = () => {
     fetchProducts()
   }, [fetchProducts]);
 
-  const fresh = products.filter((p) => p.isNew);
+  const fresh = products.filter((p) => p.isNew && !p.isHidden);
 
   // Only show the loader while genuinely loading; hide the whole section when
   // nothing is flagged "New".
