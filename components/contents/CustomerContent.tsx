@@ -5,7 +5,9 @@ import { GoArrowLeft } from "react-icons/go";
 import Loader from "../Loader";
 import ContactButtons from "../admin/ContactButtons";
 import CustomerImportExport from "../admin/CustomerImportExport";
+import { useRole } from "../admin/RoleContext";
 import useCustomerStore from "@/zustand/useCustomerStore";
+import { isManagerPlus } from "@/lib/roles";
 import { FormattedPrice } from "@/utils";
 
 type Segment = "all" | "repeat" | "new" | "nophone";
@@ -20,6 +22,7 @@ const fmtDate = (ms: number | null) => (ms ? new Date(ms).toLocaleDateString() :
 
 const CustomerContent = () => {
   const { customers, loading, fetchCustomers } = useCustomerStore();
+  const me = useRole();
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
   const [sort, setSort] = useState<SortKey>("recent");
@@ -73,6 +76,14 @@ const CustomerContent = () => {
       {label} <span className="opacity-70">{count}</span>
     </button>
   );
+
+  if (!isManagerPlus(me?.role)) {
+    return (
+      <div className="max-w-3xl mx-auto px-4 py-16 text-center text-slate-500">
+        Bu sahifa faqat menejer va administratorlar uchun.
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
