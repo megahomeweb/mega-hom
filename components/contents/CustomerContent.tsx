@@ -163,7 +163,7 @@ const CustomerContent = () => {
                 <th className={th}>Jami xarid</th>
                 <th className={th}>Oʼrtacha chek</th>
                 <th className={th}>Oxirgi buyurtma</th>
-                <th className={th}>Teglar</th>
+                <th className={th}>Belgilar</th>
                 <th className={th}></th>
               </tr>
               {visible.map((c, i) => (

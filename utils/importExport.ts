@@ -513,7 +513,7 @@ export interface ImportCustomer {
 export const CUSTOMER_FIELDS = [
   { key: "name", label: "Ism" },
   { key: "city", label: "Shahar" },
-  { key: "tags", label: "Teglar" },
+  { key: "tags", label: "Belgilar" },
   { key: "note", label: "Izoh" },
 ] as const;
 
@@ -583,7 +583,7 @@ export function parseCustomersFile(text: string, filename: string): ImportCustom
         phone: read(r, ["Phone", "Telefon", "Телефон", "phone"]),
         name: read(r, ["Name", "Ism", "Имя", "Mijoz"]),
         city: read(r, ["City", "Shahar", "Город"]),
-        tags: read(r, ["Tags", "Teglar", "Теги"]),
+        tags: read(r, ["Tags", "Belgilar", "Teglar", "Теги"]),
         note: read(r, ["Note", "Izoh", "Заметка", "Примечание"]),
       })
     )

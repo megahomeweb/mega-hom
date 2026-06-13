@@ -63,16 +63,25 @@ const SignUpContent = () => {
             // cannot run the where("uid","==") query the app used before.
             await setDoc(doc(fireDB, "user", users.user.uid), user);
 
+            // createUserWithEmailAndPassword already signed them in — persist the
+            // session for the header and land them home (no redundant re-login).
+            if (typeof window !== "undefined") {
+                localStorage.setItem(
+                    "users",
+                    JSON.stringify({ name: user.name, uid: user.uid, email: user.email, role: user.role })
+                );
+            }
+
             setUserSignup({
                 name: "",
                 email: "",
                 password: ""
             })
 
-            toast.success("Signup Successfully");
+            toast.success("Roʼyxatdan oʼtdingiz");
 
             setLoading(false);
-            navigate.push('/login')
+            navigate.push('/')
         } catch (error: any) {
             toast.error(error.message);
             console.log(error);

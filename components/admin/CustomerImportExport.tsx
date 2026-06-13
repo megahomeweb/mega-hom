@@ -67,7 +67,7 @@ const CustomerImportExport = () => {
         planCustomerImport(items, new Set(customers.map((c) => c.phone)), enabled)
       }
       commitImport={commitImport}
-      importHint="Telefon raqami boʼyicha mijozlar qoʼshiladi/yangilanadi (Ism, Shahar, Teglar, Izoh). Teglarni vergul bilan ajrating. Buyurtma soni/summasi import qilinmaydi — ular buyurtmalardan hisoblanadi."
+      importHint="Telefon raqami boʼyicha mijozlar qoʼshiladi/yangilanadi (Ism, Shahar, Belgilar, Izoh). Belgilarni vergul bilan ajrating. Buyurtma soni/summasi import qilinmaydi — ular buyurtmalardan hisoblanadi."
     />
   );
 };

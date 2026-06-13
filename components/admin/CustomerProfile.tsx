@@ -116,7 +116,7 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
 
       {/* Tags + note */}
       <div className="rounded-xl border border-slate-200 p-5 mb-6">
-        <h2 className="font-semibold text-slate-700 mb-3">Teglar va izoh</h2>
+        <h2 className="font-semibold text-slate-700 mb-3">Belgilar va izoh</h2>
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {customer.tags.map((t) => (
             <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 text-sm rounded-full bg-pink-100 text-pink-600">
@@ -135,7 +135,7 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
                 addTag();
               }
             }}
-            placeholder="Teg qoʼshish..."
+            placeholder="Belgi qoʼshish..."
             className="px-2.5 py-1 text-sm border border-pink-200 rounded-full outline-none focus:ring-1 focus:ring-pink-300"
           />
           <button onClick={addTag} className="text-sm text-pink-500 hover:underline">
