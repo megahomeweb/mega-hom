@@ -53,11 +53,20 @@ service cloud.firestore {
         && d.status == 'sotildi';
     }
 
-    // Products & categories — public storefront read; manager+ writes.
+    // Products — public storefront read; manager+ creates/edits/deletes.
+    // A POS cashier (staff+, rank 1) may update ONLY the quantity field, and
+    // only downward — so a sale can decrement stock without letting a cashier
+    // edit prices/details or inflate stock.
     match /products/{id} {
       allow read: if true;
-      allow write: if callerRank() >= 2;
+      allow create, delete: if callerRank() >= 2;
+      allow update: if callerRank() >= 2
+        || (callerRank() >= 1
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['quantity'])
+            && request.resource.data.quantity is number
+            && request.resource.data.quantity <= resource.data.get('quantity', 0));
     }
+    // Categories — public read; manager+ writes.
     match /categories/{id} {
       allow read: if true;
       allow write: if callerRank() >= 2;

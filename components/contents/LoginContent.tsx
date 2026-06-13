@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, fireDB } from "../../firebase/FirebaseConfig";
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { isStaffPlus } from "@/lib/roles";
+import GoogleAuthButton from "./GoogleAuthButton";
 import Loader from "../Loader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -182,6 +183,13 @@ const LoginContent = () => {
         >
           {loading ? "Kirilmoqda..." : "Kirish"}
         </button>
+
+        <div className="flex items-center gap-3 my-4">
+          <span className="h-px bg-gray-200 flex-1" />
+          <span className="text-xs text-gray-400">yoki</span>
+          <span className="h-px bg-gray-200 flex-1" />
+        </div>
+        <GoogleAuthButton disabled={loading} />
 
         <p className="text-sm text-gray-600 mt-5 text-center">
           Hisobingiz yo&apos;qmi?{" "}

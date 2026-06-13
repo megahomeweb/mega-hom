@@ -1,5 +1,5 @@
 import {create} from "zustand";
-import { collection, deleteDoc, doc, addDoc, query, onSnapshot, serverTimestamp, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, addDoc, increment, query, onSnapshot, serverTimestamp, updateDoc, writeBatch } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { ImageT, Order } from "@/lib/types";
 import { DEFAULT_ORDER_STATUS, OrderStatus } from "@/lib/orderStatus";
@@ -106,15 +106,17 @@ export const useOrderStore = create<StoreState>((set) => ({
     }
   },
 
-  // Record a completed in-store (POS) sale. channel:"store" + status:"sotildi"
-  // are pinned here (and validated by the orders create rule).
+  // Record a completed in-store (POS) sale AND decrement stock, atomically.
+  // channel:"store" + status:"sotildi" are pinned (validated by the create
+  // rule); each line decrements products.quantity (staff may only lower it).
   addStoreSale: async (sale: StoreSaleInput) => {
-    await addDoc(collection(fireDB, "orders"), {
-      ...sale,
-      channel: "store",
-      status: "sotildi",
-      date: new Date(),
-    });
+    const batch = writeBatch(fireDB);
+    const orderRef = doc(collection(fireDB, "orders"));
+    batch.set(orderRef, { ...sale, channel: "store", status: "sotildi", date: new Date() });
+    for (const item of sale.basketItems) {
+      batch.update(doc(fireDB, "products", item.id), { quantity: increment(-item.quantity) });
+    }
+    await batch.commit();
   },
 
   // Remove an order (admin+ only — e.g. spam or a test order).
