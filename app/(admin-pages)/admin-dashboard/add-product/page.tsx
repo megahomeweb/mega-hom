@@ -33,6 +33,9 @@ const AddProductPage = () => {
     description: "",
     isBest: false,
     isNew: false,
+    ikpu: "",
+    vatRate: 12,
+    barcode: "",
     quantity: 0,
     time: Timestamp.now(),
     date: new Date().toLocaleString("en-US", {
@@ -222,6 +225,36 @@ const AddProductPage = () => {
             rows={5}
             className=" w-full px-2 py-1 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none placeholder-pink-300 "
           ></textarea>
+        </div>
+        {/* Fiscal + POS fields (Uzbekistan ChEK) */}
+        <div className="mb-3 space-y-3 border-t border-pink-100 pt-3">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={product.ikpu}
+            onChange={(e) =>
+              setProduct({ ...product, ikpu: e.target.value.replace(/\D/g, "").slice(0, 17) })
+            }
+            placeholder="IKPU / MXIK kodi (17 raqam) — tasnif.soliq.uz"
+            className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
+          />
+          <div className="flex gap-3 w-96">
+            <input
+              type="number"
+              value={product.vatRate}
+              onChange={(e) => setProduct({ ...product, vatRate: Number(e.target.value) })}
+              placeholder="QQS %"
+              title="QQS (VAT) foizi"
+              className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 w-24 rounded-md outline-none placeholder-pink-300"
+            />
+            <input
+              type="text"
+              value={product.barcode}
+              onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
+              placeholder="Shtrix-kod (ixtiyoriy)"
+              className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-pink-300"
+            />
+          </div>
         </div>
         <div className="flex items-start divide-x-2 gap-4 mb-3">
           <div>

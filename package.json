@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@headlessui/react": "^2.2.0",
+    "@types/jsbarcode": "^3.11.4",
     "aos": "^3.0.0-beta.6",
     "firebase": "^11.1.0",
+    "jsbarcode": "^3.12.3",
     "next": "^16.2.4",
     "nodemailer": "^6.9.16",
     "qrcode": "^1.5.4",

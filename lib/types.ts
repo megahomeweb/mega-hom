@@ -13,6 +13,9 @@ export interface ProductT {
   isBest: boolean;
   isNew: boolean
   isHidden?: boolean; // true = kept in admin but hidden from the storefront
+  ikpu?: string;      // IKPU/MXIK 17-digit fiscal code (tasnif.soliq.uz) — required on a valid ChEK
+  vatRate?: number;   // VAT % shown on the fiscal receipt (UZ standard 12; depends on tax regime)
+  barcode?: string;   // scannable barcode value for the POS counter (falls back to the doc id)
   time: Timestamp;
   date: Timestamp;
   storageFileId: string;

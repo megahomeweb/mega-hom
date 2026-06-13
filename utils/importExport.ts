@@ -237,6 +237,9 @@ export interface ImportProduct {
   description?: string;
   isNew?: boolean;
   isBest?: boolean;
+  ikpu?: string;
+  vatRate?: number;
+  barcode?: string;
   images?: ImportImage[];
 }
 
@@ -244,6 +247,9 @@ export interface ImportProduct {
 export const PRODUCT_FIELDS = [
   { key: "title", label: "Nomi" },
   { key: "price", label: "Narx" },
+  { key: "ikpu", label: "IKPU" },
+  { key: "vatRate", label: "QQS %" },
+  { key: "barcode", label: "Shtrix-kod" },
   { key: "category", label: "Kategoriya" },
   { key: "subCategory", label: "Subkategoriya" },
   { key: "description", label: "Tavsif" },
@@ -260,6 +266,9 @@ export type ProductFieldKey = (typeof PRODUCT_FIELDS)[number]["key"];
 export const PRODUCT_CSV_HEADERS = [
   "Title",
   "Price",
+  "IKPU",
+  "VAT %",
+  "Barcode",
   "Category",
   "Subcategory",
   "Description",
@@ -300,6 +309,9 @@ function normalizeProduct(rec: Record<string, unknown>): ImportProduct {
     description: optStr(rec.description),
     isNew: optBool(rec.isNew),
     isBest: optBool(rec.isBest),
+    ikpu: optStr(rec.ikpu),
+    vatRate: optNum(rec.vatRate),
+    barcode: optStr(rec.barcode),
     images: rawImages === undefined ? undefined : toImages(rawImages),
   };
 }
@@ -310,6 +322,9 @@ export function productsToCSV(products: ProductT[]): string {
     rows.push([
       p.title ?? "",
       p.price ?? "",
+      p.ikpu ?? "",
+      p.vatRate ?? "",
+      p.barcode ?? "",
       p.category ?? "",
       p.subCategory ?? "",
       p.description ?? "",
@@ -341,6 +356,9 @@ export function parseProductsFile(text: string, filename: string): ImportProduct
         description: read(r, ["Description", "Tavsif", "Описание", "Body"]),
         isNew: read(r, ["New", "Yangi", "Новый", "Новинка", "isNew"]),
         isBest: read(r, ["Best", "Top", "Хит", "isBest"]),
+        ikpu: read(r, ["IKPU", "MXIK", "IKPU/MXIK", "ИКПУ", "МХИК"]),
+        vatRate: read(r, ["VAT %", "VAT", "QQS", "QQS %", "НДС"]),
+        barcode: read(r, ["Barcode", "Shtrix-kod", "Shtrix kod", "Штрихкод", "Штрих-код"]),
         images: read(r, ["Images", "Image Src", "Rasmlar"]),
       })
     );
