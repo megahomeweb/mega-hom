@@ -1,36 +1,38 @@
 rules_version = '2';
 
-// megahome.uz Firestore security rules.
+// megahome.uz Firestore security rules — the real RBAC boundary.
 //
-// The real security boundary for the admin panel. The client-side AdminGuard is
-// only UX — without these rules anyone could read customer phone numbers, delete
-// products/orders, or self-promote to admin by writing their own user doc.
-//
-// Role is read from the caller's UID-KEYED user doc: user/<uid>. The app keys
-// new user docs by uid (signup + self-heal on login); rules CANNOT run the
-// where("uid","==") query the app used before, which is why that migration is a
-// hard prerequisite for these rules. Deploy order:
-//   1) ship the app  2) the owner logs in once (self-heals user/<uid>, role:admin)
-//   3) THEN deploy these rules.  See firebase.json / the PR notes.
+// Ranks mirror lib/roles.ts EXACTLY:
+//   owner 4 · admin 3 · manager 2 · staff 1 · user 0 (storefront only)
+// Role is read from the caller's UID-KEYED user doc (user/<uid>); a disabled
+// account drops to rank -1. Capability by rank:
+//   read products/categories: public        write: manager+ (2)
+//   orders: read/update(status) staff+ (1)  create: anyone  delete: admin+ (3)
+//   customers (CRM/PII): manager+ (2)
+//   user docs: read own or admin+; manage others admin+ (never self, never a
+//   rank >= your own) so there's no privilege escalation or self-lockout.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function isSignedIn() {
-      return request.auth != null;
-    }
-    function userDoc() {
+    function profile() {
       return get(/databases/$(database)/documents/user/$(request.auth.uid)).data;
     }
     function hasProfile() {
-      return isSignedIn() && exists(/databases/$(database)/documents/user/$(request.auth.uid));
+      return request.auth != null && exists(/databases/$(database)/documents/user/$(request.auth.uid));
     }
-    // .get(key, default) so a missing 'role'/'disabled' field can't throw
-    // (a thrown rule denies) — the admin doc may not carry a 'disabled' field.
-    function isActiveAdmin() {
-      return hasProfile()
-        && userDoc().get('role', '') == 'admin'
-        && userDoc().get('disabled', false) != true;
+    function roleRank(role) {
+      return role == 'owner' ? 4
+           : role == 'admin' ? 3
+           : role == 'manager' ? 2
+           : role == 'staff' ? 1
+           : 0;
+    }
+    // Effective rank of the caller; -1 when no profile or disabled.
+    function callerRank() {
+      return hasProfile() && profile().get('disabled', false) != true
+        ? roleRank(profile().get('role', 'user'))
+        : -1;
     }
     function isValidNewOrder() {
       let d = request.resource.data;
@@ -40,40 +42,46 @@ service cloud.firestore {
         && (!('status' in d) || d.status == 'yangi');
     }
 
-    // Products & categories — public storefront read; only admins write.
+    // Products & categories — public storefront read; manager+ writes.
     match /products/{id} {
       allow read: if true;
-      allow write: if isActiveAdmin();
+      allow write: if callerRank() >= 2;
     }
     match /categories/{id} {
       allow read: if true;
-      allow write: if isActiveAdmin();
+      allow write: if callerRank() >= 2;
     }
 
-    // Orders — anyone may place an order (anonymous checkout), but only admins
-    // can read (orders hold customer PII), or update/delete (status changes).
+    // Orders — anyone places an order; any active staff reads + updates status;
+    // only admin+ deletes.
     match /orders/{id} {
-      allow read: if isActiveAdmin();
+      allow read: if callerRank() >= 1;
       allow create: if isValidNewOrder();
-      allow update, delete: if isActiveAdmin();
+      allow update: if callerRank() >= 1;
+      allow delete: if callerRank() >= 3;
     }
 
-    // Staff accounts — read your own doc or any if admin. A signed-in user may
-    // create ONLY their own doc and ONLY as role 'user' (blocks self-promotion
-    // at signup / via the SDK); only admins change roles or disable accounts.
-    match /user/{uid} {
-      allow read: if isSignedIn() && (request.auth.uid == uid || isActiveAdmin());
-      allow create: if isSignedIn()
-                    && request.auth.uid == uid
-                    && request.resource.data.role == 'user';
-      allow update, delete: if isActiveAdmin();
-    }
-
-    // Customers CRM (future) — internal PII (phones, notes); admin-only.
+    // Customers CRM (PII) — manager+.
     match /customers/{phone} {
-      allow read, write: if isActiveAdmin();
+      allow read, write: if callerRank() >= 2;
     }
 
-    // Anything not matched above is denied by default.
+    // Staff accounts. Self-signup may create ONLY a non-privileged 'user'.
+    // admin+ manages others — never themselves, never at/above their own rank.
+    match /user/{uid} {
+      allow read: if request.auth.uid == uid || callerRank() >= 3;
+      allow create: if (request.auth != null
+                        && request.auth.uid == uid
+                        && request.resource.data.get('role', 'user') == 'user')
+                     || (callerRank() >= 3
+                        && roleRank(request.resource.data.get('role', 'user')) <= callerRank());
+      allow update: if callerRank() >= 3
+                     && request.auth.uid != uid
+                     && roleRank(resource.data.get('role', 'user')) <= callerRank()
+                     && roleRank(request.resource.data.get('role', 'user')) <= callerRank();
+      allow delete: if callerRank() >= 3
+                     && request.auth.uid != uid
+                     && roleRank(resource.data.get('role', 'user')) <= callerRank();
+    }
   }
 }

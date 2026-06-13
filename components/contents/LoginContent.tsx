@@ -5,6 +5,7 @@ import { FirebaseError } from "firebase/app";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, fireDB } from "../../firebase/FirebaseConfig";
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
+import { isStaffPlus } from "@/lib/roles";
 import Loader from "../Loader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -13,7 +14,7 @@ interface StoredUser {
   name: string;
   uid: string;
   email: string;
-  role: "admin" | "user";
+  role: string; // owner | admin | manager | staff | user
   date?: string;
 }
 
@@ -101,7 +102,7 @@ const LoginContent = () => {
             name: data.name || cred.user.email || "User",
             uid: data.uid || cred.user.uid,
             email: data.email || cred.user.email || "",
-            role: data.role === "admin" ? "admin" : "user",
+            role: data.role || "user",
           };
         }
       } catch (firestoreErr) {
@@ -122,7 +123,7 @@ const LoginContent = () => {
       toast.success("Muvaffaqiyatli kirdingiz");
       setForm({ email: "", password: "" });
 
-      router.push(stored.role === "admin" ? "/admin-dashboard" : "/");
+      router.push(isStaffPlus(stored.role) ? "/admin-dashboard" : "/");
     } catch (err) {
       const code =
         err instanceof FirebaseError ? err.code : "auth/unknown-error";
