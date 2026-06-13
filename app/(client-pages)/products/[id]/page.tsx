@@ -36,7 +36,7 @@ const Products = ({ params }: { params: Promise<{ id: string }> }) => {
 
   useEffect(() => {
     let filtered = products.filter(
-      (product) => product.category === category?.name
+      (product) => product.category === category?.name && !product.isHidden
     );
 
     // Apply subcategory filter if needed

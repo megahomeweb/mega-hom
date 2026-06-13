@@ -12,6 +12,7 @@ export interface ProductT {
   quantity: number;
   isBest: boolean;
   isNew: boolean
+  isHidden?: boolean; // true = kept in admin but hidden from the storefront
   time: Timestamp;
   date: Timestamp;
   storageFileId: string;

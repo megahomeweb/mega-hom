@@ -18,7 +18,7 @@ const BestSellers = () => {
     fetchProducts()
   }, [fetchProducts]);
 
-  const best = products.filter((p) => p.isBest);
+  const best = products.filter((p) => p.isBest && !p.isHidden);
 
   // Only show the loader while genuinely loading; hide the whole section when
   // nothing is flagged "Best" (no more empty heading + empty carousel).

@@ -1,7 +1,9 @@
 import { fireDB } from '@/firebase/FirebaseConfig';
 import { ProductT } from '@/lib/types';
-import { collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, setDoc, writeBatch } from 'firebase/firestore';
 import {create} from 'zustand';
+
+const FIRESTORE_BATCH_LIMIT = 400;
 
 interface ProductStore {
   products: ProductT[];
@@ -10,7 +12,8 @@ interface ProductStore {
   fetchProducts: () => void;
   fetchSingleProduct: (id: string) => Promise<void>;
   updateProduct: (id: string, updatedProduct: ProductT) => Promise<void>;
-  // updateProduct: (productId: string, updatedData: Partial<any>) => Promise<void>;
+  patchProduct: (id: string, data: Partial<ProductT>) => Promise<void>;
+  bulkPatch: (ids: string[], data: Partial<ProductT>) => Promise<void>;
   deleteProduct: (productId: string) => Promise<void>;
 }
 
@@ -84,6 +87,28 @@ const useProductStore = create<ProductStore>((set) => ({
     } catch (error) {
       console.error('Error updating product:', error);
       set({ loading: false });
+    }
+  },
+
+  // Patch only specific fields (inline edits, flag/visibility toggles). Writes
+  // ONLY the given fields — no risk of blanking others, no stale full-object.
+  patchProduct: async (id, data) => {
+    try {
+      await setDoc(doc(fireDB, 'products', id), data as Record<string, unknown>, { merge: true });
+    } catch (error) {
+      console.error('Error patching product:', error);
+      throw error;
+    }
+  },
+
+  // Apply the same fields to many products in one batched write.
+  bulkPatch: async (ids, data) => {
+    for (let i = 0; i < ids.length; i += FIRESTORE_BATCH_LIMIT) {
+      const batch = writeBatch(fireDB);
+      for (const id of ids.slice(i, i + FIRESTORE_BATCH_LIMIT)) {
+        batch.set(doc(fireDB, 'products', id), data as Record<string, unknown>, { merge: true });
+      }
+      await batch.commit();
     }
   },
 
