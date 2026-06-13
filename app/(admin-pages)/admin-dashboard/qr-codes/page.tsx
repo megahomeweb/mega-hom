@@ -25,10 +25,12 @@ const QRCodesPage = () => {
     const generate = async () => {
       const entries = await Promise.all(
         products.map(async (p) => {
+          // 400px + quiet-zone margin + "Q" (25%) recovery — bir varaqda 4 tadan
+          // chop etilganda ham toza va ishonchli skaner qilinadi.
           const dataUrl = await QRCode.toDataURL(productUrl(p.id), {
-            width: 240,
-            margin: 1,
-            errorCorrectionLevel: "M",
+            width: 400,
+            margin: 4,
+            errorCorrectionLevel: "Q",
             color: { dark: "#1e293b", light: "#ffffff" },
           });
           return [p.id, dataUrl] as const;
