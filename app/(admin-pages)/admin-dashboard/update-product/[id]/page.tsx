@@ -2,6 +2,9 @@
 import Loader from "@/components/Loader";
 import { fireStorage } from "@/firebase/FirebaseConfig";
 import { CategoryI, ImageT, ProductT } from "@/lib/types";
+import { isManagerPlus } from "@/lib/roles";
+import { useRole } from "@/components/admin/RoleContext";
+import NoAccess from "@/components/admin/NoAccess";
 import useCategoryStore from "@/zustand/useCategoryStore";
 import useProductStore from "@/zustand/useProductStore";
 import { Switch } from "@headlessui/react";
@@ -18,6 +21,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
   const navigate = useRouter();
   const { product, loading, fetchSingleProduct, updateProduct } = useProductStore();
   const { categories, fetchCategories } = useCategoryStore();
+  const me = useRole();
   const [load, setLoad] = useState(false);
   const [projectId, setProjectId] = useState("");
    const [selectedCategory, setSelectedCategory] = useState<CategoryI | null>(null);
@@ -140,6 +144,8 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
       navigate.push('/admin-dashboard');
     }
   };
+
+  if (!isManagerPlus(me?.role)) return <NoAccess min="manager" />;
 
   if(loading){
     return <div className="flex items-center justify-center h-screen"><Loader /></div>

@@ -1,6 +1,9 @@
 "use client"
 import Loader from '@/components/Loader'
 import { CategoryI } from '@/lib/types';
+import { isManagerPlus } from "@/lib/roles";
+import { useRole } from "@/components/admin/RoleContext";
+import NoAccess from "@/components/admin/NoAccess";
 import useCategoryStore from '@/zustand/useCategoryStore';
 import { useRouter } from 'next/navigation';
 import React, { useState } from 'react'
@@ -9,6 +12,7 @@ import toast from 'react-hot-toast';
 
 const AddCategory = () => {
   const { addCategory, loading } = useCategoryStore();
+  const me = useRole();
   const [tagInput, setTagInput] = useState("");
   const navigate = useRouter();
   const [newCategory, setNewCategory] = useState<CategoryI>({
@@ -56,6 +60,8 @@ const AddCategory = () => {
       toast.error("Add product failed");
     }
   };
+
+  if (!isManagerPlus(me?.role)) return <NoAccess min="manager" />;
 
   return (
     <div className="flex justify-center items-center h-screen">

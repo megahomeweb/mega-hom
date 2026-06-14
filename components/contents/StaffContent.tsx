@@ -12,6 +12,18 @@ import { ASSIGNABLE_ROLES, ROLE_LABELS, Role, isAdminPlus, rankOf } from "@/lib/
 const th = "h-12 px-4 lg:px-6 text-md font-bold border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100";
 const td = "h-12 px-4 lg:px-6 text-md border-t border-l first:border-l-0 border-pink-100 text-slate-500";
 
+// Plain-language capability matrix shown to the owner so granting a role is
+// obvious at a glance. Mirrors lib/roles.ts + firestore.rules (Egasi = full,
+// same as Administrator; Ruxsatsiz = no panel access at all).
+const PERMS: { label: string; admin: boolean; manager: boolean; staff: boolean }[] = [
+  { label: "Buyurtmalar — koʼrish va holatini oʼzgartirish", admin: true, manager: true, staff: true },
+  { label: "Kassa (POS) — sotuv qabul qilish", admin: true, manager: true, staff: true },
+  { label: "Mahsulot va kategoriyalar", admin: true, manager: true, staff: false },
+  { label: "Mijozlar (CRM)", admin: true, manager: true, staff: false },
+  { label: "Buyurtmani butunlay oʼchirish", admin: true, manager: false, staff: false },
+  { label: "Xodimlarni boshqarish (rol berish)", admin: true, manager: false, staff: false },
+];
+
 const StaffContent = () => {
   const { staff, loading, fetchStaff, setRole, setDisabled, removeStaff } = useStaffStore();
   const me = useRole();
@@ -85,14 +97,47 @@ const StaffContent = () => {
       </Link>
       <h1 className="text-xl font-bold text-pink-500">Xodimlar</h1>
 
-      <div className="mt-3 mb-5 text-sm text-slate-600 bg-pink-50 border border-pink-100 rounded-lg px-4 py-3">
-        Yangi xodim avval{" "}
-        <Link href="/sign-up" className="text-pink-600 font-semibold underline">
-          /sign-up
-        </Link>{" "}
-        orqali roʼyxatdan oʼtsin — keyin shu yerda unga rol bering. Rollar:{" "}
-        <b>Administrator</b> (toʼliq), <b>Menejer</b> (mahsulot/kategoriya/mijoz/buyurtma),{" "}
-        <b>Xodim</b> (faqat buyurtmalar holati). <b>Ruxsatsiz</b> — panelga kira olmaydi.
+      <div className="mt-3 mb-5 bg-pink-50 border border-pink-100 rounded-lg p-4">
+        <p className="text-sm text-slate-600 mb-3">
+          Yangi xodim avval{" "}
+          <Link href="/sign-up" className="text-pink-600 font-semibold underline">
+            /sign-up
+          </Link>{" "}
+          orqali roʼyxatdan oʼtsin — keyin shu yerda unga rol bering. Har bir rol nimaga ruxsat
+          berishini quyida koʼring:
+        </p>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[480px] text-sm">
+            <thead>
+              <tr className="text-slate-500">
+                <th className="text-left font-semibold py-1.5 pr-3">Ruxsat</th>
+                <th className="font-semibold px-2 w-28">Administrator</th>
+                <th className="font-semibold px-2 w-24">Menejer</th>
+                <th className="font-semibold px-2 w-20">Xodim</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-700">
+              {PERMS.map((p) => (
+                <tr key={p.label} className="border-t border-pink-100/70">
+                  <td className="py-1.5 pr-3">{p.label}</td>
+                  {[p.admin, p.manager, p.staff].map((ok, i) => (
+                    <td key={i} className="text-center">
+                      {ok ? (
+                        <span className="text-green-600 font-bold">✓</span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-slate-400 mt-2">
+          <b>Egasi</b> — toʼliq huquq (administratorlarni ham boshqaradi). <b>Ruxsatsiz</b> — admin
+          panelga umuman kira olmaydi (faqat saytdan xarid qiladi).
+        </p>
       </div>
 
       <input
