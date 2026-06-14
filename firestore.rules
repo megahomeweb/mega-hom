@@ -98,6 +98,14 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Expenses (xarajatlar) — manager+ records, reads and edits; only admin+ may
+    // delete a financial record.
+    match /expenses/{id} {
+      allow read, update: if callerRank() >= 2;
+      allow create: if callerRank() >= 2 && request.resource.data.amount is number;
+      allow delete: if callerRank() >= 3;
+    }
+
     // Staff accounts. Self-signup may create ONLY a non-privileged 'user'.
     // admin+ manages others — never themselves, never at/above their own rank.
     match /user/{uid} {
