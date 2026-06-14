@@ -23,12 +23,12 @@ const AddCategory = () => {
 
   const handleAddTag = () => {
     if (tagInput.trim() === "") {
-      toast.error("Tag cannot be empty");
+      toast.error("Subkategoriya boʼsh boʼlmasin");
       return;
     }
 
     if (newCategory.subcategory.includes(tagInput.trim())) {
-      toast.error("Tag already exists");
+      toast.error("Bunday subkategoriya allaqachon bor");
       return;
     }
 
@@ -48,16 +48,16 @@ const AddCategory = () => {
 
   const handleAddCategory = async () => {
     if (newCategory.name == "" || newCategory.subcategory.length < 1) {
-      return toast.error("all fields are required");
+      return toast.error("Nomi va kamida bitta subkategoriya kerak");
     }
-    
+
     try {
       await addCategory(newCategory);
-      toast.success("Add category successfully");
+      toast.success("Kategoriya qoʼshildi");
       navigate.push("/admin-dashboard");
     } catch (error) {
       console.log(error);
-      toast.error("Add product failed");
+      toast.error("Kategoriya qoʼshib boʼlmadi");
     }
   };
 
@@ -70,7 +70,7 @@ const AddCategory = () => {
       <div className="login_Form bg-pink-50 px-8 py-6 border border-pink-100 rounded-xl shadow-md">
         {/* Top Heading  */}
         <div className="mb-5">
-          <h2 className="text-center text-2xl font-bold text-pink-500 "></h2>
+          <h2 className="text-center text-2xl font-bold text-pink-500 ">Kategoriya qoʼshish</h2>
         </div>
         {/* Input One  */}
         <div className="mb-3">
@@ -79,7 +79,7 @@ const AddCategory = () => {
             name="name"
             value={newCategory.name}
             onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
-            placeholder="Category Name"
+            placeholder="Kategoriya nomi"
             className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
           />
         </div>
@@ -89,11 +89,11 @@ const AddCategory = () => {
               type="text"
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
-              placeholder="Add Subcategory"
+              placeholder="Subkategoriya qoʼshish"
               className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
             />
             <button onClick={handleAddTag} type="button" className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 font-bold rounded-md text-nowrap text-sm">
-              Add
+              Qoʼshish
             </button>
           </div>
           {/* Display subcategory */}
@@ -122,7 +122,7 @@ const AddCategory = () => {
             type="button"
             className="bg-pink-500 hover:bg-pink-600 w-full text-white text-center py-2 font-bold rounded-md "
           >
-            Add category
+            Saqlash
           </button>
         </div>
       </div>

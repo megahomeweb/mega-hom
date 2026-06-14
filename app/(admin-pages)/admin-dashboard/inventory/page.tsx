@@ -13,7 +13,7 @@ const TYPE_BADGE: Record<string, string> = {
   chiqim: "bg-red-100 text-red-700",
   tuzatish: "bg-blue-100 text-blue-700",
 };
-const TYPE_LABEL: Record<string, string> = { kirim: "Kirim", chiqim: "Chiqim", tuzatish: "Tuzatish" };
+const TYPE_LABEL: Record<string, string> = { kirim: "Qoʼshish", chiqim: "Ayirish", tuzatish: "Tuzatish" };
 
 // Ombor harakatlari — the append-only inventory ledger (manual receives,
 // write-offs, corrections). Sales/returns are recorded in `orders`, not here.
@@ -38,7 +38,7 @@ const InventoryPage = () => {
       </Link>
       <h1 className="text-xl font-bold text-pink-500 mb-1">Ombor harakatlari</h1>
       <p className="text-sm text-slate-500 mb-4">
-        Zaxira oʼzgarishlari tarixi (kirim, chiqim, tuzatish). Zaxirani{" "}
+        Zaxira oʼzgarishlari tarixi (qoʼshish, ayirish, tuzatish). Zaxirani{" "}
         <b>Mahsulotlar</b> jadvalida 📦 tugmasi orqali oʼzgartiring. Sotuvlar buyurtmalarda qayd
         etiladi.
       </p>

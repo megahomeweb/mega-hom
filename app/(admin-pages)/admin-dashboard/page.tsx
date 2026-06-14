@@ -65,7 +65,7 @@ const Admin = () => {
               </Link>
             )}
             <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/orders'}>
-              Orders
+              Buyurtmalar
             </Link>
             <Popover className="relative lg:ml-5">
               <PopoverButton className="flex items-center outline-none">

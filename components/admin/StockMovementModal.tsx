@@ -6,9 +6,11 @@ import { ProductT, StockMovementType } from "@/lib/types";
 import useStockStore from "@/zustand/useStockStore";
 import { useRole } from "./RoleContext";
 
+// Internal keys stay "kirim"/"chiqim"/"tuzatish" (stored in Firestore), but the
+// labels use plain everyday Uzbek instead of the formal приход/расход terms.
 const TYPES: { key: StockMovementType; label: string; hint: string }[] = [
-  { key: "kirim", label: "Kirim (+)", hint: "Yangi tovar keldi — zaxira oshadi" },
-  { key: "chiqim", label: "Chiqim (−)", hint: "Yaroqsiz / yoʼqolgan — zaxira kamayadi" },
+  { key: "kirim", label: "Qoʼshish (+)", hint: "Yangi tovar keldi — zaxira koʼpayadi" },
+  { key: "chiqim", label: "Ayirish (−)", hint: "Yaroqsiz yoki yoʼqolgan — zaxira kamayadi" },
   { key: "tuzatish", label: "Tuzatish (=)", hint: "Sanab, aniq qoldiqni belgilash" },
 ];
 
