@@ -17,6 +17,8 @@ const SubmitModal = ({ setOpen }: props) => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [address, setAddress] = useState("");
+  const [note, setNote] = useState("");
   const { cartProducts, totalPrice, totalQuantity, clearBasket } = useCartProductStore();
   const { addOrder } = useOrderStore();
   // navigate
@@ -60,6 +62,8 @@ const SubmitModal = ({ setOpen }: props) => {
       basketItems: cartProducts,
       totalPrice: totalPrice,
       totalQuantity: totalQuantity,
+      deliveryAddress: address.trim() || undefined,
+      note: note.trim() || undefined,
     };
       
     try {
@@ -157,6 +161,39 @@ const SubmitModal = ({ setOpen }: props) => {
               onChange={handlePhoneNumberChange}
               className="block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:outline-none focus:ring-inset focus:ring-red-600 sm:text-sm px-2"
               placeholder="+998 (__) ___-__-__"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label htmlFor="address" className="block text-sm font-medium text-gray-900">
+            Yetkazish manzili
+          </label>
+          <div className="mt-1">
+            <input
+              id="address"
+              name="address"
+              type="text"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="Shahar, koʼcha, uy (ixtiyoriy)"
+              className="block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:outline-none focus:ring-inset focus:ring-red-600 sm:text-sm px-2"
+            />
+          </div>
+        </div>
+        <div>
+          <label htmlFor="note" className="block text-sm font-medium text-gray-900">
+            Izoh
+          </label>
+          <div className="mt-1">
+            <input
+              id="note"
+              name="note"
+              type="text"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder="Qoʼshimcha izoh (ixtiyoriy)"
+              className="block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:outline-none focus:ring-inset focus:ring-red-600 sm:text-sm px-2"
             />
           </div>
         </div>

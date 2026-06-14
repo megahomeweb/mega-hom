@@ -2,10 +2,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { GoArrowLeft } from "react-icons/go";
-import { FiX } from "react-icons/fi";
+import { FiX, FiPlus } from "react-icons/fi";
 import toast from "react-hot-toast";
 import Loader from "../Loader";
 import ContactButtons from "./ContactButtons";
+import ManualOrderModal from "./ManualOrderModal";
 import useCustomerStore from "@/zustand/useCustomerStore";
 import { FormattedPrice } from "@/utils";
 
@@ -18,6 +19,7 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
   const [city, setCity] = useState("");
   const [savingNote, setSavingNote] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [showSell, setShowSell] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -89,8 +91,27 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
           <h1 className="text-2xl font-bold text-pink-600 capitalize">{customer.name || "Mijoz"}</h1>
           <p className="text-slate-600 mt-1">{customer.displayPhone}</p>
         </div>
-        {customer.phone !== "no-phone" && <ContactButtons phone={customer.phone} />}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowSell(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600"
+          >
+            <FiPlus className="text-base" /> Yana sotish
+          </button>
+          {customer.phone !== "no-phone" && <ContactButtons phone={customer.phone} />}
+        </div>
       </div>
+
+      {showSell && (
+        <ManualOrderModal
+          onClose={() => setShowSell(false)}
+          prefill={{
+            name: customer.name,
+            phone: customer.phone === "no-phone" ? "" : customer.displayPhone,
+          }}
+        />
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">

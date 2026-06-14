@@ -9,11 +9,12 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { IoIosArrowDown } from "react-icons/io";
-import { FiPrinter, FiTrash2 } from "react-icons/fi";
+import { FiPrinter, FiTrash2, FiPlus } from "react-icons/fi";
 import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
 import ImportExport from "../admin/ImportExport";
+import ManualOrderModal from "../admin/ManualOrderModal";
 import ContactButtons from "../admin/ContactButtons";
 import { useRole } from "../admin/RoleContext";
 import NoPhoto from "../NoPhoto";
@@ -27,6 +28,7 @@ const OrderContent = () => {
   const { orders, fetchAllOrders, loadingOrders, updateOrderStatus, deleteOrder } = useOrderStore();
   const me = useRole();
   const [tab, setTab] = useState<"all" | OrderStatus>("all");
+  const [showManual, setShowManual] = useState(false);
 
   useEffect(() => {
     fetchAllOrders()
@@ -93,7 +95,23 @@ const OrderContent = () => {
     const dt = d.createElement("p");
     dt.className = "muted";
     dt.textContent = order.date?.seconds ? new Date(order.date.seconds * 1000).toLocaleString() : "";
-    d.body.append(h, cust, dt);
+    d.body.append(h);
+    if (order.orderNo) {
+      const ono = d.createElement("p");
+      ono.className = "muted";
+      ono.textContent = `Raqam: ${order.orderNo}`;
+      d.body.append(ono);
+    }
+    d.body.append(cust, dt);
+    // Delivery details (textContent escapes the customer-provided values).
+    for (const [label, value] of [["Manzil", order.deliveryAddress], ["Izoh", order.note]] as const) {
+      if (value) {
+        const p = d.createElement("p");
+        p.className = "muted";
+        p.textContent = `${label}: ${value}`;
+        d.body.append(p);
+      }
+    }
 
     const table = d.createElement("table");
     const headRow = d.createElement("tr");
@@ -129,10 +147,21 @@ const OrderContent = () => {
     <>
       <div className="flex flex-wrap gap-3 justify-between items-center">
         <h2 className="text-xl sm:text-2xl font-bold capitalize">All Orders</h2>
-        {orders.length > 0 && (
-          <ImportExport entityLabel="orders" onExportCSV={() => ordersToCSV(orders)} />
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowManual(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600"
+          >
+            <FiPlus className="text-base" /> Yangi buyurtma
+          </button>
+          {orders.length > 0 && (
+            <ImportExport entityLabel="orders" onExportCSV={() => ordersToCSV(orders)} />
+          )}
+        </div>
       </div>
+
+      {showManual && <ManualOrderModal onClose={() => setShowManual(false)} />}
       <div className="w-full h-0.5 bg-gray-300 my-2 rounded-full"></div>
 
       {/* Status filter tabs with live counts */}
@@ -200,6 +229,9 @@ const OrderContent = () => {
                           )}
                         </h3>
                         <p className="text-sm text-gray-500">{formatPhone(order.clientPhone)}</p>
+                        {order.orderNo && (
+                          <p className="text-[11px] font-mono text-slate-400">{order.orderNo}</p>
+                        )}
                       </div>
                       <p className="text-sm text-gray-500 hidden md:block whitespace-nowrap">
                         {new Date(order.date.seconds * 1000).toLocaleString()}
@@ -339,6 +371,12 @@ const OrderContent = () => {
                           </tbody>
                         </table>
                       </div>
+                      {(order.deliveryAddress || order.note) && (
+                        <div className="text-xs text-slate-600 mt-2 space-y-0.5">
+                          {order.deliveryAddress && <p>📍 Manzil: {order.deliveryAddress}</p>}
+                          {order.note && <p>📝 Izoh: {order.note}</p>}
+                        </div>
+                      )}
                       {order.lastChangedBy && (
                         <p className="text-xs text-slate-400 mt-2">
                           Oxirgi oʼzgarish: {order.lastChangedBy}
