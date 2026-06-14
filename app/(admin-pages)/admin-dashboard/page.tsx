@@ -2,6 +2,7 @@
 import CategoryDetail from "@/components/admin/CategoryDetail";
 import ProductDetail from "@/components/admin/ProductDetail";
 import DashboardKPIs from "@/components/admin/DashboardKPIs";
+import LowStockCard from "@/components/admin/LowStockCard";
 import { useRole } from "@/components/admin/RoleContext";
 import { ROLE_LABELS, Role, isAdminPlus, isManagerPlus } from "@/lib/roles";
 import { auth } from "@/firebase/FirebaseConfig";
@@ -93,6 +94,7 @@ const Admin = () => {
       {canCatalog ? (
         <>
           <DashboardKPIs />
+          <LowStockCard />
           <TabGroup className="px-5">
           <TabList className="flex flex-wrap gap-4 justify-center py-2">
             {/* Mahsulotlar — tap to view the product list */}
