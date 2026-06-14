@@ -92,10 +92,22 @@ service cloud.firestore {
     // same batch is already covered by the products rule (manager+).
     match /stockMovements/{id} {
       allow read: if callerRank() >= 2;
-      allow create: if callerRank() >= 2
-        && request.resource.data.delta is number
-        && request.resource.data.productId is string;
+      // Manual moves (kirim/chiqim/tuzatish) are manager+. Sale/return rows
+      // (sotuv/qaytarish) are auto-logged during a sale, so staff+ may write
+      // those — a fake row only adds a visible ledger line, never moves real
+      // stock (that's the separate products write).
+      allow create: if request.resource.data.delta is number
+        && request.resource.data.productId is string
+        && (callerRank() >= 2
+            || (callerRank() >= 1
+                && request.resource.data.type in ['sotuv', 'qaytarish']));
       allow update, delete: if false;
+    }
+
+    // Suppliers (yetkazib beruvchilar) — manager+ manage; only admin+ deletes.
+    match /suppliers/{id} {
+      allow read, create, update: if callerRank() >= 2;
+      allow delete: if callerRank() >= 3;
     }
 
     // Expenses (xarajatlar) — manager+ records, reads and edits; only admin+ may

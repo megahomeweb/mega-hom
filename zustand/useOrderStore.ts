@@ -39,6 +39,7 @@ export interface StoreSaleInput {
   clientLastName: string;
   clientPhone: string;
   cashierUid: string;
+  cashierName?: string;
   paymentMethod: string;
 }
 
@@ -146,6 +147,18 @@ export const useOrderStore = create<StoreState>((set, get) => ({
         batch.update(doc(fireDB, "orders", id), { ...base, stockApplied: willApply });
         for (const l of lines) {
           batch.update(doc(fireDB, "products", l.id), { quantity: increment(sign * l.quantity) });
+          // Mirror the move into the stock ledger: sotuv on fulfill, qaytarish on return.
+          batch.set(doc(collection(fireDB, "stockMovements")), {
+            productId: l.id,
+            productTitle: l.title ?? "",
+            type: willApply ? "sotuv" : "qaytarish",
+            delta: sign * l.quantity,
+            reason: willApply ? "Sotuv (buyurtma)" : "Qaytarildi",
+            orderNo: order?.orderNo ?? "",
+            actorUid: "",
+            actorName: actor ?? "",
+            createdAt: serverTimestamp(),
+          });
         }
         try {
           await batch.commit();
@@ -192,6 +205,18 @@ export const useOrderStore = create<StoreState>((set, get) => ({
     batch.set(orderRef, { ...sale, orderNo, channel: "store", status: "sotildi", stockApplied: true, date: new Date() });
     for (const item of sale.basketItems) {
       batch.update(doc(fireDB, "products", item.id), { quantity: increment(-item.quantity) });
+      // Auto-log the sale into the stock ledger (a "sotuv" row per line).
+      batch.set(doc(collection(fireDB, "stockMovements")), {
+        productId: item.id,
+        productTitle: item.title ?? "",
+        type: "sotuv",
+        delta: -item.quantity,
+        reason: "Doʼkon sotuvi",
+        orderNo,
+        actorUid: sale.cashierUid ?? "",
+        actorName: sale.cashierName ?? "",
+        createdAt: serverTimestamp(),
+      });
     }
     await batch.commit();
     return { id: orderRef.id, orderNo };

@@ -32,17 +32,31 @@ export interface CategoryI {
 // Append-only inventory ledger. Every manual stock change writes one row so the
 // owner has an auditable history of WHY on-hand changed (goods received,
 // written off, or corrected) — separate from sales, which live in `orders`.
-export type StockMovementType = "kirim" | "chiqim" | "tuzatish";
+// kirim=receive(+) · chiqim=write-off(−) · tuzatish=correct(set) — all manual;
+// sotuv=sale(−) · qaytarish=return(+) — auto-logged from orders so the ledger is
+// a complete per-product stock card.
+export type StockMovementType = "kirim" | "chiqim" | "tuzatish" | "sotuv" | "qaytarish";
 export interface StockMovement {
   id: string;
   productId: string;
   productTitle: string;  // snapshot so the ledger reads even if the product is renamed/deleted
-  type: StockMovementType; // kirim = receive (+), chiqim = write-off (−), tuzatish = correction (set)
+  type: StockMovementType;
   delta: number;         // signed change actually applied to on-hand
-  newQty: number;        // resulting on-hand after the movement
+  newQty?: number;       // resulting on-hand (manual moves only; auto-logged sales omit it)
   reason: string;        // free-text note (e.g. "yangi partiya", "shikastlangan")
+  supplierName?: string; // kirim: which supplier the goods came from
+  orderNo?: string;      // sotuv/qaytarish: the linked order's number
   actorName: string;
   actorUid: string;
+  createdAt: Timestamp;
+}
+
+// Yetkazib beruvchi (supplier) — where restocked goods come from.
+export interface Supplier {
+  id: string;
+  name: string;
+  phone?: string;
+  note?: string;
   createdAt: Timestamp;
 }
 
