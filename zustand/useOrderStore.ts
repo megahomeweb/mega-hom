@@ -120,8 +120,14 @@ export const useOrderStore = create<StoreState>((set, get) => ({
     // basketItems carry the ORDERED quantity per line (cart semantics) + product id.
     const isWeb = !order || order.channel !== "store";
     const lines = (order?.basketItems ?? []).filter((l) => l?.id && (l.quantity ?? 0) > 0);
+    // APPLY (decrement) is web-only — POS sales already decremented at the till.
     const willApply = isWeb && order?.stockApplied !== true && isStockCommitting(status) && lines.length > 0;
-    const willRestore = isWeb && order?.stockApplied === true && status === "bekor" && lines.length > 0;
+    // RESTORE (re-stock) covers cancellation AND returns, for BOTH channels —
+    // a returned counter (POS) sale must put goods back on the shelf too.
+    const willRestore =
+      order?.stockApplied === true &&
+      (status === "bekor" || status === "qaytarildi") &&
+      lines.length > 0;
 
     let appliedNow = false;
     let restoredNow = false;

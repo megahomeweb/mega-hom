@@ -9,7 +9,7 @@ import {
 import React, { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { IoIosArrowDown } from "react-icons/io";
-import { FiPrinter, FiTrash2, FiPlus } from "react-icons/fi";
+import { FiPrinter, FiTrash2, FiPlus, FiRotateCcw } from "react-icons/fi";
 import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
 import Image from "next/image";
@@ -22,7 +22,7 @@ import { Order } from "@/lib/types";
 import { ordersToCSV } from "@/utils/importExport";
 import { printReceipt } from "@/utils/receipt";
 import { ORDER_STATUSES, OrderStatus, orderStatusMeta } from "@/lib/orderStatus";
-import { isAdminPlus } from "@/lib/roles";
+import { isAdminPlus, isManagerPlus } from "@/lib/roles";
 import { formatPhone } from "@/utils/phone";
 
 const OrderContent = () => {
@@ -66,6 +66,26 @@ const OrderContent = () => {
       toast.success("Buyurtma oʼchirildi");
     } catch {
       toast.error("Oʼchirib boʼlmadi");
+    }
+  };
+
+  // Return / refund (manager+). Sets status → "qaytarildi", which puts the goods
+  // back on the shelf (updateOrderStatus restocks both web + POS sales) and
+  // reverses the revenue/profit (the reports reducer excludes returned orders).
+  const handleReturn = async (order: Order) => {
+    if (
+      typeof window !== "undefined" &&
+      !window.confirm(
+        "Buyurtma qaytarilsinmi? Mahsulotlar omborga qaytariladi va savdo (foyda) bekor qilinadi."
+      )
+    ) {
+      return;
+    }
+    try {
+      await updateOrderStatus(order.id, "qaytarildi", me?.name);
+      toast.success("Buyurtma qaytarildi — zaxira tiklandi");
+    } catch {
+      toast.error("Qaytarib boʼlmadi");
     }
   };
 
@@ -193,19 +213,28 @@ const OrderContent = () => {
                       />
                     </DisclosureButton>
                     <div className="flex items-center gap-2 shrink-0">
-                      <select
-                        value={orderStatusMeta(order.status).key}
-                        onChange={(e) => handleStatus(order.id, e.target.value as OrderStatus)}
-                        onClick={(e) => e.stopPropagation()}
-                        title="Buyurtma holati"
-                        className={`text-xs font-semibold rounded-full border px-2.5 py-1 outline-none cursor-pointer ${orderStatusMeta(order.status).badge}`}
-                      >
-                        {ORDER_STATUSES.map((s) => (
-                          <option key={s.key} value={s.key} className="bg-white text-slate-700">
-                            {s.label}
-                          </option>
-                        ))}
-                      </select>
+                      {orderStatusMeta(order.status).key === "qaytarildi" ? (
+                        <span
+                          title="Qaytarilgan buyurtma"
+                          className={`text-xs font-semibold rounded-full border px-2.5 py-1 ${orderStatusMeta(order.status).badge}`}
+                        >
+                          Qaytarildi
+                        </span>
+                      ) : (
+                        <select
+                          value={orderStatusMeta(order.status).key}
+                          onChange={(e) => handleStatus(order.id, e.target.value as OrderStatus)}
+                          onClick={(e) => e.stopPropagation()}
+                          title="Buyurtma holati"
+                          className={`text-xs font-semibold rounded-full border px-2.5 py-1 outline-none cursor-pointer ${orderStatusMeta(order.status).badge}`}
+                        >
+                          {ORDER_STATUSES.filter((s) => s.key !== "qaytarildi").map((s) => (
+                            <option key={s.key} value={s.key} className="bg-white text-slate-700">
+                              {s.label}
+                            </option>
+                          ))}
+                        </select>
+                      )}
                       <ContactButtons phone={order.clientPhone} />
                       <button
                         type="button"
@@ -218,6 +247,20 @@ const OrderContent = () => {
                       >
                         <FiPrinter className="text-sm" />
                       </button>
+                      {isManagerPlus(me?.role) &&
+                        ["yetkazildi", "sotildi"].includes(orderStatusMeta(order.status).key) && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleReturn(order);
+                            }}
+                            title="Qaytarish (refund) — zaxira tiklanadi"
+                            className="inline-flex items-center justify-center size-8 rounded-full border border-orange-200 text-orange-500 hover:bg-orange-50"
+                          >
+                            <FiRotateCcw className="text-sm" />
+                          </button>
+                        )}
                       {isAdminPlus(me?.role) && (
                         <button
                           type="button"

@@ -26,8 +26,9 @@ export function orderMs(o: Order): number {
   return 0;
 }
 
-/** A cancelled order contributes nothing to money totals. */
-export const isRealized = (o: Order): boolean => o.status !== "bekor";
+/** A cancelled OR returned order contributes nothing to money totals. */
+export const isRealized = (o: Order): boolean =>
+  o.status !== "bekor" && o.status !== "qaytarildi";
 
 /** Revenue for one order (0 if cancelled). */
 export const orderRevenue = (o: Order): number =>
