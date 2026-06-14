@@ -7,7 +7,8 @@ export type OrderStatus =
   | "yetkazilmoqda"
   | "yetkazildi"
   | "bekor"
-  | "sotildi"; // completed in-store (POS) sale
+  | "sotildi"      // completed in-store (POS) sale
+  | "qaytarildi";  // returned/refunded — stock restored, revenue reversed
 
 export const DEFAULT_ORDER_STATUS: OrderStatus = "yangi";
 
@@ -24,6 +25,7 @@ export const ORDER_STATUSES: OrderStatusMeta[] = [
   { key: "yetkazildi", label: "Yetkazildi", badge: "bg-green-100 text-green-700 border-green-300" },
   { key: "bekor", label: "Bekor qilindi", badge: "bg-gray-200 text-gray-600 border-gray-300" },
   { key: "sotildi", label: "Sotildi", badge: "bg-teal-100 text-teal-700 border-teal-300" },
+  { key: "qaytarildi", label: "Qaytarildi", badge: "bg-orange-100 text-orange-700 border-orange-300" },
 ];
 
 /** Resolve a stored status to its metadata; unknown / missing → "Yangi". */
