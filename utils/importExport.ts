@@ -9,6 +9,7 @@
 
 import { CategoryI, CustomerT, Order, ProductT } from "@/lib/types";
 import { normalizePhone } from "./phone";
+import { orderStatusMeta } from "@/lib/orderStatus";
 
 /* --------------------------------- generic --------------------------------- */
 
@@ -232,6 +233,8 @@ export interface ImportProduct {
   id: string;
   title?: string;
   price?: number;
+  costPrice?: number;
+  quantity?: number;
   category?: string;
   subCategory?: string;
   description?: string;
@@ -247,6 +250,8 @@ export interface ImportProduct {
 export const PRODUCT_FIELDS = [
   { key: "title", label: "Nomi" },
   { key: "price", label: "Narx" },
+  { key: "costPrice", label: "Tan narx" },
+  { key: "quantity", label: "Zaxira" },
   { key: "ikpu", label: "IKPU" },
   { key: "vatRate", label: "QQS %" },
   { key: "barcode", label: "Shtrix-kod" },
@@ -260,12 +265,14 @@ export const PRODUCT_FIELDS = [
 export type ProductFieldKey = (typeof PRODUCT_FIELDS)[number]["key"];
 
 // Human-first column order (business fields first, the technical key last) —
-// mirrors how Shopify/WooCommerce lay out their product CSVs. Quantity is gone
-// (the shop doesn't track stock), and image URLs are omitted: images are
-// preserved server-side on update, so the editable sheet stays clean.
+// mirrors how Shopify/WooCommerce lay out their product CSVs. Cost + Quantity
+// drive margin and inventory; image URLs are omitted (images are preserved
+// server-side on update, so the editable sheet stays clean).
 export const PRODUCT_CSV_HEADERS = [
   "Title",
   "Price",
+  "Cost",
+  "Quantity",
   "IKPU",
   "VAT %",
   "Barcode",
@@ -304,6 +311,8 @@ function normalizeProduct(rec: Record<string, unknown>): ImportProduct {
     id: String(rec.id ?? "").trim(),
     title: optStr(rec.title),
     price: optNum(rec.price),
+    costPrice: optNum(rec.costPrice),
+    quantity: optNum(rec.quantity),
     category: optStr(rec.category),
     subCategory: optStr(rec.subCategory ?? rec.subcategory),
     description: optStr(rec.description),
@@ -322,6 +331,8 @@ export function productsToCSV(products: ProductT[]): string {
     rows.push([
       p.title ?? "",
       p.price ?? "",
+      p.costPrice ?? "",
+      p.quantity ?? 0,
       p.ikpu ?? "",
       p.vatRate ?? "",
       p.barcode ?? "",
@@ -351,6 +362,8 @@ export function parseProductsFile(text: string, filename: string): ImportProduct
         id: read(r, ["Product ID", "id"]),
         title: read(r, ["Title", "Name", "Nomi", "Nom", "Название", "Наименование"]),
         price: read(r, ["Price", "Narxi", "Narx", "Цена", "Regular price", "Variant Price"]),
+        costPrice: read(r, ["Cost", "Cost price", "Tan narx", "Tannarx", "COGS", "Себестоимость"]),
+        quantity: read(r, ["Quantity", "Qty", "Zaxira", "Miqdor", "Soni", "Stock", "Количество", "Остаток"]),
         category: read(r, ["Category", "Categories", "Kategoriya", "Категория"]),
         subCategory: read(r, ["Subcategory", "Sub Category", "Subkategoriya", "Подкатегория"]),
         description: read(r, ["Description", "Tavsif", "Описание", "Body"]),
@@ -654,20 +667,50 @@ export function planCustomerImport(
 
 export function ordersToCSV(orders: Order[]): string {
   const rows: unknown[][] = [
-    ["Date", "Customer", "Phone", "Items", "Total Quantity", "Total Price (UZS)", "Order ID"],
+    [
+      "Order No",
+      "Date",
+      "Status",
+      "Channel",
+      "Customer",
+      "Phone",
+      "Items",
+      "Total Quantity",
+      "Total Price (UZS)",
+      "Cost (UZS)",
+      "Profit (UZS)",
+      "Payment",
+      "Cashier",
+      "Order ID",
+    ],
   ];
   for (const o of orders) {
     const items = (o.basketItems ?? [])
       .map((it) => `${it.title} x${it.quantity ?? 1}`)
       .join(" | ");
     const customer = `${o.clientName ?? ""} ${o.clientLastName ?? ""}`.trim();
+    // Cost of goods from the per-line snapshot (status-independent for the raw
+    // ledger — the Status column tells the reader if it was cancelled).
+    let cogs = 0;
+    for (const it of o.basketItems ?? []) {
+      const c = it as unknown as { costAtSale?: number; costPrice?: number; quantity?: number };
+      cogs += (Number(c.costAtSale ?? c.costPrice ?? 0) || 0) * (Number(c.quantity) || 0);
+    }
+    const revenue = Number(o.totalPrice) || 0;
     rows.push([
+      o.orderNo ?? "",
       formatDateTime(o.date),
+      orderStatusMeta(o.status).label,
+      o.channel === "store" ? "Doʼkon" : "Sayt",
       customer,
       o.clientPhone ?? "",
       items,
       o.totalQuantity ?? "",
-      o.totalPrice ?? "",
+      revenue,
+      cogs || "",
+      cogs ? revenue - cogs : "",
+      o.paymentMethod ?? "",
+      o.cashierUid ?? "",
       o.id ?? "",
     ]);
   }

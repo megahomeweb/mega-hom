@@ -27,6 +27,7 @@ const AddProductPage = () => {
   const [product, setProduct] = useState({
     title: "",
     price: "",
+    costPrice: "",
     productImageUrl: [] as ImageT[],
     category: "",
     subCategory: "",
@@ -36,7 +37,7 @@ const AddProductPage = () => {
     ikpu: "",
     vatRate: 12,
     barcode: "",
-    quantity: 0,
+    quantity: "",
     time: Timestamp.now(),
     date: new Date().toLocaleString("en-US", {
       month: "short",
@@ -91,7 +92,14 @@ const AddProductPage = () => {
     setLoading(true);
     try {
       const productRef = collection(fireDB, "products");
-      await addDoc(productRef, product);
+      // Coerce the money/stock fields to real numbers so margin + inventory math
+      // is correct (the form holds them as strings for clean empty inputs).
+      await addDoc(productRef, {
+        ...product,
+        price: Number(product.price) || 0,
+        costPrice: Number(product.costPrice) || 0,
+        quantity: Number(product.quantity) || 0,
+      });
       toast.success("Add product successfully");
       navigate.push("/admin-dashboard");
       setLoading(false);
@@ -139,8 +147,29 @@ const AddProductPage = () => {
                 price: e.target.value,
               });
             }}
-            placeholder="Product Price"
+            placeholder="Sotish narxi (UZS)"
             className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
+          />
+        </div>
+        {/* Cost (tan narx) + Stock (zaxira) — drive margin/profit and inventory */}
+        <div className="mb-3 flex gap-3 w-96">
+          <input
+            type="number"
+            name="costPrice"
+            value={product.costPrice}
+            onChange={(e) => setProduct({ ...product, costPrice: e.target.value })}
+            placeholder="Tan narx (xarid)"
+            title="Tan narx — foyda shu asosda hisoblanadi (mijozga koʼrinmaydi)"
+            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-pink-300"
+          />
+          <input
+            type="number"
+            name="quantity"
+            value={product.quantity}
+            onChange={(e) => setProduct({ ...product, quantity: e.target.value })}
+            placeholder="Zaxira (dona)"
+            title="Ombordagi miqdor"
+            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-32 rounded-md outline-none placeholder-pink-300"
           />
         </div>
         {/* Input img  */}

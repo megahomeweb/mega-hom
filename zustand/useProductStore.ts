@@ -54,6 +54,8 @@ const useProductStore = create<ProductStore>((set) => ({
             id, 
             title: productData.title,
             price: productData.price,
+            costPrice: productData.costPrice,
+            lowStockThreshold: productData.lowStockThreshold,
             productImageUrl: productData.productImageUrl,
             category: productData.category,
             subCategory: productData.subCategory,

@@ -67,6 +67,10 @@ const POSContent = () => {
           quantity: 1,
           category: p.category ?? "",
           productImageUrl: p.productImageUrl ?? [],
+          // Snapshot cost + fiscal codes at sale time (profit + future ChEK).
+          costAtSale: p.costPrice ?? 0,
+          ikpu: p.ikpu ?? "",
+          vatRate: p.vatRate ?? 0,
         },
       ];
     });
