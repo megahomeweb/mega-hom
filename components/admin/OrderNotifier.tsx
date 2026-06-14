@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import toast, { Toast } from "react-hot-toast";
-import { collection, onSnapshot, query } from "firebase/firestore";
+import { collection, onSnapshot, query, orderBy, limit } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { Order } from "@/lib/types";
 import { FormattedPrice } from "@/utils";
@@ -40,8 +40,10 @@ const OrderNotifier = () => {
     window.addEventListener("pointerdown", unlock);
     window.addEventListener("keydown", unlock);
 
+    // Only the most-recent orders are needed to detect new arrivals; a new order
+    // always sorts to the top (newest date), so it's never missed.
     const unsub = onSnapshot(
-      query(collection(fireDB, "orders")),
+      query(collection(fireDB, "orders"), orderBy("date", "desc"), limit(50)),
       (snap) => {
         if (!ready.current) {
           snap.forEach((d) => seen.current.add(d.id));
