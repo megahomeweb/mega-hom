@@ -9,8 +9,9 @@ import Loader from "../Loader";
 import NoPhoto from "../NoPhoto";
 import { useRole } from "./RoleContext";
 import useProductStore from "@/zustand/useProductStore";
+import useCustomerStore from "@/zustand/useCustomerStore";
 import { useOrderStore, StoreSaleItem } from "@/zustand/useOrderStore";
-import { ProductT } from "@/lib/types";
+import { ProductT, CustomerT } from "@/lib/types";
 import { FormattedPrice } from "@/utils";
 import { printReceipt } from "@/utils/receipt";
 
@@ -19,12 +20,14 @@ import { printReceipt } from "@/utils/receipt";
 // payment come in a later phase; this records the sale and feeds the CRM/KPIs.
 const POSContent = () => {
   const { products, loading, fetchProducts } = useProductStore();
+  const { customers, fetchCustomers } = useCustomerStore();
   const { addStoreSale } = useOrderStore();
   const me = useRole();
   const [search, setSearch] = useState("");
   const [basket, setBasket] = useState<StoreSaleItem[]>([]);
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
+  const [custPicked, setCustPicked] = useState<CustomerT | null>(null);
   const [cash, setCash] = useState("");
   const [busy, setBusy] = useState(false);
   const [printChek, setPrintChek] = useState(true);
@@ -33,7 +36,30 @@ const POSContent = () => {
 
   useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+    fetchCustomers();
+  }, [fetchProducts, fetchCustomers]);
+
+  // Recognize repeat buyers at the till: match the typed name/phone against the
+  // CRM (derived from past orders). Picking one links the sale to that customer.
+  const custMatches = useMemo(() => {
+    const q = phone.trim().toLowerCase();
+    if (q.length < 2 || custPicked) return [];
+    const digits = q.replace(/\D/g, "");
+    return customers
+      .filter(
+        (c) =>
+          c.phone !== "no-phone" &&
+          ((digits.length >= 2 && c.phone.includes(digits)) ||
+            (c.name ?? "").toLowerCase().includes(q))
+      )
+      .slice(0, 5);
+  }, [customers, phone, custPicked]);
+
+  const pickCustomer = (c: CustomerT) => {
+    setPhone(c.displayPhone || c.phone);
+    setName(c.name || "");
+    setCustPicked(c);
+  };
 
   const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -167,6 +193,7 @@ const POSContent = () => {
       setBasket([]);
       setPhone("");
       setName("");
+      setCustPicked(null);
       setCash("");
       searchRef.current?.focus();
     } catch {
@@ -295,12 +322,55 @@ const POSContent = () => {
           </div>
 
           <div className="space-y-2 mt-3">
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="Mijoz telefoni (ixtiyoriy)"
-              className={inputCls}
-            />
+            <div className="relative">
+              <input
+                value={phone}
+                onChange={(e) => {
+                  setPhone(e.target.value);
+                  setCustPicked(null);
+                  if (!e.target.value) setName("");
+                }}
+                placeholder="Mijoz: ism yoki telefon (ixtiyoriy)"
+                className={inputCls}
+              />
+              {custMatches.length > 0 && (
+                <div className="absolute z-20 left-0 right-0 mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-52 overflow-y-auto">
+                  {custMatches.map((c) => (
+                    <button
+                      key={c.phone}
+                      type="button"
+                      onClick={() => pickCustomer(c)}
+                      className="w-full text-left px-3 py-2 hover:bg-pink-50 border-b border-slate-50 last:border-0"
+                    >
+                      <p className="text-sm text-slate-700 capitalize">{c.name || "Mijoz"}</p>
+                      <p className="text-xs text-slate-400">
+                        {c.displayPhone} · {c.orderCount} buyurtma
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            {custPicked && (
+              <div className="flex items-center justify-between gap-2 text-xs text-green-700 bg-green-50 border border-green-200 rounded-lg px-2.5 py-1.5">
+                <span>
+                  ♻️ <b className="capitalize">{custPicked.name || "Mijoz"}</b> ·{" "}
+                  {custPicked.orderCount} buyurtma · {FormattedPrice(custPicked.totalSpent)} UZS
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustPicked(null);
+                    setPhone("");
+                    setName("");
+                  }}
+                  className="text-green-700/70 hover:text-green-900"
+                  aria-label="Bekor qilish"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
             <input
               type="number"
               inputMode="numeric"
