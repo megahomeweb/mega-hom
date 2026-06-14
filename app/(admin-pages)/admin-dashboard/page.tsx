@@ -4,6 +4,7 @@ import ProductDetail from "@/components/admin/ProductDetail";
 import DashboardKPIs from "@/components/admin/DashboardKPIs";
 import LowStockCard from "@/components/admin/LowStockCard";
 import TopSellers from "@/components/admin/TopSellers";
+import MeshBackdrop from "@/components/MeshBackdrop";
 import { useRole } from "@/components/admin/RoleContext";
 import { ROLE_LABELS, Role, isAdminPlus, isManagerPlus } from "@/lib/roles";
 import { auth } from "@/firebase/FirebaseConfig";
@@ -44,7 +45,10 @@ const Admin = () => {
     <div className="brand-mesh min-h-screen pb-10">
       {/* Top */}
       <div className="mb-5 px-5 pt-5">
-        <div className="flex items-center justify-between brand-header text-white px-5 py-3 rounded-xl shadow-lg shadow-brand/20">
+        <div className="relative overflow-hidden rounded-xl shadow-lg shadow-brand/20">
+          <MeshBackdrop colors={["#C21A1A", "#9E1414", "#5B0D0D", "#7A1010", "#C21A1A"]} speed={0.5} />
+          <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#5B0D0D]/45 via-transparent to-[#5B0D0D]/45" />
+          <div className="relative z-10 flex items-center justify-between text-white px-5 py-3">
           <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
             <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/pos'}>
@@ -98,6 +102,7 @@ const Admin = () => {
                 </div>
               </PopoverPanel>
             </Popover>
+          </div>
           </div>
         </div>
       </div>
