@@ -18,16 +18,8 @@ const BRAND_COLORS = ["#FFD9C2", "#FF8F8F", "#E23B3B", "#C21A1A", "#5B0D0D"];
 
 const MegaBuddy = () => {
   const reduce = useReducedMotion();
-  const [shown, setShown] = useState(false);
   const [eye, setEye] = useState({ x: 0, y: 0 });
   const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const onScroll = () => setShown(window.scrollY > 400);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
@@ -65,9 +57,7 @@ const MegaBuddy = () => {
       animate={reduce ? undefined : { y: [0, -8, 0], scaleY: [1, 1.06, 1] }}
       transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
       style={{ transformOrigin: "top center" }}
-      className={`fixed bottom-5 left-5 md:bottom-10 md:left-10 z-50 w-16 md:w-20 cursor-pointer outline-none transition-opacity duration-500 focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded-3xl ${
-        shown ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
-      }`}
+      className="fixed bottom-5 left-5 md:bottom-10 md:left-10 z-50 w-16 md:w-20 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 rounded-3xl"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

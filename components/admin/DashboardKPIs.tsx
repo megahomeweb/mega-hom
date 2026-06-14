@@ -5,8 +5,11 @@ import { orderStatusMeta } from "@/lib/orderStatus";
 import { aggregateOrders, startOfToday, startOfDaysAgo } from "@/lib/reports";
 import useExpenseStore from "@/zustand/useExpenseStore";
 import { FormattedPrice } from "@/utils";
+import { motion, useReducedMotion } from "framer-motion";
 
 const card = "rounded-xl border border-pink-100 bg-pink-50 px-4 py-3 text-center";
+const cardContainer = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
+const cardItem = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 
 type Period = "today" | "7d" | "30d";
 const PERIODS: { key: Period; label: string }[] = [
@@ -21,6 +24,7 @@ const DashboardKPIs = () => {
   const { orders, fetchAllOrders } = useOrderStore();
   const { expenses, fetchExpenses } = useExpenseStore();
   const [period, setPeriod] = useState<Period>("today");
+  const reduce = useReducedMotion();
 
   useEffect(() => {
     fetchAllOrders();
@@ -69,42 +73,48 @@ const DashboardKPIs = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
-        <div className={card}>
+      <motion.div
+        key={period}
+        variants={cardContainer}
+        initial={reduce ? false : "hidden"}
+        animate="show"
+        className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3"
+      >
+        <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Buyurtmalar</p>
           <p className="text-2xl font-bold text-pink-500">{kpi.all.count}</p>
           <p className="text-[10px] text-slate-400">{kpi.all.items} dona</p>
-        </div>
-        <div className={card}>
+        </motion.div>
+        <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Savdo</p>
           <p className="text-2xl font-bold text-pink-500">{FormattedPrice(kpi.all.revenue)}</p>
           <p className="text-[10px] text-slate-400">
             Sayt {FormattedPrice(kpi.web.revenue)} · Doʼkon {FormattedPrice(kpi.store.revenue)}
           </p>
-        </div>
-        <div className={card}>
+        </motion.div>
+        <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Yalpi foyda</p>
           <p className="text-2xl font-bold text-pink-500">{FormattedPrice(kpi.all.profit)}</p>
           <p className="text-[10px] text-slate-400">savdo − tan narx</p>
-        </div>
-        <div className={card}>
+        </motion.div>
+        <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Xarajat</p>
           <p className="text-2xl font-bold text-pink-500">{FormattedPrice(kpi.expenseTotal)}</p>
           <p className="text-[10px] text-slate-400">davr boʼyicha</p>
-        </div>
-        <div className={card}>
+        </motion.div>
+        <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Net foyda</p>
           <p className={`text-2xl font-bold ${kpi.net < 0 ? "text-red-500" : "text-green-600"}`}>
             {FormattedPrice(kpi.net)}
           </p>
           <p className="text-[10px] text-slate-400">foyda − xarajat</p>
-        </div>
-        <div className={card}>
+        </motion.div>
+        <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Kutilayotgan</p>
           <p className="text-2xl font-bold text-pink-500">{kpi.pending}</p>
           <p className="text-[10px] text-slate-400">jami navbatda</p>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     </div>
   );
 };
