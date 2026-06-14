@@ -193,3 +193,9 @@
     animation: none !important;
   }
 }
+
+/* Storefront "buddy" — brand-gradient fallback shown behind the WebGL mesh
+ * gradient if WebGL is unavailable, so the blob is never empty. */
+.brand-buddy {
+  background: radial-gradient(120% 120% at 30% 25%, #ff9a9a 0%, #e23b3b 36%, #c21a1a 66%, #8e1212 100%);
+}
