@@ -17,6 +17,7 @@ export interface MovementInput {
   type: StockMovementType; // kirim (+), chiqim (−), tuzatish (set)
   qty: number;             // positive magnitude entered by the user
   reason: string;
+  supplierName?: string;   // kirim: which supplier supplied the goods
   actorUid: string;
   actorName: string;
 }
@@ -54,7 +55,7 @@ const useStockStore = create<StockState>((set) => ({
   // Atomically move stock AND append the ledger row, so on-hand and its history
   // can never drift apart. kirim adds, chiqim subtracts (floored at 0),
   // tuzatish sets the absolute counted quantity.
-  applyMovement: async ({ product, type, qty, reason, actorUid, actorName }) => {
+  applyMovement: async ({ product, type, qty, reason, supplierName, actorUid, actorName }) => {
     const current = Number(product.quantity) || 0;
     const magnitude = Math.abs(Number(qty) || 0);
     let newQty = current;
@@ -72,6 +73,7 @@ const useStockStore = create<StockState>((set) => ({
       delta,
       newQty,
       reason: reason.trim(),
+      supplierName: type === "kirim" ? supplierName?.trim() || "" : "",
       actorUid,
       actorName,
       createdAt: serverTimestamp(),

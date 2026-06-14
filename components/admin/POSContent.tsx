@@ -170,6 +170,7 @@ const POSContent = () => {
         clientLastName: "",
         clientPhone: phone.trim(),
         cashierUid: me?.uid ?? "",
+        cashierName: me?.name ?? "",
         paymentMethod: "naqd",
       });
       toast.success(`Sotuv yakunlandi — ${FormattedPrice(total)} UZS`);

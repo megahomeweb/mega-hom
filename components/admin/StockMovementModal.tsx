@@ -1,9 +1,10 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FiX } from "react-icons/fi";
 import { ProductT, StockMovementType } from "@/lib/types";
 import useStockStore from "@/zustand/useStockStore";
+import useSupplierStore from "@/zustand/useSupplierStore";
 import { useRole } from "./RoleContext";
 
 // Internal keys stay "kirim"/"chiqim"/"tuzatish" (stored in Firestore), but the
@@ -20,10 +21,16 @@ const TYPES: { key: StockMovementType; label: string; hint: string }[] = [
 const StockMovementModal = ({ product, onClose }: { product: ProductT; onClose: () => void }) => {
   const me = useRole();
   const { applyMovement } = useStockStore();
+  const { suppliers, fetchSuppliers } = useSupplierStore();
   const [type, setType] = useState<StockMovementType>("kirim");
   const [qty, setQty] = useState("");
   const [reason, setReason] = useState("");
+  const [supplier, setSupplier] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
 
   const current = Number(product.quantity) || 0;
   const magnitude = Math.abs(parseInt(qty, 10) || 0);
@@ -43,6 +50,7 @@ const StockMovementModal = ({ product, onClose }: { product: ProductT; onClose: 
         type,
         qty: magnitude,
         reason,
+        supplierName: supplier,
         actorUid: me?.uid ?? "",
         actorName: me?.name ?? "",
       });
@@ -88,6 +96,16 @@ const StockMovementModal = ({ product, onClose }: { product: ProductT; onClose: 
             ))}
           </div>
           <p className="text-xs text-slate-400">{TYPES.find((t) => t.key === type)?.hint}</p>
+          {type === "kirim" && suppliers.length > 0 && (
+            <select value={supplier} onChange={(e) => setSupplier(e.target.value)} className={input}>
+              <option value="">Yetkazib beruvchi (ixtiyoriy)</option>
+              {suppliers.map((s) => (
+                <option key={s.id} value={s.name}>
+                  {s.name}
+                </option>
+              ))}
+            </select>
+          )}
           <input
             type="number"
             inputMode="numeric"

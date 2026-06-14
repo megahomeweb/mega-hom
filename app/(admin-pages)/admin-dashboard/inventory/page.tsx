@@ -12,8 +12,16 @@ const TYPE_BADGE: Record<string, string> = {
   kirim: "bg-green-100 text-green-700",
   chiqim: "bg-red-100 text-red-700",
   tuzatish: "bg-blue-100 text-blue-700",
+  sotuv: "bg-teal-100 text-teal-700",
+  qaytarish: "bg-orange-100 text-orange-700",
 };
-const TYPE_LABEL: Record<string, string> = { kirim: "Qoʼshish", chiqim: "Ayirish", tuzatish: "Tuzatish" };
+const TYPE_LABEL: Record<string, string> = {
+  kirim: "Qoʼshish",
+  chiqim: "Ayirish",
+  tuzatish: "Tuzatish",
+  sotuv: "Sotuv",
+  qaytarish: "Qaytarish",
+};
 
 // Ombor harakatlari — the append-only inventory ledger (manual receives,
 // write-offs, corrections). Sales/returns are recorded in `orders`, not here.
@@ -36,11 +44,19 @@ const InventoryPage = () => {
         <GoArrowLeft className="text-xl" />
         <span>Admin panelga qaytish</span>
       </Link>
-      <h1 className="text-xl font-bold text-pink-500 mb-1">Ombor harakatlari</h1>
+      <div className="flex items-center justify-between mb-1 gap-3">
+        <h1 className="text-xl font-bold text-pink-500">Ombor harakatlari</h1>
+        <Link
+          href="/admin-dashboard/suppliers"
+          className="text-sm font-medium text-pink-600 hover:underline whitespace-nowrap"
+        >
+          Yetkazib beruvchilar →
+        </Link>
+      </div>
       <p className="text-sm text-slate-500 mb-4">
-        Zaxira oʼzgarishlari tarixi (qoʼshish, ayirish, tuzatish). Zaxirani{" "}
-        <b>Mahsulotlar</b> jadvalida 📦 tugmasi orqali oʼzgartiring. Sotuvlar buyurtmalarda qayd
-        etiladi.
+        Zaxiraning barcha harakatlari — qoʼshish, ayirish, tuzatish, sotuv va qaytarish.{" "}
+        <b>Mahsulotlar</b> jadvalida 📦 tugmasi orqali qoʼlda oʼzgartiring; sotuv va qaytarishlar
+        avtomatik yoziladi.
       </p>
 
       {loading && movements.length === 0 && (
@@ -87,8 +103,16 @@ const InventoryPage = () => {
                   >
                     {m.delta > 0 ? `+${m.delta}` : m.delta}
                   </td>
-                  <td className="py-2 px-3 text-right">{m.newQty}</td>
-                  <td className="py-2 px-3 text-slate-500">{m.reason || "—"}</td>
+                  <td className="py-2 px-3 text-right">{m.newQty ?? "—"}</td>
+                  <td className="py-2 px-3 text-slate-500">
+                    {m.reason || "—"}
+                    {m.supplierName && (
+                      <span className="block text-xs text-slate-400">↳ {m.supplierName}</span>
+                    )}
+                    {m.orderNo && (
+                      <span className="block text-xs font-mono text-slate-400">{m.orderNo}</span>
+                    )}
+                  </td>
                   <td className="py-2 px-3 text-slate-500">{m.actorName || "—"}</td>
                 </tr>
               ))}
