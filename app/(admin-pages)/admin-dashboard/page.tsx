@@ -59,6 +59,11 @@ const Admin = () => {
                 Mijozlar
               </Link>
             )}
+            {canCatalog && (
+              <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/inventory'}>
+                Ombor
+              </Link>
+            )}
             <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/orders'}>
               Orders
             </Link>

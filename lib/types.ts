@@ -29,6 +29,23 @@ export interface CategoryI {
   subcategory: string[]
 }
 
+// Append-only inventory ledger. Every manual stock change writes one row so the
+// owner has an auditable history of WHY on-hand changed (goods received,
+// written off, or corrected) — separate from sales, which live in `orders`.
+export type StockMovementType = "kirim" | "chiqim" | "tuzatish";
+export interface StockMovement {
+  id: string;
+  productId: string;
+  productTitle: string;  // snapshot so the ledger reads even if the product is renamed/deleted
+  type: StockMovementType; // kirim = receive (+), chiqim = write-off (−), tuzatish = correction (set)
+  delta: number;         // signed change actually applied to on-hand
+  newQty: number;        // resulting on-hand after the movement
+  reason: string;        // free-text note (e.g. "yangi partiya", "shikastlangan")
+  actorName: string;
+  actorUid: string;
+  createdAt: Timestamp;
+}
+
 export interface ImageT {
   url: string;
   path: string;

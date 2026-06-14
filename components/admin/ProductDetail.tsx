@@ -5,7 +5,7 @@ import Loader from "../Loader";
 import { CiEdit } from "react-icons/ci";
 import { MdDeleteForever } from "react-icons/md";
 import { BsQrCode } from "react-icons/bs";
-import { FiCopy, FiLink } from "react-icons/fi";
+import { FiCopy, FiLink, FiBox } from "react-icons/fi";
 import useProductStore from "@/zustand/useProductStore";
 import toast, { Toast } from "react-hot-toast";
 import { ProductT } from "@/lib/types";
@@ -16,6 +16,7 @@ import { FormattedPrice } from "@/utils";
 import { fireDB, fireStorage } from "@/firebase/FirebaseConfig";
 import Image from "next/image";
 import ProductRow from "./ProductRow";
+import StockMovementModal from "./StockMovementModal";
 import ProductImportExport from "./ProductImportExport";
 import ProductQRCode from "./ProductQRCode";
 import NoPhoto from "@/components/NoPhoto";
@@ -31,6 +32,7 @@ const chip =
 const ProductDetail = () => {
   const { products, loading, fetchProducts, deleteProduct, bulkPatch, patchProduct } = useProductStore();
   const [qrProduct, setQrProduct] = useState<ProductT | null>(null);
+  const [stockProduct, setStockProduct] = useState<ProductT | null>(null);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingDelete, setPendingDelete] = useState<Set<string>>(new Set());
@@ -356,39 +358,48 @@ const ProductDetail = () => {
                       </div>
                     )}
                   </td>
-                  {/* Zaxira (stock) — inline editable; red when low */}
+                  {/* Zaxira (stock) — inline edit + 📦 kirim/chiqim/tuzatish (logged) */}
                   <td className={td}>
-                    {editingStockId === id ? (
-                      <input
-                        autoFocus
-                        type="number"
-                        value={editStock}
-                        onChange={(e) => setEditStock(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") e.currentTarget.blur();
-                          else if (e.key === "Escape") {
-                            skipSave.current = true;
-                            e.currentTarget.blur();
-                          }
-                        }}
-                        onBlur={() => {
-                          if (skipSave.current) {
-                            skipSave.current = false;
-                            setEditingStockId(null);
-                          } else saveStock(id);
-                        }}
-                        className="w-16 px-1.5 py-1 border border-pink-300 rounded outline-none text-slate-700"
-                      />
-                    ) : (
+                    <div className="flex items-center justify-center gap-2">
+                      {editingStockId === id ? (
+                        <input
+                          autoFocus
+                          type="number"
+                          value={editStock}
+                          onChange={(e) => setEditStock(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") e.currentTarget.blur();
+                            else if (e.key === "Escape") {
+                              skipSave.current = true;
+                              e.currentTarget.blur();
+                            }
+                          }}
+                          onBlur={() => {
+                            if (skipSave.current) {
+                              skipSave.current = false;
+                              setEditingStockId(null);
+                            } else saveStock(id);
+                          }}
+                          className="w-16 px-1.5 py-1 border border-pink-300 rounded outline-none text-slate-700"
+                        />
+                      ) : (
+                        <button
+                          onClick={() => startStockEdit(item)}
+                          title="Zaxirani tahrirlash"
+                          className={`font-semibold hover:underline ${lowStock(item) ? "text-red-500" : "text-slate-600"}`}
+                        >
+                          {item.quantity ?? 0}
+                          {lowStock(item) && <span className="block text-[10px] font-normal">kam qoldi</span>}
+                        </button>
+                      )}
                       <button
-                        onClick={() => startStockEdit(item)}
-                        title="Zaxirani tahrirlash"
-                        className={`font-semibold hover:underline ${lowStock(item) ? "text-red-500" : "text-slate-600"}`}
+                        onClick={() => setStockProduct(item)}
+                        title="Zaxira harakati: kirim / chiqim / tuzatish"
+                        className="text-slate-400 hover:text-pink-500"
                       >
-                        {item.quantity ?? 0}
-                        {lowStock(item) && <span className="block text-[10px] font-normal">kam qoldi</span>}
+                        <FiBox className="text-base" />
                       </button>
-                    )}
+                    </div>
                   </td>
                   <td className={`${td} text-slate-500 first-letter:uppercase`}>{category}</td>
                   <td className={`${td} text-slate-500 first-letter:uppercase`}>{date.toString()}</td>
@@ -427,6 +438,11 @@ const ProductDetail = () => {
 
       {/* QR dialog */}
       {qrProduct && <ProductQRCode product={qrProduct} onClose={() => setQrProduct(null)} />}
+
+      {/* Stock movement (kirim / chiqim / tuzatish) */}
+      {stockProduct && (
+        <StockMovementModal product={stockProduct} onClose={() => setStockProduct(null)} />
+      )}
 
       {/* Bulk price modal */}
       {priceModalOpen && (

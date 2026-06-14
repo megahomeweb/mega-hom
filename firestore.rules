@@ -86,6 +86,18 @@ service cloud.firestore {
       allow read, write: if callerRank() >= 2;
     }
 
+    // Inventory movement ledger (kirim/chiqim/tuzatish) — manager+ records and
+    // reads; immutable once written (no client update/delete) so the audit trail
+    // can't be quietly rewritten. The matching products.quantity write in the
+    // same batch is already covered by the products rule (manager+).
+    match /stockMovements/{id} {
+      allow read: if callerRank() >= 2;
+      allow create: if callerRank() >= 2
+        && request.resource.data.delta is number
+        && request.resource.data.productId is string;
+      allow update, delete: if false;
+    }
+
     // Staff accounts. Self-signup may create ONLY a non-privileged 'user'.
     // admin+ manages others — never themselves, never at/above their own rank.
     match /user/{uid} {
