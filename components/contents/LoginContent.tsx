@@ -7,9 +7,11 @@ import { auth, fireDB } from "../../firebase/FirebaseConfig";
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { isStaffPlus } from "@/lib/roles";
 import GoogleAuthButton from "./GoogleAuthButton";
+import AuthShell from "./AuthShell";
 import Loader from "../Loader";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { FiMail, FiLock, FiEye, FiEyeOff } from "react-icons/fi";
 
 interface StoredUser {
   name: string;
@@ -44,6 +46,7 @@ const friendlyAuthError = (code: string): string => {
 
 const LoginContent = () => {
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const [form, setForm] = useState({ email: "", password: "" });
 
@@ -136,69 +139,120 @@ const LoginContent = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-body px-4">
+    <AuthShell>
       {loading && <Loader />}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleLogin();
-        }}
-        className="login_Form bg-white w-full max-w-sm px-8 py-7 border border-gray-100 rounded-xl shadow-lg"
-      >
-        <h2 className="text-center text-2xl font-bold text-brand mb-1">
-          Kirish
-        </h2>
-        <p className="text-center text-sm text-gray-500 mb-6">
-          Hisobingizga kiring
-        </p>
 
-        <div className="mb-3">
-          <input
-            type="email"
-            name="email"
-            autoComplete="email"
-            placeholder="Email manzil"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            className="bg-white border border-gray-200 focus:border-brand focus:ring-1 focus:ring-brand px-3 py-2 w-full rounded-md outline-none placeholder-gray-400"
-          />
-        </div>
+      <div className="w-full max-w-[420px]">
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight text-[#1A1414]">
+            Kirish
+          </h1>
+          <p className="mt-2 text-base text-[#575353]">
+            Hisobingizga kiring va doʼkoningizni boshqaring.
+          </p>
+        </header>
 
-        <div className="mb-5">
-          <input
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            placeholder="Parol"
-            value={form.password}
-            onChange={(e) => setForm({ ...form, password: e.target.value })}
-            className="bg-white border border-gray-200 focus:border-brand focus:ring-1 focus:ring-brand px-3 py-2 w-full rounded-md outline-none placeholder-gray-400"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-brand hover:bg-brand/90 disabled:opacity-60 w-full text-white py-2.5 font-semibold rounded-md transition-colors"
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleLogin();
+          }}
+          className="space-y-5"
+          noValidate
         >
-          {loading ? "Kirilmoqda..." : "Kirish"}
-        </button>
+          <div>
+            <label
+              htmlFor="login-email"
+              className="block text-sm font-medium text-[#1A1414]"
+            >
+              Email manzil
+            </label>
+            <div className="relative mt-2">
+              <FiMail
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9A9595]"
+              />
+              <input
+                id="login-email"
+                type="email"
+                name="email"
+                autoComplete="email"
+                inputMode="email"
+                placeholder="siz@megahome.uz"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                className="block w-full rounded-xl border border-[#E5E1E1] bg-white py-3.5 pl-11 pr-4 text-base text-[#1A1414] placeholder-[#9A9595] outline-none transition-colors focus:border-brand focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1"
+              />
+            </div>
+          </div>
 
-        <div className="flex items-center gap-3 my-4">
-          <span className="h-px bg-gray-200 flex-1" />
-          <span className="text-xs text-gray-400">yoki</span>
-          <span className="h-px bg-gray-200 flex-1" />
-        </div>
-        <GoogleAuthButton disabled={loading} />
+          <div>
+            <label
+              htmlFor="login-password"
+              className="block text-sm font-medium text-[#1A1414]"
+            >
+              Parol
+            </label>
+            <div className="relative mt-2">
+              <FiLock
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#9A9595]"
+              />
+              <input
+                id="login-password"
+                type={showPassword ? "text" : "password"}
+                name="password"
+                autoComplete="current-password"
+                placeholder="Parolingiz"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                className="block w-full rounded-xl border border-[#E5E1E1] bg-white py-3.5 pl-11 pr-12 text-base text-[#1A1414] placeholder-[#9A9595] outline-none transition-colors focus:border-brand focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "Parolni yashirish" : "Parolni koʼrsatish"}
+                aria-pressed={showPassword}
+                className="absolute inset-y-0 right-0 flex items-center rounded-r-xl px-4 text-[#575353] outline-none transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-1"
+              >
+                {showPassword ? (
+                  <FiEyeOff className="h-5 w-5" aria-hidden="true" />
+                ) : (
+                  <FiEye className="h-5 w-5" aria-hidden="true" />
+                )}
+              </button>
+            </div>
+          </div>
 
-        <p className="text-sm text-gray-600 mt-5 text-center">
-          Hisobingiz yo&apos;qmi?{" "}
-          <Link className="text-brand font-semibold" href="/sign-up">
-            Ro&apos;yxatdan o&apos;ting
+          <button
+            type="submit"
+            disabled={loading}
+            aria-busy={loading}
+            className="w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-white shadow-brand transition-colors hover:bg-[#A91616] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 motion-safe:active:scale-[0.99]"
+          >
+            {loading ? "Kirilmoqda..." : "Kirish"}
+          </button>
+
+          <div className="flex items-center gap-4 py-1" aria-hidden="true">
+            <span className="h-px flex-1 bg-[#E5E1E1]" />
+            <span className="text-sm text-[#575353]">yoki</span>
+            <span className="h-px flex-1 bg-[#E5E1E1]" />
+          </div>
+
+          <GoogleAuthButton disabled={loading} />
+        </form>
+
+        <p className="mt-8 text-base text-[#575353]">
+          Hisobingiz yoʼqmi?{" "}
+          <Link
+            href="/sign-up"
+            className="rounded font-semibold text-brand underline-offset-4 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          >
+            Roʼyxatdan oʼting
           </Link>
         </p>
-      </form>
-    </div>
+      </div>
+    </AuthShell>
   );
 };
 
