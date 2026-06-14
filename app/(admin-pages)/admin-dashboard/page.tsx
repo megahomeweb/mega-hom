@@ -39,26 +39,26 @@ const Admin = () => {
   const canStaff = isAdminPlus(me?.role);
 
   return (
-    <>
+    <div className="brand-mesh min-h-screen pb-10">
       {/* Top */}
-      <div className="mb-5 px-5 mt-5">
-        <div className="flex items-center justify-between bg-pink-50 px-5 py-2 border border-pink-100 rounded-lg">
-          <h1 className="text-2xl font-bold text-pink-500">Admin Dashboard</h1>
+      <div className="mb-5 px-5 pt-5">
+        <div className="flex items-center justify-between brand-header text-white px-5 py-3 rounded-xl shadow-lg shadow-brand/20">
+          <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
           <div className="flex items-center gap-4">
-            <Link className="font-medium text-pink-500 hover:text-pink-700" href={'/admin-dashboard/pos'}>
+            <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/pos'}>
               Kassa
             </Link>
             {canStaff && (
-              <Link className="font-medium text-pink-500 hover:text-pink-700" href={'/admin-dashboard/staff'}>
+              <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/staff'}>
                 Xodimlar
               </Link>
             )}
             {canCatalog && (
-              <Link className="font-medium text-pink-500 hover:text-pink-700" href={'/admin-dashboard/customers'}>
+              <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/customers'}>
                 Mijozlar
               </Link>
             )}
-            <Link className="font-medium text-pink-500 hover:text-pink-700" href={'/admin-dashboard/orders'}>
+            <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/orders'}>
               Orders
             </Link>
             <Popover className="relative lg:ml-5">
@@ -94,34 +94,42 @@ const Admin = () => {
         <>
           <DashboardKPIs />
           <TabGroup className="px-5">
-          <TabList className="flex flex-wrap text-center justify-center">
-            {/* Total Products */}
-            <Tab className="p-4 cursor-pointer outline-none">
-              <div className="flex items-center justify-center gap-4 border bg-pink-50 hover:bg-pink-100 border-pink-100 px-4 py-3 rounded-xl">
-                <div className="text-pink-500 size-12 inline-block">
-                  <svg xmlns="http://www.w3.org/2000/svg" width={50} height={50} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-shopping-basket">
-                    <path d="m5 11 4-7" /><path d="m19 11-4-7" /><path d="M2 11h20" /><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8c.9 0 1.8-.7 2-1.6l1.7-7.4" /><path d="m9 11 1 9" /><path d="M4.5 15.5h15" /><path d="m15 11-1 9" />
-                  </svg>
+          <TabList className="flex flex-wrap gap-4 justify-center py-2">
+            {/* Mahsulotlar — tap to view the product list */}
+            <Tab className="p-1 outline-none cursor-pointer">
+              {({ selected }: { selected: boolean }) => (
+                <div className={`shiny-border ${selected ? "shiny-border--active" : ""} transition-transform duration-200 hover:-translate-y-0.5`}>
+                  <div className={`flex items-center gap-4 px-5 py-3.5 rounded-[14px] transition-colors ${selected ? "bg-brand" : "bg-white hover:bg-pink-50"}`}>
+                    <div className={`size-11 inline-flex items-center justify-center rounded-xl ${selected ? "bg-white/15" : "bg-pink-50"}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width={26} height={26} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={selected ? "text-white" : "text-pink-500"}>
+                        <path d="m5 11 4-7" /><path d="m19 11-4-7" /><path d="M2 11h20" /><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8c.9 0 1.8-.7 2-1.6l1.7-7.4" /><path d="m9 11 1 9" /><path d="M4.5 15.5h15" /><path d="m15 11-1 9" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <h2 className={`font-bold text-3xl leading-none ${selected ? "text-white" : "text-pink-500"}`}>{products.length}</h2>
+                      <p className={`text-sm font-semibold mt-1 ${selected ? "text-white/90" : "text-slate-500"}`}>Mahsulotlar</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="title-font font-medium text-3xl text-pink-400 fonts1">{products.length}</h2>
-                  <p className="text-pink-500 font-bold">Total Products</p>
-                </div>
-              </div>
+              )}
             </Tab>
-            {/* Total Category */}
-            <Tab className="p-4 cursor-pointer outline-none">
-              <div className="flex items-center justify-center gap-4 border bg-pink-50 hover:bg-pink-100 border-pink-100 px-4 py-3 rounded-xl">
-                <div className="text-pink-500 w-12 h-12 inline-block">
-                  <svg xmlns="http://www.w3.org/2000/svg" width={50} height={50} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-grid">
-                    <rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" />
-                  </svg>
+            {/* Kategoriyalar — tap to view categories */}
+            <Tab className="p-1 outline-none cursor-pointer">
+              {({ selected }: { selected: boolean }) => (
+                <div className={`shiny-border ${selected ? "shiny-border--active" : ""} transition-transform duration-200 hover:-translate-y-0.5`}>
+                  <div className={`flex items-center gap-4 px-5 py-3.5 rounded-[14px] transition-colors ${selected ? "bg-brand" : "bg-white hover:bg-pink-50"}`}>
+                    <div className={`size-11 inline-flex items-center justify-center rounded-xl ${selected ? "bg-white/15" : "bg-pink-50"}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width={26} height={26} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className={selected ? "text-white" : "text-pink-500"}>
+                        <rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <h2 className={`font-bold text-3xl leading-none ${selected ? "text-white" : "text-pink-500"}`}>{categories.length}</h2>
+                      <p className={`text-sm font-semibold mt-1 ${selected ? "text-white/90" : "text-slate-500"}`}>Kategoriyalar</p>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="title-font font-medium text-3xl text-pink-400 fonts1">{categories.length}</h2>
-                  <p className="text-pink-500 font-bold">Total Category</p>
-                </div>
-              </div>
+              )}
             </Tab>
           </TabList>
           <TabPanels>
@@ -152,7 +160,7 @@ const Admin = () => {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 };
 

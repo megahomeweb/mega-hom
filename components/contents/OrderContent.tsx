@@ -20,6 +20,7 @@ import { useRole } from "../admin/RoleContext";
 import NoPhoto from "../NoPhoto";
 import { Order } from "@/lib/types";
 import { ordersToCSV } from "@/utils/importExport";
+import { printReceipt } from "@/utils/receipt";
 import { ORDER_STATUSES, OrderStatus, orderStatusMeta } from "@/lib/orderStatus";
 import { isAdminPlus } from "@/lib/roles";
 import { formatPhone } from "@/utils/phone";
@@ -68,79 +69,28 @@ const OrderContent = () => {
     }
   };
 
-  // Printable packing slip — built with DOM nodes (textContent escapes the
-  // customer-provided values; no innerHTML on user data).
+  // Printable slip — the shared thermal-receipt engine (utils/receipt.ts).
+  // A store sale prints a "CHEK"; a web/phone order prints a "BUYURTMA" slip
+  // carrying the delivery address + note for the courier.
   const printOrderSlip = (order: Order) => {
-    const win = window.open("", "_blank", "width=420,height=640");
-    if (!win) {
-      toast.error("Brauzer oynani bloklab qoʼydi — popup ruxsatini yoqing");
-      return;
-    }
-    const d = win.document;
-    d.title = `Buyurtma — ${order.clientName ?? ""}`;
-    const style = d.createElement("style");
-    style.textContent =
-      "body{font-family:-apple-system,Arial,sans-serif;padding:20px;color:#1e293b}" +
-      "h1{font-size:18px;margin:0 0 4px}.muted{color:#64748b;font-size:12px;margin:2px 0}" +
-      "table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}" +
-      "th,td{text-align:left;border-bottom:1px solid #e2e8f0;padding:6px 4px}" +
-      ".tot{font-weight:700;font-size:15px;margin-top:12px;text-align:right}";
-    d.head.appendChild(style);
-
-    const h = d.createElement("h1");
-    h.textContent = "megahome.uz — Buyurtma";
-    const cust = d.createElement("p");
-    cust.className = "muted";
-    cust.textContent = `${order.clientName ?? ""} ${order.clientLastName ?? ""} · ${formatPhone(order.clientPhone)}`;
-    const dt = d.createElement("p");
-    dt.className = "muted";
-    dt.textContent = order.date?.seconds ? new Date(order.date.seconds * 1000).toLocaleString() : "";
-    d.body.append(h);
-    if (order.orderNo) {
-      const ono = d.createElement("p");
-      ono.className = "muted";
-      ono.textContent = `Raqam: ${order.orderNo}`;
-      d.body.append(ono);
-    }
-    d.body.append(cust, dt);
-    // Delivery details (textContent escapes the customer-provided values).
-    for (const [label, value] of [["Manzil", order.deliveryAddress], ["Izoh", order.note]] as const) {
-      if (value) {
-        const p = d.createElement("p");
-        p.className = "muted";
-        p.textContent = `${label}: ${value}`;
-        d.body.append(p);
-      }
-    }
-
-    const table = d.createElement("table");
-    const headRow = d.createElement("tr");
-    ["Mahsulot", "Soni", "Narx"].forEach((label) => {
-      const thEl = d.createElement("th");
-      thEl.textContent = label;
-      headRow.appendChild(thEl);
+    const ok = printReceipt({
+      orderNo: order.orderNo,
+      dateMs: order.date?.seconds ? order.date.seconds * 1000 : Date.now(),
+      customerName: `${order.clientName ?? ""} ${order.clientLastName ?? ""}`.trim() || undefined,
+      customerPhone: order.clientPhone,
+      items: (order.basketItems ?? []).map((it) => ({
+        title: it.title,
+        quantity: it.quantity ?? 1,
+        price: it.price ?? 0,
+        vatRate: it.vatRate,
+      })),
+      total: order.totalPrice,
+      paymentMethod: order.paymentMethod,
+      deliveryAddress: order.deliveryAddress,
+      note: order.note,
+      heading: order.channel === "store" ? "CHEK" : "BUYURTMA",
     });
-    const thead = d.createElement("thead");
-    thead.appendChild(headRow);
-    const tbody = d.createElement("tbody");
-    (order.basketItems ?? []).forEach((it) => {
-      const tr = d.createElement("tr");
-      const c1 = d.createElement("td");
-      c1.textContent = it.title ?? "";
-      const c2 = d.createElement("td");
-      c2.textContent = String(it.quantity ?? 1);
-      const c3 = d.createElement("td");
-      c3.textContent = `${FormattedPrice(it.price ?? 0)} UZS`;
-      tr.append(c1, c2, c3);
-      tbody.appendChild(tr);
-    });
-    table.append(thead, tbody);
-    const tot = d.createElement("p");
-    tot.className = "tot";
-    tot.textContent = `Jami: ${FormattedPrice(order.totalPrice)} UZS`;
-    d.body.append(table, tot);
-
-    win.print();
+    if (!ok) toast.error("Brauzer oynani bloklab qoʼydi — popup ruxsatini yoqing");
   };
 
   return (

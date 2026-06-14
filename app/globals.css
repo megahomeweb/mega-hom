@@ -92,3 +92,104 @@
     transform: none !important;
   }
 }
+
+/* ------------------------------------------------------------------ *
+ * Admin polish — animated shiny border, soft brand mesh gradient,     *
+ * glass order-alert. Pure CSS (no WebGL / framer-motion), adapted to  *
+ * the brand red. All decorative → disabled under reduced-motion, and  *
+ * text always sits on solid surfaces so contrast is never affected.   *
+ * ------------------------------------------------------------------ */
+
+/* Animated angle for the conic shiny border. Progressive enhancement:  *
+ * where @property is unsupported the border is simply a static gradient.*/
+@property --shiny-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* Shiny gradient border: a 2px brand conic ring that slowly rotates,    *
+ * signalling "this card is interactive". Content sits inside on its own *
+ * solid surface (the mask cuts the centre out of the gradient).         */
+.shiny-border {
+  position: relative;
+  border-radius: 16px;
+  isolation: isolate;
+}
+.shiny-border::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--shiny-angle),
+    transparent 0deg,
+    #c21a1a 55deg,
+    #ff8f8f 110deg,
+    #c21a1a 165deg,
+    transparent 230deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  animation: shinySpin 5s linear infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+.shiny-border--active::before {
+  padding: 2.5px;
+  animation-duration: 3s;
+}
+@keyframes shinySpin {
+  to {
+    --shiny-angle: 360deg;
+  }
+}
+
+/* Slow, soft brand mesh gradient for the admin backdrop. */
+.brand-mesh {
+  background:
+    radial-gradient(60% 55% at 12% 18%, rgba(194, 26, 26, 0.10) 0%, transparent 60%),
+    radial-gradient(55% 50% at 88% 12%, rgba(255, 153, 102, 0.12) 0%, transparent 55%),
+    radial-gradient(60% 60% at 78% 88%, rgba(194, 26, 26, 0.08) 0%, transparent 60%),
+    radial-gradient(50% 50% at 22% 82%, rgba(255, 190, 130, 0.10) 0%, transparent 55%),
+    #fff7f7;
+  background-size: 180% 180%;
+  animation: meshDrift 24s ease-in-out infinite alternate;
+}
+@keyframes meshDrift {
+  0% { background-position: 0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 0; }
+  100% { background-position: 25% 18%, 72% 28%, 60% 72%, 28% 78%, 0 0; }
+}
+
+/* Animated brand header gradient — white text sits on it (AAA contrast). */
+.brand-header {
+  background: linear-gradient(110deg, #c21a1a 0%, #9e1414 42%, #c21a1a 68%, #d83a3a 100%);
+  background-size: 220% 100%;
+  animation: headerShift 14s ease-in-out infinite alternate;
+}
+@keyframes headerShift {
+  0% { background-position: 0% 0; }
+  100% { background-position: 100% 0; }
+}
+
+/* Glass order-alert toast entrance. */
+.glass-toast {
+  animation: glassToastIn 0.28s cubic-bezier(0.4, 1.4, 0.5, 1);
+}
+@keyframes glassToastIn {
+  0% { opacity: 0; transform: translateY(-10px) scale(0.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shiny-border::before,
+  .brand-mesh,
+  .brand-header,
+  .glass-toast {
+    animation: none !important;
+  }
+}

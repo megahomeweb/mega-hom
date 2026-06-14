@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef } from "react";
-import toast from "react-hot-toast";
+import toast, { Toast } from "react-hot-toast";
 import { collection, onSnapshot, query } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { Order } from "@/lib/types";
@@ -97,8 +97,46 @@ const OrderNotifier = () => {
     playDing();
     const name = `${o.clientName ?? ""} ${o.clientLastName ?? ""}`.trim() || "Mijoz";
     const total = `${FormattedPrice(o.totalPrice)} UZS`;
+    const items = `${o.totalQuantity ?? o.basketItems?.length ?? 0} dona`;
+    const channel = o.channel === "store" ? "Doʼkon" : "Sayt";
 
-    toast.success(`🛒 Yangi buyurtma! ${name} — ${total}`, { duration: 8000 });
+    // Enterprise "liquid glass" order alert (pure CSS backdrop-blur, brand-tinted)
+    // with a one-tap link straight to the order.
+    toast.custom(
+      (t: Toast) => (
+        <div className={`glass-toast pointer-events-auto ${t.visible ? "" : "opacity-0"}`}>
+          <div className="flex items-start gap-3 w-[340px] max-w-[90vw] rounded-2xl border border-white/40 bg-white/70 px-4 py-3 shadow-[0_8px_40px_rgba(194,26,26,0.18)] ring-1 ring-black/5 backdrop-blur-xl">
+            <div className="inline-flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand text-lg text-white shadow-brand">
+              🛒
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="font-bold leading-tight text-[#1A1414]">Yangi buyurtma!</p>
+              <p className="truncate text-sm text-[#575353]">
+                {name} · {channel}
+              </p>
+              <p className="mt-0.5 text-sm font-semibold text-brand">
+                {total} · {items}
+              </p>
+              <a
+                href="/admin-dashboard/orders"
+                onClick={() => toast.dismiss(t.id)}
+                className="mt-2 inline-block rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#A91616]"
+              >
+                Buyurtmani koʼrish →
+              </a>
+            </div>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              aria-label="Yopish"
+              className="shrink-0 text-[#9A9595] hover:text-[#575353]"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 8000 }
+    );
 
     try {
       if (typeof Notification !== "undefined" && Notification.permission === "granted") {
