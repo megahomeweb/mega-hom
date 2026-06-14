@@ -2,6 +2,9 @@
 import Loader from "@/components/Loader";
 import { fireDB, fireStorage } from "@/firebase/FirebaseConfig";
 import { CategoryI, ImageT } from "@/lib/types";
+import { isManagerPlus } from "@/lib/roles";
+import { useRole } from "@/components/admin/RoleContext";
+import NoAccess from "@/components/admin/NoAccess";
 import useCategoryStore from "@/zustand/useCategoryStore";
 import { Switch } from "@headlessui/react";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
@@ -15,6 +18,7 @@ const AddProductPage = () => {
   const [loading, setLoading] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<CategoryI | null>(null);
   const { categories, fetchCategories } = useCategoryStore();
+  const me = useRole();
 
   useEffect(() => {
     fetchCategories();
@@ -110,6 +114,8 @@ const AddProductPage = () => {
     }
   };
   
+  if (!isManagerPlus(me?.role)) return <NoAccess min="manager" />;
+
   return (
     <div className="flex justify-center items-center h-screen">
       {loading && <Loader />}
