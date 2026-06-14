@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useOrderStore } from "@/zustand/useOrderStore";
 import { orderStatusMeta } from "@/lib/orderStatus";
 import { aggregateOrders, startOfToday, startOfDaysAgo } from "@/lib/reports";
+import useExpenseStore from "@/zustand/useExpenseStore";
 import { FormattedPrice } from "@/utils";
 
 const card = "rounded-xl border border-pink-100 bg-pink-50 px-4 py-3 text-center";
@@ -18,11 +19,13 @@ const PERIODS: { key: Period; label: string }[] = [
 // shared reports reducer. Revenue/profit EXCLUDE cancelled (bekor) orders.
 const DashboardKPIs = () => {
   const { orders, fetchAllOrders } = useOrderStore();
+  const { expenses, fetchExpenses } = useExpenseStore();
   const [period, setPeriod] = useState<Period>("today");
 
   useEffect(() => {
     fetchAllOrders();
-  }, [fetchAllOrders]);
+    fetchExpenses();
+  }, [fetchAllOrders, fetchExpenses]);
 
   const kpi = useMemo(() => {
     const from =
@@ -31,14 +34,21 @@ const DashboardKPIs = () => {
     const web = aggregateOrders(orders, { from, channel: "web" });
     const store = aggregateOrders(orders, { from, channel: "store" });
 
+    // Period expenses → true net profit = gross profit − expenses.
+    let expenseTotal = 0;
+    for (const e of expenses) {
+      const ms = e.date?.seconds ? e.date.seconds * 1000 : 0;
+      if (ms >= from) expenseTotal += Number(e.amount) || 0;
+    }
+
     // Pending is an all-time operational queue, not period-scoped.
     let pending = 0;
     for (const o of orders) {
       const st = orderStatusMeta(o.status).key;
       if (st === "yangi" || st === "tasdiqlangan" || st === "yetkazilmoqda") pending++;
     }
-    return { all, web, store, pending };
-  }, [orders, period]);
+    return { all, web, store, pending, expenseTotal, net: all.profit - expenseTotal };
+  }, [orders, expenses, period]);
 
   return (
     <div className="px-5 mb-4">
@@ -59,7 +69,7 @@ const DashboardKPIs = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         <div className={card}>
           <p className="text-xs text-slate-500">Buyurtmalar</p>
           <p className="text-2xl font-bold text-pink-500">{kpi.all.count}</p>
@@ -73,9 +83,21 @@ const DashboardKPIs = () => {
           </p>
         </div>
         <div className={card}>
-          <p className="text-xs text-slate-500">Foyda</p>
+          <p className="text-xs text-slate-500">Yalpi foyda</p>
           <p className="text-2xl font-bold text-pink-500">{FormattedPrice(kpi.all.profit)}</p>
-          <p className="text-[10px] text-slate-400">tan narx kiritilsa aniq</p>
+          <p className="text-[10px] text-slate-400">savdo − tan narx</p>
+        </div>
+        <div className={card}>
+          <p className="text-xs text-slate-500">Xarajat</p>
+          <p className="text-2xl font-bold text-pink-500">{FormattedPrice(kpi.expenseTotal)}</p>
+          <p className="text-[10px] text-slate-400">davr boʼyicha</p>
+        </div>
+        <div className={card}>
+          <p className="text-xs text-slate-500">Net foyda</p>
+          <p className={`text-2xl font-bold ${kpi.net < 0 ? "text-red-500" : "text-green-600"}`}>
+            {FormattedPrice(kpi.net)}
+          </p>
+          <p className="text-[10px] text-slate-400">foyda − xarajat</p>
         </div>
         <div className={card}>
           <p className="text-xs text-slate-500">Kutilayotgan</p>

@@ -51,6 +51,19 @@ export interface ImageT {
   path: string;
 }
 
+// A business expense (chiqim) — rent, salary, utilities, restock cost, ads, etc.
+// Net profit = realized revenue − COGS − expenses (over a period).
+export interface Expense {
+  id: string;
+  title: string;
+  amount: number;
+  category: string;   // Ijara / Maosh / Kommunal / Tovar / Reklama / Boshqa
+  note?: string;
+  date: Timestamp;
+  actorName: string;
+  actorUid: string;
+}
+
 export interface Order {
   id: string;
   orderNo?: string;           // short human-quotable reference (e.g. MH-K3F9A2) — docId stays the real key
