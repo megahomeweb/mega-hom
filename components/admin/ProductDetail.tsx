@@ -232,7 +232,7 @@ const ProductDetail = () => {
   return (
     <div>
       <div className="py-5 flex flex-wrap gap-3 justify-between items-center">
-        <h1 className=" text-xl text-pink-300 font-bold">All Product</h1>
+        <h1 className=" text-xl text-pink-300 font-bold">Mahsulotlar</h1>
         <div className="flex items-center gap-2 flex-wrap">
           <ProductImportExport />
           <Link
@@ -242,7 +242,7 @@ const ProductDetail = () => {
             <BsQrCode className="text-base" /> QR kodlar
           </Link>
           <Link href={"/admin-dashboard/add-product"}>
-            <button className="px-5 py-2 bg-pink-50 border border-pink-100 rounded-lg">Add Product</button>
+            <button className="px-5 py-2 bg-pink-50 border border-pink-100 rounded-lg">Mahsulot qoʼshish</button>
           </Link>
         </div>
       </div>
@@ -291,20 +291,20 @@ const ProductDetail = () => {
               <th scope="col" className={th}>
                 <input type="checkbox" checked={allSelected} onChange={toggleSelectAll} className="size-4 accent-pink-500" />
               </th>
-              <th scope="col" className={th}>S.No.</th>
-              <th scope="col" className={th}>Image</th>
-              <th scope="col" className={th}>Title</th>
+              <th scope="col" className={th}>№</th>
+              <th scope="col" className={th}>Rasm</th>
+              <th scope="col" className={th}>Nomi</th>
               <th scope="col" className={`${th} min-w-24`}>Narx / Tan</th>
               <th scope="col" className={th}>Zaxira</th>
-              <th scope="col" className={th}>Category</th>
-              <th scope="col" className={`${th} min-w-24`}>Date</th>
-              <th scope="col" className={th}>isNew</th>
-              <th scope="col" className={th}>isBest</th>
+              <th scope="col" className={th}>Kategoriya</th>
+              <th scope="col" className={`${th} min-w-24`}>Sana</th>
+              <th scope="col" className={th}>Yangi</th>
+              <th scope="col" className={th}>Top</th>
               <th scope="col" className={th}>Koʼrinadi</th>
               <th scope="col" className={th}>QR / Havola</th>
               <th scope="col" className={th}>Nusxa</th>
-              <th scope="col" className={th}>Action</th>
-              <th scope="col" className={th}>Action</th>
+              <th scope="col" className={th}>Tahrir</th>
+              <th scope="col" className={th}>Oʼchirish</th>
             </tr>
             {visible.map((item, index) => {
               const { id, title, price, costPrice, category, date, productImageUrl } = item;
@@ -394,7 +394,7 @@ const ProductDetail = () => {
                       )}
                       <button
                         onClick={() => setStockProduct(item)}
-                        title="Zaxira harakati: kirim / chiqim / tuzatish"
+                        title="Zaxira harakati: qoʼshish / ayirish / tuzatish"
                         className="text-slate-400 hover:text-pink-500"
                       >
                         <FiBox className="text-base" />

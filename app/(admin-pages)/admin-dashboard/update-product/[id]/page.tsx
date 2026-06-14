@@ -130,17 +130,17 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
     const imageRef = ref(fireStorage, `products/${updatedProduct.storageFileId}/${imageUrl.split('/').pop()}`);
     try {
       await deleteObject(imageRef);
-      toast.success("Image deleted successfully");
+      toast.success("Rasm oʼchirildi");
     } catch (error) {
       console.error("Error deleting image:", error);
-      toast.error("Failed to delete image");
+      toast.error("Rasmni oʼchirib boʼlmadi");
     }
   };
 
   const handleUpdate = async () => {
     if (projectId) {
       await updateProduct(projectId, updatedProduct);
-      toast.success('Product Updated Successfully');
+      toast.success('Mahsulot yangilandi');
       navigate.push('/admin-dashboard');
     }
   };
@@ -159,7 +159,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
         {/* Top Heading  */}
         <div className="mb-5">
           <h2 className="text-center text-2xl font-bold text-pink-500 ">
-            update product
+            Mahsulotni tahrirlash
           </h2>
         </div>
         {/* Input One  */}
@@ -167,7 +167,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
           <input
             type="text"
             name="title"
-            placeholder="Product Title"
+            placeholder="Mahsulot nomi"
             value={updatedProduct.title}
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, title: e.target.value })}
             className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
@@ -241,7 +241,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
               handleGetSubCategory(e.target.value)
             }}
           >
-            <option disabled>Select Product Category</option>
+            <option disabled>Kategoriyani tanlang</option>
             {categories.map((value) => {
               const { name, id } = value;
               return (
@@ -269,7 +269,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             }}
             className="w-full px-1 py-2 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none  "
           >
-            <option >Select Product Sub Category</option>
+            <option >Subkategoriyani tanlang</option>
             {selectedCategory?.subcategory.map((value,idx) => {
               return (
                 <option
@@ -287,7 +287,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
         <div className="mb-3">
           <textarea
             name="description"
-            placeholder="Product Description"
+            placeholder="Mahsulot tavsifi"
             rows={5}
             value={updatedProduct?.description}
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, description: e.target.value })}
@@ -327,7 +327,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
         <div className="flex items-start divide-x-2 gap-4 mb-3">
           <div>
             <span className="text-sm text-brand block capitalize mb-1">
-              best product
+              Top mahsulot
             </span>
             <Switch
               checked={updatedProduct.isBest}
@@ -345,7 +345,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
           </div>
           <div className="pl-4">
             <span className="text-sm text-brand block capitalize mb-1">
-              new product
+              Yangi mahsulot
             </span>
             <Switch
               checked={updatedProduct.isNew}
@@ -367,9 +367,9 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
           <button
             type="button"
             onClick={handleUpdate}
-            className="bg-pink-500 hover:bg-pink-600 w-full text-white text-center py-2 font-bold rounded-md capitalize"
+            className="bg-pink-500 hover:bg-pink-600 w-full text-white text-center py-2 font-bold rounded-md"
           >
-            update product
+            Saqlash
           </button>
         </div>
       </div>

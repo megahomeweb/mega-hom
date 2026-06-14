@@ -90,7 +90,7 @@ const AddProductPage = () => {
       product.category == "" ||
       product.description == ""
     ) {
-      return toast.error("all fields are required");
+      return toast.error("Barcha asosiy maydonlarni toʼldiring");
     }
 
     setLoading(true);
@@ -104,13 +104,13 @@ const AddProductPage = () => {
         costPrice: Number(product.costPrice) || 0,
         quantity: Number(product.quantity) || 0,
       });
-      toast.success("Add product successfully");
+      toast.success("Mahsulot qoʼshildi");
       navigate.push("/admin-dashboard");
       setLoading(false);
     } catch (error) {
       console.log(error);
       setLoading(false);
-      toast.error("Add product failed");
+      toast.error("Mahsulot qoʼshib boʼlmadi");
     }
   };
   
@@ -123,7 +123,7 @@ const AddProductPage = () => {
       <div className="login_Form bg-pink-50 px-8 py-6 border border-pink-100 rounded-xl shadow-md">
         {/* Top Heading  */}
         <div className="mb-5">
-          <h2 className="text-center text-2xl font-bold text-pink-500 ">Add product</h2>
+          <h2 className="text-center text-2xl font-bold text-pink-500 ">Mahsulot qoʼshish</h2>
         </div>
         {/* Input title  */}
         <div className="mb-3">
@@ -137,7 +137,7 @@ const AddProductPage = () => {
                 title: e.target.value,
               });
             }}
-            placeholder="Product Title"
+            placeholder="Mahsulot nomi"
             className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
           />
         </div>
@@ -185,7 +185,7 @@ const AddProductPage = () => {
             multiple
             name="productImageUrl"
             onChange={(e) => handleImageUpload(e.target.files)}
-            placeholder="Product Image Url"
+            placeholder="Mahsulot rasmi"
             accept="image/*"
             className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
           />
@@ -203,7 +203,7 @@ const AddProductPage = () => {
             }}
             className="w-full px-1 py-2 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none  "
           >
-            <option >Select Product Category</option>
+            <option >Kategoriyani tanlang</option>
             {categories.map((value) => {
               const { name, id } = value;
               return (
@@ -231,7 +231,7 @@ const AddProductPage = () => {
             }}
             className="w-full px-1 py-2 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none  "
           >
-            <option >Select Product Sub Category</option>
+            <option >Subkategoriyani tanlang</option>
             {selectedCategory?.subcategory.map((value,idx) => {
               return (
                 <option
@@ -256,7 +256,7 @@ const AddProductPage = () => {
               });
             }}
             name="description"
-            placeholder="Product Description"
+            placeholder="Mahsulot tavsifi"
             rows={5}
             className=" w-full px-2 py-1 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none placeholder-pink-300 "
           ></textarea>
@@ -294,7 +294,7 @@ const AddProductPage = () => {
         <div className="flex items-start divide-x-2 gap-4 mb-3">
           <div>
             <span className="text-sm text-brand block capitalize mb-1">
-              best product
+              Top mahsulot
             </span>
             <Switch
               checked={product.isBest}
@@ -312,7 +312,7 @@ const AddProductPage = () => {
           </div>
           <div className="pl-4">
             <span className="text-sm text-brand block capitalize mb-1">
-              new product
+              Yangi mahsulot
             </span>
             <Switch
               checked={product.isNew}
@@ -337,7 +337,7 @@ const AddProductPage = () => {
             type="button"
             className="bg-pink-500 hover:bg-pink-600 w-full text-white text-center py-2 font-bold rounded-md "
           >
-            Add product
+            Saqlash
           </button>
         </div>
       </div>

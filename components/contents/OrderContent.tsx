@@ -116,7 +116,7 @@ const OrderContent = () => {
   return (
     <>
       <div className="flex flex-wrap gap-3 justify-between items-center">
-        <h2 className="text-xl sm:text-2xl font-bold capitalize">All Orders</h2>
+        <h2 className="text-xl sm:text-2xl font-bold">Buyurtmalar</h2>
         <div className="flex items-center gap-2">
           <button
             type="button"
