@@ -12,6 +12,7 @@ import useProductStore from "@/zustand/useProductStore";
 import { useOrderStore, StoreSaleItem } from "@/zustand/useOrderStore";
 import { ProductT } from "@/lib/types";
 import { FormattedPrice } from "@/utils";
+import { printReceipt } from "@/utils/receipt";
 
 // In-store counter (POS) — cash sales recorded into the same orders collection
 // as the website (channel:"store", status:"sotildi"). Fiscal receipt + card
@@ -26,6 +27,8 @@ const POSContent = () => {
   const [name, setName] = useState("");
   const [cash, setCash] = useState("");
   const [busy, setBusy] = useState(false);
+  const [printChek, setPrintChek] = useState(true);
+  const [chekWidth, setChekWidth] = useState<58 | 80>(80);
   const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -104,8 +107,16 @@ const POSContent = () => {
     if (!basket.length) return toast.error("Savatcha boʼsh");
     if (cash && cashNum < total) return toast.error("Naqd pul yetarli emas");
     setBusy(true);
+    // Snapshot everything the receipt needs BEFORE the form is cleared.
+    const receiptItems = basket.map((b) => ({
+      title: b.title,
+      quantity: b.quantity,
+      price: b.price,
+      vatRate: b.vatRate,
+    }));
+    const tendered = cash !== "" ? cashNum : undefined;
     try {
-      await addStoreSale({
+      const { orderNo } = await addStoreSale({
         basketItems: basket,
         totalPrice: total,
         totalQuantity: totalQty,
@@ -116,6 +127,23 @@ const POSContent = () => {
         paymentMethod: "naqd",
       });
       toast.success(`Sotuv yakunlandi — ${FormattedPrice(total)} UZS`);
+      if (printChek) {
+        const ok = printReceipt({
+          orderNo,
+          dateMs: Date.now(),
+          cashier: me?.name,
+          customerName: name.trim() || undefined,
+          customerPhone: phone.trim() || undefined,
+          items: receiptItems,
+          total,
+          cash: tendered,
+          change: tendered !== undefined ? tendered - total : undefined,
+          paymentMethod: "naqd",
+          widthMm: chekWidth,
+          heading: "CHEK",
+        });
+        if (!ok) toast.error("Chek oynasi bloklandi — popup ruxsatini yoqing");
+      }
       setBasket([]);
       setPhone("");
       setName("");
@@ -244,6 +272,28 @@ const POSContent = () => {
             {cash !== "" && cashNum >= total && (
               <p className="text-sm text-green-600 font-medium">Qaytim: {FormattedPrice(change)} UZS</p>
             )}
+          </div>
+
+          <div className="flex items-center justify-between mt-3 text-sm">
+            <label className="flex items-center gap-2 text-slate-600 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={printChek}
+                onChange={(e) => setPrintChek(e.target.checked)}
+                className="size-4 accent-pink-500"
+              />
+              🧾 Chek chiqarish
+            </label>
+            <select
+              value={chekWidth}
+              onChange={(e) => setChekWidth(Number(e.target.value) as 58 | 80)}
+              disabled={!printChek}
+              title="Chek qogʼozi eni"
+              className="border border-slate-200 rounded-lg px-2 py-1 text-slate-600 outline-none disabled:opacity-50"
+            >
+              <option value={80}>80 mm</option>
+              <option value={58}>58 mm</option>
+            </select>
           </div>
 
           <button

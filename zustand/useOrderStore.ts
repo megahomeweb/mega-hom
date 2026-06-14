@@ -41,7 +41,7 @@ interface StoreState {
   currentOrder: Order | null;
   loadingOrders: boolean;
   addOrder: (order: Order) => Promise<void>;
-  addStoreSale: (sale: StoreSaleInput) => Promise<void>;
+  addStoreSale: (sale: StoreSaleInput) => Promise<{ id: string; orderNo: string }>;
   fetchAllOrders: () => void;
   updateOrderStatus: (id: string, status: OrderStatus, actor?: string) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
@@ -172,13 +172,15 @@ export const useOrderStore = create<StoreState>((set, get) => ({
   addStoreSale: async (sale: StoreSaleInput) => {
     const batch = writeBatch(fireDB);
     const orderRef = doc(collection(fireDB, "orders"));
+    const orderNo = genOrderNo();
     // stockApplied:true — the decrement happens HERE atomically, so the
     // fulfillment hook never double-applies a POS sale.
-    batch.set(orderRef, { ...sale, orderNo: genOrderNo(), channel: "store", status: "sotildi", stockApplied: true, date: new Date() });
+    batch.set(orderRef, { ...sale, orderNo, channel: "store", status: "sotildi", stockApplied: true, date: new Date() });
     for (const item of sale.basketItems) {
       batch.update(doc(fireDB, "products", item.id), { quantity: increment(-item.quantity) });
     }
     await batch.commit();
+    return { id: orderRef.id, orderNo };
   },
 
   // Remove an order (admin+ only — e.g. spam or a test order).
