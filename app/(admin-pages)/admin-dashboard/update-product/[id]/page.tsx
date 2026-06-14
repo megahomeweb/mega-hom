@@ -34,6 +34,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
     id: projectId || '',
     title: '',
     price: 0,
+    costPrice: 0,
     productImageUrl: [] as ImageT[],
     category: '',
     subCategory: '',
@@ -65,6 +66,8 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
         id: product.id,
         title: product.title,
         price: product.price,
+        costPrice: product.costPrice ?? 0,
+        lowStockThreshold: product.lowStockThreshold,
         productImageUrl: product.productImageUrl,
         category: product.category,
         subCategory: product.subCategory,
@@ -169,10 +172,31 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
           <input
             type="number"
             name="price"
-            placeholder="Product Price"
+            placeholder="Sotish narxi (UZS)"
             value={updatedProduct?.price}
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: +e.target.value })}
             className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
+          />
+        </div>
+        {/* Cost (tan narx) + Stock (zaxira) */}
+        <div className="mb-3 flex gap-3 w-96">
+          <input
+            type="number"
+            name="costPrice"
+            value={updatedProduct.costPrice ?? 0}
+            onChange={(e) => setUpdatedProduct({ ...updatedProduct, costPrice: +e.target.value })}
+            placeholder="Tan narx (xarid)"
+            title="Tan narx — foyda shu asosda hisoblanadi (mijozga koʼrinmaydi)"
+            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-pink-300"
+          />
+          <input
+            type="number"
+            name="quantity"
+            value={updatedProduct.quantity}
+            onChange={(e) => setUpdatedProduct({ ...updatedProduct, quantity: +e.target.value })}
+            placeholder="Zaxira (dona)"
+            title="Ombordagi miqdor"
+            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-32 rounded-md outline-none placeholder-pink-300"
           />
         </div>
         {/* Display uploaded images with delete option */}

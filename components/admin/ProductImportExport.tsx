@@ -63,6 +63,7 @@ const ProductImportExport = () => {
         data: {
           // defaults first, then whatever the file provided on top
           price: 0,
+          costPrice: 0,
           quantity: 0,
           category: "",
           subCategory: "",

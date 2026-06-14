@@ -36,6 +36,8 @@ const ProductDetail = () => {
   const [pendingDelete, setPendingDelete] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPrice, setEditPrice] = useState("");
+  const [editingStockId, setEditingStockId] = useState<string | null>(null);
+  const [editStock, setEditStock] = useState("");
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [priceMode, setPriceMode] = useState<"inc" | "dec" | "set">("inc");
   const [priceValue, setPriceValue] = useState("");
@@ -203,6 +205,26 @@ const ProductDetail = () => {
     }
   };
 
+  /* ----------------------------- inline stock ------------------------------ */
+  const startStockEdit = (item: ProductT) => {
+    setEditingStockId(item.id);
+    setEditStock(String(item.quantity ?? 0));
+  };
+  const saveStock = async (id: string) => {
+    const val = parseInt(editStock, 10);
+    const current = products.find((p) => p.id === id);
+    setEditingStockId(null);
+    if (isNaN(val) || val < 0 || !current || current.quantity === val) return;
+    try {
+      await patchProduct(id, { quantity: val });
+      toast.success("Zaxira yangilandi");
+    } catch {
+      toast.error("Saqlab boʼlmadi");
+    }
+  };
+  // Stock at/under this flags "kam qoldi" (red). Per-product override or default 5.
+  const lowStock = (p: ProductT) => (p.quantity ?? 0) <= (p.lowStockThreshold ?? 5);
+
   const handleDelete = (item: ProductT) => deleteWithUndo([item]);
 
   return (
@@ -270,7 +292,8 @@ const ProductDetail = () => {
               <th scope="col" className={th}>S.No.</th>
               <th scope="col" className={th}>Image</th>
               <th scope="col" className={th}>Title</th>
-              <th scope="col" className={`${th} min-w-24`}>Price</th>
+              <th scope="col" className={`${th} min-w-24`}>Narx / Tan</th>
+              <th scope="col" className={th}>Zaxira</th>
               <th scope="col" className={th}>Category</th>
               <th scope="col" className={`${th} min-w-24`}>Date</th>
               <th scope="col" className={th}>isNew</th>
@@ -282,7 +305,7 @@ const ProductDetail = () => {
               <th scope="col" className={th}>Action</th>
             </tr>
             {visible.map((item, index) => {
-              const { id, title, price, category, date, productImageUrl } = item;
+              const { id, title, price, costPrice, category, date, productImageUrl } = item;
               const isSel = selected.has(id);
               return (
                 <tr key={id} className={`text-pink-300 ${isSel ? "bg-pink-50/60" : ""}`}>
@@ -323,8 +346,47 @@ const ProductDetail = () => {
                         className="w-24 px-1.5 py-1 border border-pink-300 rounded outline-none text-slate-700"
                       />
                     ) : (
-                      <button onClick={() => startEdit(item)} title="Narxni tahrirlash" className="hover:text-pink-600 hover:underline">
-                        {FormattedPrice(price)} UZS
+                      <div>
+                        <button onClick={() => startEdit(item)} title="Narxni tahrirlash" className="hover:text-pink-600 hover:underline">
+                          {FormattedPrice(price)} UZS
+                        </button>
+                        {costPrice ? (
+                          <span className="block text-[11px] text-slate-400">tan: {FormattedPrice(costPrice)}</span>
+                        ) : null}
+                      </div>
+                    )}
+                  </td>
+                  {/* Zaxira (stock) — inline editable; red when low */}
+                  <td className={td}>
+                    {editingStockId === id ? (
+                      <input
+                        autoFocus
+                        type="number"
+                        value={editStock}
+                        onChange={(e) => setEditStock(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") e.currentTarget.blur();
+                          else if (e.key === "Escape") {
+                            skipSave.current = true;
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        onBlur={() => {
+                          if (skipSave.current) {
+                            skipSave.current = false;
+                            setEditingStockId(null);
+                          } else saveStock(id);
+                        }}
+                        className="w-16 px-1.5 py-1 border border-pink-300 rounded outline-none text-slate-700"
+                      />
+                    ) : (
+                      <button
+                        onClick={() => startStockEdit(item)}
+                        title="Zaxirani tahrirlash"
+                        className={`font-semibold hover:underline ${lowStock(item) ? "text-red-500" : "text-slate-600"}`}
+                      >
+                        {item.quantity ?? 0}
+                        {lowStock(item) && <span className="block text-[10px] font-normal">kam qoldi</span>}
                       </button>
                     )}
                   </td>

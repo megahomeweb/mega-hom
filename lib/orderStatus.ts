@@ -29,3 +29,21 @@ export const ORDER_STATUSES: OrderStatusMeta[] = [
 /** Resolve a stored status to its metadata; unknown / missing → "Yangi". */
 export const orderStatusMeta = (status?: string): OrderStatusMeta =>
   ORDER_STATUSES.find((s) => s.key === status) ?? ORDER_STATUSES[0];
+
+// Statuses that mean the shop has COMMITTED the goods to the buyer, so on-hand
+// stock should be decremented. A web order leaving "yangi" into any of these
+// triggers a one-time stock decrement (guarded by Order.stockApplied); moving it
+// back to "bekor" restores the stock. "sotildi" (POS) already decrements at sale.
+export const STOCK_COMMITTING_STATUSES: OrderStatus[] = [
+  "tasdiqlangan",
+  "yetkazilmoqda",
+  "yetkazildi",
+  "sotildi",
+];
+
+/** Does this status commit goods to the buyer (i.e. stock should be consumed)? */
+export const isStockCommitting = (status?: string): boolean =>
+  STOCK_COMMITTING_STATUSES.includes(status as OrderStatus);
+
+/** Cancelled — the only status that releases previously-committed stock back. */
+export const isCancelled = (status?: string): boolean => status === "bekor";

@@ -9,7 +9,9 @@ export interface ProductT {
   category: string;
   subCategory:string;
   description: string;
-  quantity: number;
+  quantity: number;          // on-hand stock (decrements on POS sale + web-order fulfillment)
+  costPrice?: number;        // tan narx — unit purchase cost; basis for margin/profit (never shown to customers)
+  lowStockThreshold?: number; // reorder point — stock at/under this flags "kam qoldi" (default 5)
   isBest: boolean;
   isNew: boolean
   isHidden?: boolean; // true = kept in admin but hidden from the storefront
@@ -34,6 +36,7 @@ export interface ImageT {
 
 export interface Order {
   id: string;
+  orderNo?: string;           // short human-quotable reference (e.g. MH-K3F9A2) — docId stays the real key
   clientName: string;
   clientLastName: string;
   clientPhone: string;
@@ -42,11 +45,16 @@ export interface Order {
   totalPrice: number;
   totalQuantity: number;
   status?: OrderStatus;
+  stockApplied?: boolean;     // true once this order's lines have decremented on-hand stock (idempotency guard)
   lastChangedBy?: string;     // display-only "who last touched this" hint
   lastChangedAt?: Timestamp;
   channel?: "web" | "store";  // where the sale came from (default web)
   cashierUid?: string;        // staff who rang up an in-store (POS) sale
   paymentMethod?: string;     // e.g. "naqd" (cash) — POS sales
+  // Fulfillment (web/phone orders) — captured at checkout, shown on the packing slip.
+  deliveryAddress?: string;
+  deliveryDate?: string;      // free-text or ISO date the customer wants it by
+  note?: string;              // order-level note (e.g. "call before delivery")
 }
 
 export interface  userT {

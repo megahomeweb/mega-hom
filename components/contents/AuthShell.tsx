@@ -97,14 +97,18 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => {
           {/* Wordmark on a white chip — the dark PNG stays on a light surface
               so the red roof tile survives (never inverted). */}
           <div>
-            <span className="inline-flex rounded-2xl bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.18)]">
+            <Link
+              href="/"
+              aria-label="Bosh sahifaga qaytish"
+              className="inline-flex rounded-2xl bg-white px-4 py-3 shadow-[0_8px_30px_rgba(0,0,0,0.18)] transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/80 focus-visible:ring-offset-2 focus-visible:ring-offset-brand"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/megahome-text.png"
                 alt="megahome"
                 className="h-7 w-auto xl:h-8"
               />
-            </span>
+            </Link>
           </div>
 
           {/* Headline + value pillars */}
@@ -154,8 +158,14 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => {
         {/* Mobile-only brand bar (the panel is hidden < lg). Wordmark stays on
             a light/white surface so the red roof tile survives. */}
         <div className="flex items-center justify-between border-b border-[#F0ECEC] px-5 py-4 lg:hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/megahome-text.png" alt="megahome" className="h-7 w-auto" />
+          <Link
+            href="/"
+            aria-label="Bosh sahifaga qaytish"
+            className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/megahome-text.png" alt="megahome" className="h-7 w-auto" />
+          </Link>
           <Link
             href="/"
             className="rounded-lg px-2 py-1 text-sm font-medium text-[#575353] transition-colors hover:text-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2"

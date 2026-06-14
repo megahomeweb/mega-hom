@@ -165,7 +165,8 @@ const SubmitModal = ({ setOpen }: props) => {
           <button
             onClick={handleSubmit}
             type="button"
-            className="flex items-center justify-center bg-red-500 transition-all ease-in-out hover:bg-red-600 rounded-xl max-w-lg w-full text-white p-2"
+            disabled={loading}
+            className="flex items-center justify-center bg-red-500 transition-all ease-in-out hover:bg-red-600 rounded-xl max-w-lg w-full text-white p-2 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? <div className="size-8"><Loader /></div> : "Buyurtmani Yuborish"}
           </button>
