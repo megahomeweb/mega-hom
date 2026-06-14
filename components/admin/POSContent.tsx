@@ -53,7 +53,21 @@ const POSContent = () => {
   const cashNum = parseFloat(cash) || 0;
   const change = cashNum - total;
 
+  // Live on-hand for a product (the POS list is a real-time snapshot).
+  const stockOf = (id: string) => products.find((p) => p.id === id)?.quantity ?? 0;
+
   const addToBasket = (p: ProductT) => {
+    const stock = p.quantity ?? 0;
+    const inBasket = basket.find((b) => b.id === p.id)?.quantity ?? 0;
+    // Don't let the till oversell a tracked item past its on-hand stock.
+    if (stock > 0 && inBasket >= stock) {
+      return toast.error(`"${p.title}": zaxirada faqat ${stock} dona bor`);
+    }
+    // stock <= 0 means out-of-stock OR not-yet-counted — allow but warn, so an
+    // un-seeded catalog can still sell while the owner is filling in stock.
+    if (stock <= 0) {
+      toast(`"${p.title}": zaxira tugagan yoki belgilanmagan`, { icon: "⚠️" });
+    }
     setBasket((prev) => {
       const i = prev.findIndex((b) => b.id === p.id);
       if (i >= 0) {
@@ -78,14 +92,20 @@ const POSContent = () => {
       ];
     });
   };
-  const setQty = (id: string, delta: number) =>
-    setBasket((prev) =>
-      prev.flatMap((b) => {
-        if (b.id !== id) return [b];
-        const q = b.quantity + delta;
-        return q <= 0 ? [] : [{ ...b, quantity: q }];
-      })
-    );
+  const setQty = (id: string, delta: number) => {
+    const line = basket.find((b) => b.id === id);
+    if (!line) return;
+    const next = line.quantity + delta;
+    if (next <= 0) {
+      setBasket((prev) => prev.filter((b) => b.id !== id));
+      return;
+    }
+    const stock = stockOf(id);
+    if (delta > 0 && stock > 0 && next > stock) {
+      return toast.error(`Zaxirada faqat ${stock} dona bor`);
+    }
+    setBasket((prev) => prev.map((b) => (b.id === id ? { ...b, quantity: next } : b)));
+  };
   const removeLine = (id: string) => setBasket((prev) => prev.filter((b) => b.id !== id));
 
   // A hardware scanner types the code then Enter. On Enter, add the product
@@ -194,12 +214,15 @@ const POSContent = () => {
             <p className="text-center text-slate-400 py-16">Mahsulot topilmadi.</p>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2">
-              {visible.map((p) => (
+              {visible.map((p) => {
+                const stock = p.quantity ?? 0;
+                const low = stock > 0 && stock <= (p.lowStockThreshold ?? 5);
+                return (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => addToBasket(p)}
-                  className="border border-slate-200 rounded-lg p-2 text-left hover:border-pink-400 hover:shadow-sm transition"
+                  className={`border border-slate-200 rounded-lg p-2 text-left hover:border-pink-400 hover:shadow-sm transition ${stock <= 0 ? "opacity-60" : ""}`}
                 >
                   <div className="relative aspect-square w-full overflow-hidden rounded mb-1 bg-slate-50">
                     {p.productImageUrl?.[0]?.url ? (
@@ -207,11 +230,23 @@ const POSContent = () => {
                     ) : (
                       <NoPhoto className="absolute inset-0" />
                     )}
+                    <span
+                      className={`absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                        stock <= 0
+                          ? "bg-red-500 text-white"
+                          : low
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-white/90 text-slate-600"
+                      }`}
+                    >
+                      {stock <= 0 ? "Tugadi" : `${stock} dona`}
+                    </span>
                   </div>
                   <p className="text-xs font-medium text-slate-700 line-clamp-2 min-h-8">{p.title}</p>
                   <p className="text-xs text-pink-600 font-bold">{FormattedPrice(p.price)} UZS</p>
                 </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -238,7 +273,12 @@ const POSContent = () => {
                     <FiMinus className="text-xs" />
                   </button>
                   <span className="w-5 text-center text-sm">{b.quantity}</span>
-                  <button onClick={() => setQty(b.id, 1)} className="size-7 rounded border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">
+                  <button
+                    onClick={() => setQty(b.id, 1)}
+                    disabled={stockOf(b.id) > 0 && b.quantity >= stockOf(b.id)}
+                    title={stockOf(b.id) > 0 && b.quantity >= stockOf(b.id) ? "Zaxira chegarasi" : ""}
+                    className="size-7 rounded border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
                     <FiPlus className="text-xs" />
                   </button>
                   <button onClick={() => removeLine(b.id)} className="text-red-400 hover:text-red-600 ml-1">
