@@ -1,5 +1,5 @@
 "use client";
-import { useOrderStore } from "@/zustand/useOrderStore";
+import { useOrderStore, ORDER_FETCH_LIMIT } from "@/zustand/useOrderStore";
 import {
   Disclosure,
   DisclosureButton,
@@ -133,6 +133,12 @@ const OrderContent = () => {
 
       {showManual && <ManualOrderModal onClose={() => setShowManual(false)} />}
       <div className="w-full h-0.5 bg-gray-300 my-2 rounded-full"></div>
+
+      {orders.length >= ORDER_FETCH_LIMIT && (
+        <p className="text-xs text-slate-400">
+          Eng soʼnggi {ORDER_FETCH_LIMIT} ta buyurtma koʼrsatilmoqda — toʼliq tarix uchun CSV eksport qiling.
+        </p>
+      )}
 
       {/* Status filter tabs with live counts */}
       {orders.length > 0 && (

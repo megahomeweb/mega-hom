@@ -1,8 +1,14 @@
 import {create} from "zustand";
-import { collection, deleteDoc, doc, addDoc, increment, query, onSnapshot, serverTimestamp, updateDoc, writeBatch, FieldValue } from "firebase/firestore";
+import { collection, deleteDoc, doc, addDoc, increment, query, orderBy, limit, onSnapshot, serverTimestamp, updateDoc, writeBatch, FieldValue } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { ImageT, Order } from "@/lib/types";
 import { DEFAULT_ORDER_STATUS, OrderStatus, isStockCommitting } from "@/lib/orderStatus";
+
+// Cap how many (most-recent) orders the admin loads at once. Bounds Firestore
+// reads + in-memory work as the collection grows; the full history stays
+// available via CSV export. 1000 comfortably covers the dashboard periods,
+// recent order management, and top-sellers for a single shop.
+export const ORDER_FETCH_LIMIT = 1000;
 
 // Short, human-quotable order reference (e.g. "MH-K3F9A2"). The Firestore docId
 // stays the real key; this is only what staff/customers say out loud or write on
@@ -81,7 +87,9 @@ export const useOrderStore = create<StoreState>((set, get) => ({
   fetchAllOrders: async () => {
     set({ loadingOrders: true });
     try {
-      const q = query(collection(fireDB, "orders"));
+      // Newest-first + capped — see ORDER_FETCH_LIMIT. orderBy is safe: every
+      // order is written with a `date` Timestamp.
+      const q = query(collection(fireDB, "orders"), orderBy("date", "desc"), limit(ORDER_FETCH_LIMIT));
       const unsubscribe = onSnapshot(
         q,
         (QuerySnapshot) => {
