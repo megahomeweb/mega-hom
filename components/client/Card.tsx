@@ -45,7 +45,7 @@ const Card = ({ img, title, description, currentPrice, href }: CardProps) => {
             </span>
           </div>
           <span className="block text-center w-full rounded bg-red-500 hover:bg-red-600 transition-all ease-in-out text-white p-2">
-            Buyrutma qilish
+            Buyurtma qilish
           </span>
         </div>
       </div>

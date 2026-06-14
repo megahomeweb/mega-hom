@@ -11,7 +11,7 @@ import AccountMenu from "./AccountMenu";
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const { categories, fetchCategories } = useCategoryStore()
+  const { categories, fetchCategories, loading } = useCategoryStore()
 
   useEffect(() => {
     fetchCategories();
@@ -21,8 +21,8 @@ const Header = () => {
     <header>
       <div className="w-full bg-white">
         <div className="max-w-7xl mx-auto flex items-center justify-between gap-5 py-1 md:py-0 xl:px-0 px-4 my-2">
-          <Link href="/" className="relative flex justify-center p-4 w-40 sm:w-48">
-            <Image className="absolute object-cover" fill src="/megahome-text.png" alt="Logo" />
+          <Link href="/" className="relative block w-36 sm:w-44 h-12 sm:h-14 shrink-0">
+            <Image className="object-contain" fill sizes="176px" priority src="/megahome-text.png" alt="megahome" />
           </Link>
 
           <div className="max-w-md w-full">
@@ -44,12 +44,12 @@ const Header = () => {
                 )}
               </button>
             </div>
-            {categories.length == 0 && <div className="flex items-center justify-center h-11">
+            {loading && categories.length === 0 && <div className="flex items-center justify-center h-11">
               <Loader />
             </div>}
             <div className={`absolute md:static top-12 left-0 w-full bg-brand md:max-h-none overflow-hidden transition-all ease-in-out duration-200 z-10 ${menuOpen ? "max-h-64" : "max-h-0"}`} >
               <div className="flex flex-col md:flex-row md:items-center justify-between">
-                {categories.slice(0, -1).map((category) => (
+                {categories.map((category) => (
                   <Link
                     key={category.id}
                     href={`/products/${category.id}`}
@@ -58,13 +58,6 @@ const Header = () => {
                     <span>{category.name}</span>
                   </Link>
                 ))}
-                <Link
-                    href='https://www.kursiy.uz/'
-                    target="_blank"
-                    className="flex items-center justify-center gap-1 uppercase text-white transition-all ease-in-out hover:text-white/70 border-b border-transparent hover:border-b hover:border-white font-medium text-xs lg:text-sm p-3"
-                  >
-                    <span>Kreslolar</span>
-                  </Link>
               </div>
             </div>
           </div>
