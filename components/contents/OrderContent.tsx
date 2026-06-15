@@ -187,7 +187,7 @@ const OrderContent = () => {
             <Disclosure>
               {({ open }) => (
                 <div>
-                  <div className="flex items-center justify-between gap-3 w-full px-4 py-2 bg-white shadow-lg rounded-lg border border-gray-200">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 w-full px-4 py-2.5 bg-white shadow-lg rounded-lg border border-gray-200">
                     <DisclosureButton className="flex items-center gap-4 text-left flex-1 min-w-0">
                       <div className="min-w-0">
                         <h3 className="font-medium capitalize truncate flex items-center gap-2">
@@ -218,7 +218,7 @@ const OrderContent = () => {
                         }`}
                       />
                     </DisclosureButton>
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex items-center gap-2 flex-wrap justify-end sm:shrink-0">
                       {orderStatusMeta(order.status).key === "qaytarildi" ? (
                         <span
                           title="Qaytarilgan buyurtma"

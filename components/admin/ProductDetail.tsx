@@ -229,6 +229,19 @@ const ProductDetail = () => {
 
   const handleDelete = (item: ProductT) => deleteWithUndo([item]);
 
+  // Single-product flag toggle (used by the mobile cards).
+  const togglePatch = async (id: string, data: Partial<ProductT>) => {
+    try {
+      await patchProduct(id, data);
+    } catch {
+      toast.error("Saqlab boʼlmadi");
+    }
+  };
+  const tchip = (on: boolean) =>
+    `text-[10px] px-2 py-1 rounded-full border transition-colors ${
+      on ? "bg-pink-500 text-white border-pink-500" : "bg-white text-slate-400 border-slate-200"
+    }`;
+
   return (
     <div>
       <div className="py-5 flex flex-wrap gap-3 justify-between items-center">
@@ -284,7 +297,79 @@ const ProductDetail = () => {
 
       <div className="flex justify-center relative top-20">{loading && products.length === 0 && <Loader />}</div>
 
-      <div className="w-full overflow-x-auto mb-5">
+      {/* ---------- Mobile cards (lg:hidden) ---------- */}
+      <div className="lg:hidden space-y-3 mb-5">
+        {visible.map((item) => {
+          const { id, title, price, costPrice, category, productImageUrl } = item;
+          const isSel = selected.has(id);
+          return (
+            <div key={id} className={`rounded-xl border p-3 ${isSel ? "border-pink-300 bg-pink-50/60" : "border-pink-100 bg-white"}`}>
+              <div className="flex gap-3">
+                <input type="checkbox" checked={isSel} onChange={() => toggleSelect(id)} className="size-4 accent-pink-500 mt-1 shrink-0" />
+                <div className="shrink-0">
+                  {productImageUrl?.[0]?.url ? (
+                    <Image width={64} height={64} className="size-16 rounded object-cover" src={productImageUrl[0].url} alt="" />
+                  ) : (
+                    <NoPhoto className="size-16 rounded" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-slate-700 capitalize leading-tight line-clamp-2">{title}</p>
+                  <div className="mt-0.5">
+                    {editingId === id ? (
+                      <input
+                        autoFocus type="number" value={editPrice}
+                        onChange={(e) => setEditPrice(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); else if (e.key === "Escape") { skipSave.current = true; e.currentTarget.blur(); } }}
+                        onBlur={() => { if (skipSave.current) { skipSave.current = false; setEditingId(null); } else savePrice(id); }}
+                        className="w-24 px-1.5 py-0.5 border border-pink-300 rounded outline-none text-slate-700"
+                      />
+                    ) : (
+                      <button onClick={() => startEdit(item)} className="text-pink-600 font-semibold text-sm hover:underline">{FormattedPrice(price)} UZS</button>
+                    )}
+                    {costPrice ? <span className="text-[11px] text-slate-400 ml-2">tan: {FormattedPrice(costPrice)}</span> : null}
+                  </div>
+                  <p className="text-xs text-slate-400 capitalize mt-0.5">{category}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  {editingStockId === id ? (
+                    <input
+                      autoFocus type="number" value={editStock}
+                      onChange={(e) => setEditStock(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); else if (e.key === "Escape") { skipSave.current = true; e.currentTarget.blur(); } }}
+                      onBlur={() => { if (skipSave.current) { skipSave.current = false; setEditingStockId(null); } else saveStock(id); }}
+                      className="w-14 px-1.5 py-0.5 border border-pink-300 rounded text-slate-700 text-right"
+                    />
+                  ) : (
+                    <button onClick={() => startStockEdit(item)} className={`font-bold text-sm leading-tight ${lowStock(item) ? "text-red-500" : "text-slate-600"}`}>
+                      {item.quantity ?? 0}
+                      <span className="block text-[9px] font-normal text-slate-400">dona</span>
+                    </button>
+                  )}
+                  {lowStock(item) && <span className="block text-[9px] text-red-500">kam qoldi</span>}
+                </div>
+              </div>
+              <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-pink-50">
+                <div className="flex items-center gap-1">
+                  <button onClick={() => togglePatch(id, { isNew: !item.isNew })} className={tchip(!!item.isNew)}>Yangi</button>
+                  <button onClick={() => togglePatch(id, { isBest: !item.isBest })} className={tchip(!!item.isBest)}>Top</button>
+                  <button onClick={() => togglePatch(id, { isHidden: !item.isHidden })} className={tchip(!item.isHidden)}>Koʼrinadi</button>
+                </div>
+                <div className="flex items-center gap-3 text-slate-500">
+                  <button onClick={() => setStockProduct(item)} title="Zaxira"><FiBox className="text-lg hover:text-pink-500" /></button>
+                  <button onClick={() => setQrProduct(item)} title="QR kod"><BsQrCode className="text-lg hover:text-pink-500" /></button>
+                  <button onClick={() => duplicate(item)} title="Nusxa"><FiCopy className="text-lg hover:text-pink-500" /></button>
+                  <Link href={`/admin-dashboard/update-product/${id}`} title="Tahrirlash"><CiEdit className="text-xl text-green-500" /></Link>
+                  <button onClick={() => handleDelete(item)} title="Oʼchirish"><MdDeleteForever className="text-xl text-red-500" /></button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ---------- Desktop table (lg+) ---------- */}
+      <div className="hidden lg:block w-full overflow-x-auto mb-5">
         <table className="w-full text-left border border-collapse sm:border-separate border-pink-100 text-pink-400">
           <tbody>
             <tr>
