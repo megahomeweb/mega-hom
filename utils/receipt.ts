@@ -21,7 +21,9 @@ export interface ReceiptInput {
   customerName?: string;
   customerPhone?: string;
   items: ReceiptItem[];
-  total: number;
+  subtotal?: number;       // before discount (shown only if discount > 0)
+  discount?: number;       // discount off the subtotal
+  total: number;           // final total
   cash?: number;           // tendered (POS cash sale)
   change?: number;
   paymentMethod?: string;
@@ -126,7 +128,11 @@ export function printReceipt(input: ReceiptInput): boolean {
   }
   rule();
 
-  // Totals
+  // Totals — show subtotal + discount lines only when a discount was applied.
+  if (input.discount && input.discount > 0) {
+    row("Oraliq jami", `${FormattedPrice(input.subtotal ?? input.total + input.discount)} UZS`, "pay muted");
+    row("Chegirma", `− ${FormattedPrice(input.discount)} UZS`, "pay muted");
+  }
   const tot = el("div", "total");
   tot.appendChild(el("span", undefined, "JAMI"));
   tot.appendChild(el("span", "r", `${FormattedPrice(input.total)} UZS`));

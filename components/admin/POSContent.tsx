@@ -29,6 +29,7 @@ const POSContent = () => {
   const [name, setName] = useState("");
   const [custPicked, setCustPicked] = useState<CustomerT | null>(null);
   const [cash, setCash] = useState("");
+  const [discount, setDiscount] = useState("");
   const [busy, setBusy] = useState(false);
   const [printChek, setPrintChek] = useState(true);
   const [chekWidth, setChekWidth] = useState<58 | 80>(80);
@@ -74,8 +75,10 @@ const POSContent = () => {
     );
   }, [products, search]);
 
-  const total = useMemo(() => basket.reduce((a, b) => a + b.price * b.quantity, 0), [basket]);
+  const subtotal = useMemo(() => basket.reduce((a, b) => a + b.price * b.quantity, 0), [basket]);
   const totalQty = useMemo(() => basket.reduce((a, b) => a + b.quantity, 0), [basket]);
+  const discountNum = Math.min(Math.max(0, parseFloat(discount) || 0), subtotal);
+  const total = Math.max(0, subtotal - discountNum);
   const cashNum = parseFloat(cash) || 0;
   const change = cashNum - total;
 
@@ -166,6 +169,7 @@ const POSContent = () => {
         basketItems: basket,
         totalPrice: total,
         totalQuantity: totalQty,
+        discount: discountNum,
         clientName: name.trim(),
         clientLastName: "",
         clientPhone: phone.trim(),
@@ -182,6 +186,8 @@ const POSContent = () => {
           customerName: name.trim() || undefined,
           customerPhone: phone.trim() || undefined,
           items: receiptItems,
+          subtotal,
+          discount: discountNum,
           total,
           cash: tendered,
           change: tendered !== undefined ? tendered - total : undefined,
@@ -196,6 +202,7 @@ const POSContent = () => {
       setName("");
       setCustPicked(null);
       setCash("");
+      setDiscount("");
       searchRef.current?.focus();
     } catch {
       toast.error("Sotuvni saqlab boʼlmadi");
@@ -317,9 +324,26 @@ const POSContent = () => {
             </div>
           )}
 
-          <div className="border-t border-slate-100 mt-3 pt-3 flex items-center justify-between">
-            <span className="font-bold text-slate-700">Jami</span>
-            <span className="font-bold text-lg text-pink-600">{FormattedPrice(total)} UZS</span>
+          <div className="border-t border-slate-100 mt-3 pt-3 space-y-1.5">
+            <div className="flex items-center justify-between text-sm text-slate-500">
+              <span>Oraliq jami</span>
+              <span>{FormattedPrice(subtotal)} UZS</span>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-sm text-slate-500">Chegirma</span>
+              <input
+                type="number"
+                inputMode="numeric"
+                value={discount}
+                onChange={(e) => setDiscount(e.target.value)}
+                placeholder="0"
+                className="w-28 px-2 py-1 border border-slate-200 rounded-lg text-right text-slate-700 outline-none focus:ring-1 focus:ring-pink-300"
+              />
+            </div>
+            <div className="flex items-center justify-between pt-1">
+              <span className="font-bold text-slate-700">Jami</span>
+              <span className="font-bold text-lg text-pink-600">{FormattedPrice(total)} UZS</span>
+            </div>
           </div>
 
           <div className="space-y-2 mt-3">
