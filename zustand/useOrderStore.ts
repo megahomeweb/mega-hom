@@ -33,8 +33,9 @@ export interface StoreSaleItem {
 }
 export interface StoreSaleInput {
   basketItems: StoreSaleItem[];
-  totalPrice: number;
+  totalPrice: number;       // final total AFTER discount
   totalQuantity: number;
+  discount?: number;        // discount applied at the till (UZS off the subtotal)
   clientName: string;
   clientLastName: string;
   clientPhone: string;
