@@ -1,5 +1,5 @@
 import CartButton from "@/components/CartButton";
-import MegaBuddy from "@/components/client/MegaBuddy";
+import MegaBuddyLazy from "@/components/client/MegaBuddyLazy";
 import Contact from "@/components/client/Contact";
 import Delivery from "@/components/client/Delivery";
 import Footer from "@/components/client/Footer";
@@ -29,7 +29,7 @@ export default function ClientLayout({
         <Delivery />
         <Contact />
         <CartButton />
-        <MegaBuddy />
+        <MegaBuddyLazy />
       </main>
       <Footer />
     </>
