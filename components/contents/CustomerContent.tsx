@@ -151,8 +151,47 @@ const CustomerContent = () => {
         </p>
       )}
 
+      {/* ---------- Mobile cards (lg:hidden) ---------- */}
       {visible.length > 0 && (
-        <div className="w-full overflow-x-auto">
+        <div className="lg:hidden space-y-2.5">
+          {visible.map((c) => (
+            <div key={c.phone} className="rounded-xl border border-pink-100 bg-white p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-700 capitalize truncate">{c.name || "Mijoz"}</p>
+                  <p className="text-sm text-slate-500">{c.displayPhone}</p>
+                </div>
+                {c.phone !== "no-phone" && <ContactButtons phone={c.phone} />}
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
+                <span>Buyurtma: <b className="text-slate-700">{c.orderCount}</b></span>
+                <span>Xarid: <b className="text-pink-600">{FormattedPrice(c.totalSpent)}</b></span>
+                <span>Oʼrtacha: {FormattedPrice(c.avgTicket)}</span>
+                <span>Oxirgi: {fmtDate(c.lastOrderAt)}</span>
+              </div>
+              {c.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1 mt-2">
+                  {c.tags.map((t) => (
+                    <span key={t} className="px-2 py-0.5 text-xs rounded-full bg-pink-100 text-pink-600">{t}</span>
+                  ))}
+                </div>
+              )}
+              {c.phone !== "no-phone" && (
+                <Link
+                  href={`/admin-dashboard/customers/${encodeURIComponent(c.phone)}`}
+                  className="inline-block mt-2 text-sm font-medium text-pink-500 hover:underline"
+                >
+                  Profilni koʼrish →
+                </Link>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ---------- Desktop table (lg+) ---------- */}
+      {visible.length > 0 && (
+        <div className="hidden lg:block w-full overflow-x-auto">
           <table className="w-full text-left border-separate border-pink-100">
             <tbody>
               <tr>

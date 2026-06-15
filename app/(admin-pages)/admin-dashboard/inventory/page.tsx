@@ -68,8 +68,42 @@ const InventoryPage = () => {
         <p className="text-center text-slate-400 py-16">Hozircha harakatlar yoʼq.</p>
       )}
 
+      {/* Mobile cards */}
       {movements.length > 0 && (
-        <div className="overflow-x-auto">
+        <div className="lg:hidden space-y-2.5">
+          {movements.map((m) => (
+            <div key={m.id} className="rounded-xl border border-slate-100 bg-white p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-medium text-slate-700 capitalize truncate">{m.productTitle}</p>
+                  <span className={`inline-block mt-0.5 text-xs font-semibold px-2 py-0.5 rounded-full ${TYPE_BADGE[m.type] ?? ""}`}>
+                    {TYPE_LABEL[m.type] ?? m.type}
+                  </span>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className={`font-bold ${m.delta < 0 ? "text-red-500" : m.delta > 0 ? "text-green-600" : "text-slate-400"}`}>
+                    {m.delta > 0 ? `+${m.delta}` : m.delta}
+                  </p>
+                  <p className="text-[11px] text-slate-400">→ {m.newQty ?? "—"}</p>
+                </div>
+              </div>
+              <div className="text-xs text-slate-400 mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5">
+                <span>{m.createdAt?.seconds ? new Date(m.createdAt.seconds * 1000).toLocaleString() : "—"}</span>
+                {m.actorName && <span>{m.actorName}</span>}
+              </div>
+              {(m.reason || m.supplierName || m.orderNo) && (
+                <p className="text-xs text-slate-500 mt-1">
+                  {[m.reason, m.supplierName, m.orderNo].filter(Boolean).join(" · ")}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Desktop table */}
+      {movements.length > 0 && (
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-sm border-separate border-spacing-0">
             <thead>
               <tr className="text-slate-500 text-left">
