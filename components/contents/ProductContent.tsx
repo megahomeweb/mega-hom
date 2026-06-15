@@ -82,7 +82,7 @@ const ProductContent = ({productID}: {productID:string}) => {
             <div className="w-14 border-b">
               <span className="block text-center">{quantity}</span>
             </div>
-            <button onClick={handleAddQuantity} className="size-9 bg-red-500 text-white flex items-center justify-center rounded-full">
+            <button onClick={handleAddQuantity} className="size-9 bg-brand text-white flex items-center justify-center rounded-full">
               +
             </button>
           </div>
@@ -92,7 +92,7 @@ const ProductContent = ({productID}: {productID:string}) => {
           </div>
           <button
             onClick={handleSubmit}
-            className="flex items-center justify-center gap-2 bg-red-500 transition-all ease-in-out hover:bg-red-600 rounded-xl max-w-lg w-full text-white p-3"
+            className="flex items-center justify-center gap-2 bg-brand transition-all ease-in-out hover:bg-brand-600 rounded-xl max-w-lg w-full text-white p-3"
           >
             {load ? <Loader /> : (
               <>

@@ -121,7 +121,7 @@ const OrderContent = () => {
           <button
             type="button"
             onClick={() => setShowManual(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600"
           >
             <FiPlus className="text-base" /> Yangi buyurtma
           </button>
@@ -148,7 +148,7 @@ const OrderContent = () => {
             onClick={() => setTab("all")}
             className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
               tab === "all"
-                ? "bg-pink-500 text-white border-pink-500"
+                ? "bg-brand-500 text-white border-brand-500"
                 : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
             }`}
           >
@@ -161,7 +161,7 @@ const OrderContent = () => {
               onClick={() => setTab(s.key)}
               className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
                 tab === s.key
-                  ? "bg-pink-500 text-white border-pink-500"
+                  ? "bg-brand-500 text-white border-brand-500"
                   : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
               }`}
             >
@@ -298,37 +298,37 @@ const OrderContent = () => {
                             <tr>
                               <th
                                 scope="col"
-                                className="h-12 px-6 text-md border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100 font-bold fontPara"
+                                className="h-12 px-6 text-md border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100 font-bold fontPara"
                               >
                                 S.No.
                               </th>
                               <th
                                 scope="col"
-                                className="h-12 px-6 text-md border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100 font-bold fontPara"
+                                className="h-12 px-6 text-md border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100 font-bold fontPara"
                               >
                                 Image
                               </th>
                               <th
                                 scope="col"
-                                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
+                                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100"
                               >
                                 Title
                               </th>
                               <th
                                 scope="col"
-                                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
+                                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100"
                               >
                                 Price
                               </th>
                               <th
                                 scope="col"
-                                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
+                                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100"
                               >
                                 soni
                               </th>
                               <th
                                 scope="col"
-                                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100"
+                                className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100"
                               >
                                 Category
                               </th>
@@ -339,11 +339,11 @@ const OrderContent = () => {
                               const { title, price, category, quantity, productImageUrl } =
                                 item;
                               return (
-                                <tr key={index} className="text-pink-300">
-                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 ">
+                                <tr key={index} className="text-brand-300">
+                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 ">
                                     {index + 1}.
                                   </td>
-                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
+                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
                                     <div className="flex justify-center">
                                       {productImageUrl?.[0]?.url ? (
                                         <Image width={80} height={80} className="w-20" src={productImageUrl[0].url} alt="" />
@@ -352,16 +352,16 @@ const OrderContent = () => {
                                       )}
                                     </div>
                                   </td>
-                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
+                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
                                     {title}
                                   </td>
-                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
+                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
                                     {FormattedPrice(price)} UZS
                                   </td>
-                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
+                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
                                     {quantity}
                                   </td>
-                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
+                                  <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
                                     {category}
                                   </td>
                                 </tr>

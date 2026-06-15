@@ -13,8 +13,8 @@ import { Role, ROLE_LABELS } from "@/lib/roles";
 const NoAccess = ({ min }: { min: Role }) => {
   const me = useRole();
   return (
-    <div className="max-w-md mx-auto text-center bg-white border border-pink-100 rounded-xl p-8 mt-16 shadow-sm">
-      <div className="mx-auto mb-3 inline-flex size-12 items-center justify-center rounded-full bg-pink-50 text-pink-500">
+    <div className="max-w-md mx-auto text-center bg-white border border-brand-100 rounded-xl p-8 mt-16 shadow-sm">
+      <div className="mx-auto mb-3 inline-flex size-12 items-center justify-center rounded-full bg-brand-50 text-brand-500">
         <FiLock className="text-xl" />
       </div>
       <h2 className="text-lg font-bold text-slate-700">Ruxsat yoʼq</h2>
@@ -24,7 +24,7 @@ const NoAccess = ({ min }: { min: Role }) => {
       </p>
       <Link
         href="/admin-dashboard"
-        className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600"
+        className="mt-5 inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600"
       >
         <GoArrowLeft /> Admin panelga qaytish
       </Link>

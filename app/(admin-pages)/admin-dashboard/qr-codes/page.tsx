@@ -74,12 +74,12 @@ const QRCodesPage = () => {
         <div>
           <Link
             href="/admin-dashboard"
-            className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-pink-500 mb-2"
+            className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-brand-500 mb-2"
           >
             <GoArrowLeft className="text-xl" />
             <span>Admin panelga qaytish</span>
           </Link>
-          <h1 className="text-xl font-bold text-pink-500">QR va shtrix-kodlar</h1>
+          <h1 className="text-xl font-bold text-brand-500">QR va shtrix-kodlar</h1>
           <p className="text-sm text-slate-500 mt-1">
             Varaqni chop eting, kartochkalarni qirqib mahsulotlarga yopishtiring. <b>QR</b> — mijoz
             skaner qilsa saytdagi mahsulot sahifasi ochiladi; <b>shtrix-kod</b> — do'kon kassasida
@@ -90,7 +90,7 @@ const QRCodesPage = () => {
           type="button"
           onClick={() => window.print()}
           disabled={!products.length || Object.keys(codes).length < products.length}
-          className="px-4 py-2 rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600 disabled:opacity-50 inline-flex items-center gap-2"
+          className="px-4 py-2 rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600 disabled:opacity-50 inline-flex items-center gap-2"
         >
           <FiPrinter /> Chop etish
         </button>

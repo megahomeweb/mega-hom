@@ -7,7 +7,7 @@ import useExpenseStore from "@/zustand/useExpenseStore";
 import { FormattedPrice } from "@/utils";
 import { motion, useReducedMotion } from "framer-motion";
 
-const card = "rounded-xl border border-pink-100 bg-pink-50 px-4 py-3 text-center";
+const card = "rounded-xl border border-brand-100 bg-brand-50 px-4 py-3 text-center";
 const cardContainer = { hidden: {}, show: { transition: { staggerChildren: 0.06 } } };
 const cardItem = { hidden: { opacity: 0, y: 12 }, show: { opacity: 1, y: 0 } };
 
@@ -64,8 +64,8 @@ const DashboardKPIs = () => {
             onClick={() => setPeriod(p.key)}
             className={`px-3 py-1 text-sm rounded-lg border transition-colors ${
               period === p.key
-                ? "bg-pink-500 text-white border-pink-500"
-                : "bg-white text-slate-500 border-pink-100 hover:bg-pink-50"
+                ? "bg-brand-500 text-white border-brand-500"
+                : "bg-white text-slate-500 border-brand-100 hover:bg-brand-50"
             }`}
           >
             {p.label}
@@ -82,24 +82,24 @@ const DashboardKPIs = () => {
       >
         <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Buyurtmalar</p>
-          <p className="text-2xl font-bold text-pink-500">{kpi.all.count}</p>
+          <p className="text-2xl font-bold text-brand-500">{kpi.all.count}</p>
           <p className="text-[10px] text-slate-400">{kpi.all.items} dona</p>
         </motion.div>
         <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Savdo</p>
-          <p className="text-2xl font-bold text-pink-500">{FormattedPrice(kpi.all.revenue)}</p>
+          <p className="text-2xl font-bold text-brand-500">{FormattedPrice(kpi.all.revenue)}</p>
           <p className="text-[10px] text-slate-400">
             Sayt {FormattedPrice(kpi.web.revenue)} · Doʼkon {FormattedPrice(kpi.store.revenue)}
           </p>
         </motion.div>
         <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Yalpi foyda</p>
-          <p className="text-2xl font-bold text-pink-500">{FormattedPrice(kpi.all.profit)}</p>
+          <p className="text-2xl font-bold text-brand-500">{FormattedPrice(kpi.all.profit)}</p>
           <p className="text-[10px] text-slate-400">savdo − tan narx</p>
         </motion.div>
         <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Xarajat</p>
-          <p className="text-2xl font-bold text-pink-500">{FormattedPrice(kpi.expenseTotal)}</p>
+          <p className="text-2xl font-bold text-brand-500">{FormattedPrice(kpi.expenseTotal)}</p>
           <p className="text-[10px] text-slate-400">davr boʼyicha</p>
         </motion.div>
         <motion.div variants={cardItem} className={card}>
@@ -111,7 +111,7 @@ const DashboardKPIs = () => {
         </motion.div>
         <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Kutilayotgan</p>
-          <p className="text-2xl font-bold text-pink-500">{kpi.pending}</p>
+          <p className="text-2xl font-bold text-brand-500">{kpi.pending}</p>
           <p className="text-[10px] text-slate-400">jami navbatda</p>
         </motion.div>
       </motion.div>

@@ -115,7 +115,7 @@ const ManualOrderModal = ({
   };
 
   const inputCls =
-    "w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-pink-300 text-slate-700 placeholder-slate-400";
+    "w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-brand-300 text-slate-700 placeholder-slate-400";
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-3" onClick={onClose}>
@@ -148,7 +148,7 @@ const ManualOrderModal = ({
                   key={p.id}
                   type="button"
                   onClick={() => addLine(p)}
-                  className="border border-slate-200 rounded-lg p-1.5 text-left hover:border-pink-400 transition"
+                  className="border border-slate-200 rounded-lg p-1.5 text-left hover:border-brand-400 transition"
                 >
                   <div className="relative aspect-square w-full overflow-hidden rounded mb-1 bg-slate-50">
                     {p.productImageUrl?.[0]?.url ? (
@@ -158,7 +158,7 @@ const ManualOrderModal = ({
                     )}
                   </div>
                   <p className="text-[11px] text-slate-700 line-clamp-2 leading-tight min-h-7">{p.title}</p>
-                  <p className="text-[11px] text-pink-600 font-bold">{FormattedPrice(p.price)}</p>
+                  <p className="text-[11px] text-brand-600 font-bold">{FormattedPrice(p.price)}</p>
                 </button>
               ))}
             </div>
@@ -204,12 +204,12 @@ const ManualOrderModal = ({
 
               <div className="flex items-center justify-between pt-1">
                 <span className="font-bold text-slate-700">Jami</span>
-                <span className="font-bold text-lg text-pink-600">{FormattedPrice(totalPrice)} UZS</span>
+                <span className="font-bold text-lg text-brand-600">{FormattedPrice(totalPrice)} UZS</span>
               </div>
               <button
                 onClick={submit}
                 disabled={busy || !lines.length}
-                className="w-full px-4 py-3 rounded-lg bg-pink-500 text-white font-bold hover:bg-pink-600 disabled:opacity-50"
+                className="w-full px-4 py-3 rounded-lg bg-brand-500 text-white font-bold hover:bg-brand-600 disabled:opacity-50"
               >
                 {busy ? "Saqlanmoqda…" : "Buyurtma yaratish"}
               </button>

@@ -48,7 +48,7 @@ const CartProductContent = () => {
         </div>
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center mx-auto justify-center gap-2 bg-red-500 transition-all ease-in-out hover:bg-red-600 rounded-xl max-w-lg w-full text-white p-3 !mt-6"
+          className="flex items-center mx-auto justify-center gap-2 bg-brand transition-all ease-in-out hover:bg-brand-600 rounded-xl max-w-lg w-full text-white p-3 !mt-6"
         >
           <BsCartDash className="text-white text-xl" />
           <span>Adminga Yuborish</span>

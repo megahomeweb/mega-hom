@@ -27,7 +27,7 @@ const AllProducts = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6">
-      <h2 className="text-3xl sm:text-4xl font-bold pb-5">Barcha mahsulotlar</h2>
+      <h2 className="font-brand text-3xl sm:text-4xl font-bold pb-5">Barcha mahsulotlar</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6 lg:gap-5">
         {visible.map((card) => (
           <Card

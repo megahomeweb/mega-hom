@@ -95,7 +95,7 @@ const AccountMenu = () => {
         {isStaffPlus(user.role) && (
           <Link
             href="/admin-dashboard"
-            className="block px-3 py-2 rounded-lg text-sm text-brand hover:bg-pink-50 font-medium"
+            className="block px-3 py-2 rounded-lg text-sm text-brand hover:bg-brand-50 font-medium"
           >
             Admin panel
           </Link>

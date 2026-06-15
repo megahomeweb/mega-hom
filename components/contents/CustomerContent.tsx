@@ -14,9 +14,9 @@ type Segment = "all" | "repeat" | "new" | "nophone";
 type SortKey = "recent" | "spent" | "orders" | "name";
 
 const th =
-  "h-12 px-4 lg:px-6 text-md font-bold border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100";
+  "h-12 px-4 lg:px-6 text-md font-bold border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100";
 const td =
-  "h-12 px-4 lg:px-6 text-md border-t border-l first:border-l-0 border-pink-100 text-slate-500";
+  "h-12 px-4 lg:px-6 text-md border-t border-l first:border-l-0 border-brand-100 text-slate-500";
 
 const fmtDate = (ms: number | null) => (ms ? new Date(ms).toLocaleDateString() : "—");
 
@@ -69,7 +69,7 @@ const CustomerContent = () => {
       onClick={() => setSegment(key)}
       className={`text-sm px-3 py-1.5 rounded-full border transition-colors ${
         segment === key
-          ? "bg-pink-500 text-white border-pink-500"
+          ? "bg-brand-500 text-white border-brand-500"
           : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
       }`}
     >
@@ -91,12 +91,12 @@ const CustomerContent = () => {
         <div>
           <Link
             href="/admin-dashboard"
-            className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-pink-500 mb-2"
+            className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-brand-500 mb-2"
           >
             <GoArrowLeft className="text-xl" />
             <span>Admin panelga qaytish</span>
           </Link>
-          <h1 className="text-xl font-bold text-pink-500">Mijozlar</h1>
+          <h1 className="text-xl font-bold text-brand-500">Mijozlar</h1>
           <div className="flex flex-wrap gap-2 mt-2 text-sm">
             <span className="px-2.5 py-1 rounded-full bg-slate-50 text-slate-600 border border-slate-200">
               Jami: {stats.total}
@@ -118,12 +118,12 @@ const CustomerContent = () => {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Qidirish: ism yoki telefon..."
-          className="flex-1 min-w-48 sm:max-w-xs px-3 py-2 border border-pink-200 rounded-lg outline-none focus:ring-1 focus:ring-pink-300 text-slate-700 placeholder-slate-400"
+          className="flex-1 min-w-48 sm:max-w-xs px-3 py-2 border border-brand-200 rounded-lg outline-none focus:ring-1 focus:ring-brand-300 text-slate-700 placeholder-slate-400"
         />
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
-          className="px-3 py-2 border border-pink-200 rounded-lg outline-none text-slate-700"
+          className="px-3 py-2 border border-brand-200 rounded-lg outline-none text-slate-700"
         >
           <option value="recent">Oxirgi buyurtma</option>
           <option value="spent">Eng koʼp xarid</option>
@@ -155,7 +155,7 @@ const CustomerContent = () => {
       {visible.length > 0 && (
         <div className="lg:hidden space-y-2.5">
           {visible.map((c) => (
-            <div key={c.phone} className="rounded-xl border border-pink-100 bg-white p-3">
+            <div key={c.phone} className="rounded-xl border border-brand-100 bg-white p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-semibold text-slate-700 capitalize truncate">{c.name || "Mijoz"}</p>
@@ -165,21 +165,21 @@ const CustomerContent = () => {
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
                 <span>Buyurtma: <b className="text-slate-700">{c.orderCount}</b></span>
-                <span>Xarid: <b className="text-pink-600">{FormattedPrice(c.totalSpent)}</b></span>
+                <span>Xarid: <b className="text-brand-600">{FormattedPrice(c.totalSpent)}</b></span>
                 <span>Oʼrtacha: {FormattedPrice(c.avgTicket)}</span>
                 <span>Oxirgi: {fmtDate(c.lastOrderAt)}</span>
               </div>
               {c.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
                   {c.tags.map((t) => (
-                    <span key={t} className="px-2 py-0.5 text-xs rounded-full bg-pink-100 text-pink-600">{t}</span>
+                    <span key={t} className="px-2 py-0.5 text-xs rounded-full bg-brand-100 text-brand-600">{t}</span>
                   ))}
                 </div>
               )}
               {c.phone !== "no-phone" && (
                 <Link
                   href={`/admin-dashboard/customers/${encodeURIComponent(c.phone)}`}
-                  className="inline-block mt-2 text-sm font-medium text-pink-500 hover:underline"
+                  className="inline-block mt-2 text-sm font-medium text-brand-500 hover:underline"
                 >
                   Profilni koʼrish →
                 </Link>
@@ -192,7 +192,7 @@ const CustomerContent = () => {
       {/* ---------- Desktop table (lg+) ---------- */}
       {visible.length > 0 && (
         <div className="hidden lg:block w-full overflow-x-auto">
-          <table className="w-full text-left border-separate border-pink-100">
+          <table className="w-full text-left border-separate border-brand-100">
             <tbody>
               <tr>
                 <th className={th}>№</th>
@@ -206,7 +206,7 @@ const CustomerContent = () => {
                 <th className={th}></th>
               </tr>
               {visible.map((c, i) => (
-                <tr key={c.phone} className="hover:bg-pink-50/40">
+                <tr key={c.phone} className="hover:bg-brand-50/40">
                   <td className={td}>{i + 1}.</td>
                   <td className={`${td} capitalize font-medium text-slate-700`}>{c.name || "—"}</td>
                   <td className={td}>
@@ -222,7 +222,7 @@ const CustomerContent = () => {
                   <td className={td}>
                     <div className="flex flex-wrap gap-1">
                       {c.tags.map((t) => (
-                        <span key={t} className="px-2 py-0.5 text-xs rounded-full bg-pink-100 text-pink-600">
+                        <span key={t} className="px-2 py-0.5 text-xs rounded-full bg-brand-100 text-brand-600">
                           {t}
                         </span>
                       ))}
@@ -232,7 +232,7 @@ const CustomerContent = () => {
                     {c.phone !== "no-phone" && (
                       <Link
                         href={`/admin-dashboard/customers/${encodeURIComponent(c.phone)}`}
-                        className="text-pink-500 hover:underline text-sm font-medium"
+                        className="text-brand-500 hover:underline text-sm font-medium"
                       >
                         Profil
                       </Link>

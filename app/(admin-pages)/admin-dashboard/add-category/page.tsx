@@ -67,10 +67,10 @@ const AddCategory = () => {
     <div className="flex justify-center items-start sm:items-center min-h-screen p-4">
       {loading && <Loader />}
       {/* Login Form  */}
-      <div className="login_Form w-full max-w-md bg-pink-50 px-5 sm:px-8 py-6 border border-pink-100 rounded-xl shadow-md">
+      <div className="login_Form w-full max-w-md bg-brand-50 px-5 sm:px-8 py-6 border border-brand-100 rounded-xl shadow-md">
         {/* Top Heading  */}
         <div className="mb-5">
-          <h2 className="text-center text-2xl font-bold text-pink-500 ">Kategoriya qoʼshish</h2>
+          <h2 className="text-center text-2xl font-bold text-brand-500 ">Kategoriya qoʼshish</h2>
         </div>
         {/* Input One  */}
         <div className="mb-3">
@@ -80,7 +80,7 @@ const AddCategory = () => {
             value={newCategory.name}
             onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
             placeholder="Kategoriya nomi"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
         </div>
         <div className="mb-3">
@@ -90,9 +90,9 @@ const AddCategory = () => {
               value={tagInput}
               onChange={(e) => setTagInput(e.target.value)}
               placeholder="Subkategoriya qoʼshish"
-              className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
             />
-            <button onClick={handleAddTag} type="button" className="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 font-bold rounded-md text-nowrap text-sm">
+            <button onClick={handleAddTag} type="button" className="bg-brand-500 hover:bg-brand-600 text-white px-4 py-2 font-bold rounded-md text-nowrap text-sm">
               Qoʼshish
             </button>
           </div>
@@ -101,12 +101,12 @@ const AddCategory = () => {
             {newCategory.subcategory.map((tag, index) => (
               <div
                 key={index}
-                className="flex items-center bg-pink-100 text-pink-500 px-3 py-1 rounded-md text-sm"
+                className="flex items-center bg-brand-100 text-brand-700 px-3 py-1 rounded-md text-sm"
               >
                 {tag}
                 <button
                   onClick={() => handleRemoveTag(tag)}
-                  className="ml-2 text-pink-500 hover:text-pink-700"
+                  className="ml-2 text-brand-500 hover:text-brand-700"
                 >
                   ×
                 </button>
@@ -120,7 +120,7 @@ const AddCategory = () => {
             disabled={loading}
             onClick={handleAddCategory}
             type="button"
-            className="bg-pink-500 hover:bg-pink-600 w-full text-white text-center py-2 font-bold rounded-md "
+            className="bg-brand-500 hover:bg-brand-600 w-full text-white text-center py-2 font-bold rounded-md "
           >
             Saqlash
           </button>

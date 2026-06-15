@@ -113,7 +113,7 @@ const AuthShell = ({ children }: { children: React.ReactNode }) => {
 
           {/* Headline + value pillars */}
           <div className="max-w-md">
-            <h2 className="text-[2rem] font-bold leading-[1.15] tracking-tight text-white xl:text-[2.5rem]">
+            <h2 className="font-brand text-[2rem] font-bold leading-[1.15] tracking-tight text-white xl:text-[2.5rem]">
               Doʼkoningizni bitta joydan boshqaring.
             </h2>
             <p className="mt-4 text-base leading-relaxed text-white/85">

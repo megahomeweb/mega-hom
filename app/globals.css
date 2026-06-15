@@ -34,7 +34,7 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
-  color: #C21A1A;
+  color: #DD2426;
 }
 
 .autoplay-progress svg {
@@ -46,7 +46,7 @@
   width: 100%;
   height: 100%;
   stroke-width: 4px;
-  stroke: #C21A1A;
+  stroke: #DD2426;
   fill: none;
   stroke-dashoffset: calc(125.6 * (1 - var(--progress)));
   stroke-dasharray: 125.6;
@@ -55,7 +55,7 @@
 
 .swiper-button-prev,
 .swiper-button-next {
-  color: #C21A1A;
+  color: #DD2426;
 }
 
 /* ------------------------------------------------------------------ *

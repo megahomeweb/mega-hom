@@ -85,7 +85,7 @@ const ProductQRCode = ({ product, onClose }: ProductQRCodeProps) => {
         className="bg-white rounded-xl p-6 w-full max-w-sm shadow-xl text-center"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-bold text-pink-600 mb-1">Mahsulot QR kodi</h3>
+        <h3 className="text-lg font-bold text-brand-600 mb-1">Mahsulot QR kodi</h3>
         <p className="text-sm text-slate-700 font-medium line-clamp-2">{product.title}</p>
 
         <div className="flex justify-center my-4">
@@ -108,7 +108,7 @@ const ProductQRCode = ({ product, onClose }: ProductQRCodeProps) => {
             type="button"
             onClick={handleDownload}
             disabled={!dataUrl}
-            className="px-4 py-2 rounded-md bg-pink-500 text-white font-semibold hover:bg-pink-600 disabled:opacity-50 inline-flex items-center gap-1.5 text-sm"
+            className="px-4 py-2 rounded-md bg-brand-500 text-white font-semibold hover:bg-brand-600 disabled:opacity-50 inline-flex items-center gap-1.5 text-sm"
           >
             <FiDownload /> PNG yuklab olish
           </button>
@@ -116,7 +116,7 @@ const ProductQRCode = ({ product, onClose }: ProductQRCodeProps) => {
             type="button"
             onClick={handlePrint}
             disabled={!dataUrl}
-            className="px-4 py-2 rounded-md border border-pink-200 text-pink-500 hover:bg-pink-50 disabled:opacity-50 inline-flex items-center gap-1.5 text-sm"
+            className="px-4 py-2 rounded-md border border-brand-200 text-brand-500 hover:bg-brand-50 disabled:opacity-50 inline-flex items-center gap-1.5 text-sm"
           >
             <FiPrinter /> Chop etish
           </button>

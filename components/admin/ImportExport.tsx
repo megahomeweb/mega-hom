@@ -150,7 +150,7 @@ export default function ImportExport<T>({
   };
 
   const exportBtn =
-    "px-3 py-2 text-sm bg-white border border-pink-200 text-pink-500 rounded-lg hover:bg-pink-50 inline-flex items-center gap-1.5 disabled:opacity-50";
+    "px-3 py-2 text-sm bg-white border border-brand-200 text-brand-500 rounded-lg hover:bg-brand-50 inline-flex items-center gap-1.5 disabled:opacity-50";
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -165,7 +165,7 @@ export default function ImportExport<T>({
             type="button"
             disabled={disabled}
             onClick={() => inputRef.current?.click()}
-            className="px-3 py-2 text-sm bg-pink-500 text-white rounded-lg hover:bg-pink-600 inline-flex items-center gap-1.5 disabled:opacity-50"
+            className="px-3 py-2 text-sm bg-brand-500 text-white rounded-lg hover:bg-brand-600 inline-flex items-center gap-1.5 disabled:opacity-50"
           >
             <FiUpload className="text-base" /> Import
           </button>
@@ -191,7 +191,7 @@ export default function ImportExport<T>({
             {result ? (
               /* ------------------------------ natija ------------------------------ */
               <>
-                <h3 className="text-lg font-bold text-pink-600 mb-3 flex items-center gap-2">
+                <h3 className="text-lg font-bold text-brand-600 mb-3 flex items-center gap-2">
                   <FiCheckCircle className="text-green-500" /> Import yakunlandi
                 </h3>
                 <div className="flex flex-wrap gap-2 text-sm">
@@ -218,7 +218,7 @@ export default function ImportExport<T>({
                     <button
                       type="button"
                       onClick={downloadErrorReport}
-                      className="mt-2 text-xs text-pink-500 hover:text-pink-600 underline"
+                      className="mt-2 text-xs text-brand-500 hover:text-brand-600 underline"
                     >
                       Hisobotni yuklab olish (.txt)
                     </button>
@@ -228,7 +228,7 @@ export default function ImportExport<T>({
                   <button
                     type="button"
                     onClick={closeDialog}
-                    className="px-4 py-2 rounded-md bg-pink-500 text-white font-semibold hover:bg-pink-600"
+                    className="px-4 py-2 rounded-md bg-brand-500 text-white font-semibold hover:bg-brand-600"
                   >
                     Yopish
                   </button>
@@ -237,7 +237,7 @@ export default function ImportExport<T>({
             ) : (
               /* ----------------------------- sozlash ------------------------------ */
               <>
-                <h3 className="text-lg font-bold text-pink-600 mb-2">Importni sozlash</h3>
+                <h3 className="text-lg font-bold text-brand-600 mb-2">Importni sozlash</h3>
                 <p className="text-sm text-slate-600">
                   <b className="break-all">{pending.filename}</b> faylida{" "}
                   <b>{pending.items.length}</b> ta qator topildi.
@@ -277,7 +277,7 @@ export default function ImportExport<T>({
                               disabled={absent || busy}
                               checked={enabled.has(col.key)}
                               onChange={() => toggleColumn(col.key)}
-                              className="size-4 accent-pink-500"
+                              className="size-4 accent-brand-500"
                             />
                             <span>
                               {col.label}
@@ -316,7 +316,7 @@ export default function ImportExport<T>({
                     type="button"
                     disabled={busy}
                     onClick={runImport}
-                    className="px-4 py-2 rounded-md bg-pink-500 text-white font-semibold hover:bg-pink-600 disabled:opacity-60"
+                    className="px-4 py-2 rounded-md bg-brand-500 text-white font-semibold hover:bg-brand-600 disabled:opacity-60"
                   >
                     {busy ? "Yuklanmoqda…" : "Import qilish"}
                   </button>

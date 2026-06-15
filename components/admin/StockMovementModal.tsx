@@ -64,7 +64,7 @@ const StockMovementModal = ({ product, onClose }: { product: ProductT; onClose: 
   };
 
   const input =
-    "w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-pink-300 text-slate-700 placeholder-slate-400";
+    "w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-brand-300 text-slate-700 placeholder-slate-400";
 
   return (
     <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
@@ -87,7 +87,7 @@ const StockMovementModal = ({ product, onClose }: { product: ProductT; onClose: 
                 onClick={() => setType(t.key)}
                 className={`px-2 py-2 rounded-lg text-sm font-semibold border transition-colors ${
                   type === t.key
-                    ? "bg-pink-500 text-white border-pink-500"
+                    ? "bg-brand-500 text-white border-brand-500"
                     : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
                 }`}
               >
@@ -133,7 +133,7 @@ const StockMovementModal = ({ product, onClose }: { product: ProductT; onClose: 
           <button
             onClick={apply}
             disabled={busy}
-            className="w-full px-4 py-2.5 rounded-lg bg-pink-500 text-white font-bold hover:bg-pink-600 disabled:opacity-50"
+            className="w-full px-4 py-2.5 rounded-lg bg-brand-500 text-white font-bold hover:bg-brand-600 disabled:opacity-50"
           >
             {busy ? "Saqlanmoqda…" : "Saqlash"}
           </button>

@@ -34,7 +34,7 @@ const BestSellers = () => {
 
   return (
     <div className="max-w-7xl mx-auto py-10 px-4 sm:px-6">
-      <h2 className="text-3xl sm:text-4xl font-bold pb-5">Sotuv xitlari</h2>
+      <h2 className="font-brand text-3xl sm:text-4xl font-bold pb-5">Sotuv xitlari</h2>
       <div className="relative">
         <Swiper
           onBeforeInit={(swiper) => {

@@ -212,18 +212,18 @@ const POSContent = () => {
   };
 
   const inputCls =
-    "w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-pink-300 text-slate-700 placeholder-slate-400";
+    "w-full px-3 py-2 border border-slate-200 rounded-lg outline-none focus:ring-1 focus:ring-brand-300 text-slate-700 placeholder-slate-400";
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-5">
       <Link
         href="/admin-dashboard"
-        className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-pink-500 mb-2"
+        className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-brand-500 mb-2"
       >
         <GoArrowLeft className="text-xl" />
         <span>Admin panel</span>
       </Link>
-      <h1 className="text-xl font-bold text-pink-500 mb-4">Kassa (POS)</h1>
+      <h1 className="text-xl font-bold text-brand-500 mb-4">Kassa (POS)</h1>
 
       <div className="grid lg:grid-cols-[1fr_380px] gap-5">
         {/* LEFT: scan/search + product grid */}
@@ -257,7 +257,7 @@ const POSContent = () => {
                   key={p.id}
                   type="button"
                   onClick={() => addToBasket(p)}
-                  className={`border border-slate-200 rounded-lg p-2 text-left hover:border-pink-400 hover:shadow-sm transition ${stock <= 0 ? "opacity-60" : ""}`}
+                  className={`border border-slate-200 rounded-lg p-2 text-left hover:border-brand-400 hover:shadow-sm transition ${stock <= 0 ? "opacity-60" : ""}`}
                 >
                   <div className="relative aspect-square w-full overflow-hidden rounded mb-1 bg-slate-50">
                     {p.productImageUrl?.[0]?.url ? (
@@ -278,7 +278,7 @@ const POSContent = () => {
                     </span>
                   </div>
                   <p className="text-xs font-medium text-slate-700 line-clamp-2 min-h-8">{p.title}</p>
-                  <p className="text-xs text-pink-600 font-bold">{FormattedPrice(p.price)} UZS</p>
+                  <p className="text-xs text-brand-600 font-bold">{FormattedPrice(p.price)} UZS</p>
                 </button>
                 );
               })}
@@ -337,12 +337,12 @@ const POSContent = () => {
                 value={discount}
                 onChange={(e) => setDiscount(e.target.value)}
                 placeholder="0"
-                className="w-28 px-2 py-1 border border-slate-200 rounded-lg text-right text-slate-700 outline-none focus:ring-1 focus:ring-pink-300"
+                className="w-28 px-2 py-1 border border-slate-200 rounded-lg text-right text-slate-700 outline-none focus:ring-1 focus:ring-brand-300"
               />
             </div>
             <div className="flex items-center justify-between pt-1">
               <span className="font-bold text-slate-700">Jami</span>
-              <span className="font-bold text-lg text-pink-600">{FormattedPrice(total)} UZS</span>
+              <span className="font-bold text-lg text-brand-600">{FormattedPrice(total)} UZS</span>
             </div>
           </div>
 
@@ -365,7 +365,7 @@ const POSContent = () => {
                       key={c.phone}
                       type="button"
                       onClick={() => pickCustomer(c)}
-                      className="w-full text-left px-3 py-2 hover:bg-pink-50 border-b border-slate-50 last:border-0"
+                      className="w-full text-left px-3 py-2 hover:bg-brand-50 border-b border-slate-50 last:border-0"
                     >
                       <p className="text-sm text-slate-700 capitalize">{c.name || "Mijoz"}</p>
                       <p className="text-xs text-slate-400">
@@ -415,7 +415,7 @@ const POSContent = () => {
                 type="checkbox"
                 checked={printChek}
                 onChange={(e) => setPrintChek(e.target.checked)}
-                className="size-4 accent-pink-500"
+                className="size-4 accent-brand-500"
               />
               🧾 Chek chiqarish
             </label>
@@ -434,7 +434,7 @@ const POSContent = () => {
           <button
             onClick={pay}
             disabled={busy || basket.length === 0}
-            className="w-full mt-3 px-4 py-3 rounded-lg bg-pink-500 text-white font-bold hover:bg-pink-600 disabled:opacity-50"
+            className="w-full mt-3 px-4 py-3 rounded-lg bg-brand-500 text-white font-bold hover:bg-brand-600 disabled:opacity-50"
           >
             {busy ? "Saqlanmoqda…" : "Toʼlash (naqd)"}
           </button>
@@ -447,15 +447,15 @@ const POSContent = () => {
 
       {/* Mobile sticky pay bar — running total + one-tap pay, floats above the dock */}
       {basket.length > 0 && (
-        <div className="lg:hidden fixed inset-x-3 bottom-[4.75rem] z-40 flex items-center justify-between gap-3 rounded-2xl bg-white/95 backdrop-blur border border-pink-100 shadow-[0_8px_30px_rgba(0,0,0,0.18)] px-4 py-2.5">
+        <div className="lg:hidden fixed inset-x-3 bottom-[4.75rem] z-40 flex items-center justify-between gap-3 rounded-2xl bg-white/95 backdrop-blur border border-brand-100 shadow-[0_8px_30px_rgba(0,0,0,0.18)] px-4 py-2.5">
           <div className="min-w-0">
             <p className="text-[11px] text-slate-500 leading-none">Savatcha ({totalQty})</p>
-            <p className="font-bold text-pink-600 text-lg leading-tight">{FormattedPrice(total)} UZS</p>
+            <p className="font-bold text-brand-600 text-lg leading-tight">{FormattedPrice(total)} UZS</p>
           </div>
           <button
             onClick={pay}
             disabled={busy}
-            className="px-6 py-2.5 rounded-xl bg-pink-500 text-white font-bold hover:bg-pink-600 disabled:opacity-50 shrink-0"
+            className="px-6 py-2.5 rounded-xl bg-brand-500 text-white font-bold hover:bg-brand-600 disabled:opacity-50 shrink-0"
           >
             {busy ? "..." : "Toʼlash"}
           </button>

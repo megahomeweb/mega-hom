@@ -34,17 +34,17 @@ const TopSellers = () => {
 
   return (
     <div className="px-5 mb-4">
-      <div className="rounded-xl border border-pink-100 bg-white p-4">
+      <div className="rounded-xl border border-brand-100 bg-white p-4">
         <h3 className="font-bold text-slate-700 mb-3">Eng koʼp sotilgan mahsulotlar</h3>
         <div className="space-y-1.5">
           {top.map((p, i) => (
             <div key={i} className="flex items-center gap-3 text-sm">
-              <span className="w-5 text-center font-bold text-pink-400">{i + 1}</span>
+              <span className="w-5 text-center font-bold text-brand-600">{i + 1}</span>
               <span className="flex-1 min-w-0 truncate text-slate-700 capitalize">{p.title}</span>
               <span className="text-slate-500 whitespace-nowrap">
                 <b className="text-slate-700">{p.units}</b> dona
               </span>
-              <span className="w-28 text-right font-semibold text-pink-600">
+              <span className="w-28 text-right font-semibold text-brand-600">
                 {FormattedPrice(p.revenue)}
               </span>
             </div>

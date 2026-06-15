@@ -109,7 +109,7 @@ const SignUpContent = () => {
 
       <div className="w-full max-w-[420px]">
         <header className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight text-[#1A1414]">
+          <h1 className="font-brand text-3xl font-bold tracking-tight text-[#1A1414]">
             Roʼyxatdan oʼtish
           </h1>
           <p className="mt-2 text-base text-[#575353]">
@@ -237,7 +237,7 @@ const SignUpContent = () => {
             type="submit"
             disabled={loading}
             aria-busy={loading}
-            className="w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-white shadow-brand transition-colors hover:bg-[#A91616] disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 motion-safe:active:scale-[0.99]"
+            className="w-full rounded-xl bg-brand py-3.5 text-base font-semibold text-white shadow-brand transition-colors hover:bg-brand-600 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 motion-safe:active:scale-[0.99]"
           >
             {loading ? "Yuborilmoqda..." : "Roʼyxatdan oʼtish"}
           </button>

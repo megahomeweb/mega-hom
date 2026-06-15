@@ -1,12 +1,14 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import Link from "next/link";
 import { GoArrowLeft } from "react-icons/go";
 import Loader from "@/components/Loader";
 import useStockStore from "@/zustand/useStockStore";
+import useProductStore from "@/zustand/useProductStore";
 import { useRole } from "@/components/admin/RoleContext";
 import { isManagerPlus } from "@/lib/roles";
 import NoAccess from "@/components/admin/NoAccess";
+import { FormattedPrice } from "@/utils";
 
 const TYPE_BADGE: Record<string, string> = {
   kirim: "bg-green-100 text-green-700",
@@ -28,10 +30,29 @@ const TYPE_LABEL: Record<string, string> = {
 const InventoryPage = () => {
   const me = useRole();
   const { movements, loading, fetchMovements } = useStockStore();
+  const { products, fetchProducts } = useProductStore();
 
   useEffect(() => {
     fetchMovements();
-  }, [fetchMovements]);
+    fetchProducts();
+  }, [fetchMovements, fetchProducts]);
+
+  // Inventory valuation — answers "Qoldiq va Tan narx qancha summa?". Qoldiq is
+  // each product's on-hand `quantity`; Tan narx is its unit `costPrice`. The
+  // ombor's worth at cost = Σ(quantity × costPrice); at retail = Σ(quantity ×
+  // price); the gap is the margin still sitting on the shelves.
+  const val = useMemo(() => {
+    let units = 0, cost = 0, retail = 0, noCost = 0;
+    for (const p of products) {
+      const q = Number(p.quantity) || 0;
+      const c = Number(p.costPrice) || 0;
+      if (q > 0 && !p.costPrice) noCost++;
+      units += q;
+      cost += q * c;
+      retail += q * (Number(p.price) || 0);
+    }
+    return { skus: products.length, units, cost, retail, profit: retail - cost, noCost };
+  }, [products]);
 
   if (!isManagerPlus(me?.role)) return <NoAccess min="manager" />;
 
@@ -39,16 +60,16 @@ const InventoryPage = () => {
     <div className="max-w-5xl mx-auto px-4 py-6">
       <Link
         href="/admin-dashboard"
-        className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-pink-500 mb-3"
+        className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-brand mb-3"
       >
         <GoArrowLeft className="text-xl" />
         <span>Admin panelga qaytish</span>
       </Link>
       <div className="flex items-center justify-between mb-1 gap-3">
-        <h1 className="text-xl font-bold text-pink-500">Ombor harakatlari</h1>
+        <h1 className="text-xl font-bold text-brand">Ombor harakatlari</h1>
         <Link
           href="/admin-dashboard/suppliers"
-          className="text-sm font-medium text-pink-600 hover:underline whitespace-nowrap"
+          className="text-sm font-medium text-brand-600 hover:underline whitespace-nowrap"
         >
           Yetkazib beruvchilar →
         </Link>
@@ -58,6 +79,43 @@ const InventoryPage = () => {
         <b>Mahsulotlar</b> jadvalida 📦 tugmasi orqali qoʼlda oʼzgartiring; sotuv va qaytarishlar
         avtomatik yoziladi.
       </p>
+
+      {/* Ombor qiymati — Qoldiq (on-hand) × Tan narx (cost) valuation */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 mb-5">
+        <div className="rounded-xl border border-slate-100 bg-white px-4 py-3">
+          <p className="text-xs text-slate-500">Jami qoldiq</p>
+          <p className="text-lg sm:text-xl font-bold text-slate-700">
+            {val.units.toLocaleString("ru-RU")} <span className="text-sm font-medium text-slate-400">dona</span>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">{val.skus} ta mahsulot turi</p>
+        </div>
+        <div className="rounded-xl border border-brand-100 bg-brand-50 px-4 py-3">
+          <p className="text-xs text-slate-500">Ombor qiymati — tan narx</p>
+          <p className="text-lg sm:text-xl font-bold text-brand">
+            {FormattedPrice(val.cost)} <span className="text-sm font-medium text-brand-400">soʼm</span>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Σ qoldiq × tan narx</p>
+        </div>
+        <div className="rounded-xl border border-slate-100 bg-white px-4 py-3">
+          <p className="text-xs text-slate-500">Ombor qiymati — sotuvda</p>
+          <p className="text-lg sm:text-xl font-bold text-slate-700">
+            {FormattedPrice(val.retail)} <span className="text-sm font-medium text-slate-400">soʼm</span>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">Σ qoldiq × sotuv narx</p>
+        </div>
+        <div className="rounded-xl border border-green-100 bg-green-50 px-4 py-3">
+          <p className="text-xs text-slate-500">Potensial foyda</p>
+          <p className="text-lg sm:text-xl font-bold text-green-600">
+            {FormattedPrice(val.profit)} <span className="text-sm font-medium text-green-500">soʼm</span>
+          </p>
+          <p className="text-[11px] text-slate-400 mt-0.5">sotuvda − tan narx</p>
+        </div>
+      </div>
+      {val.noCost > 0 && (
+        <p className="-mt-3 mb-5 text-[11px] text-amber-600">
+          ⚠ {val.noCost} ta mahsulotda tan narx kiritilmagan — ular tan narx qiymatiga kirmaydi.
+        </p>
+      )}
 
       {loading && movements.length === 0 && (
         <div className="flex justify-center py-16">

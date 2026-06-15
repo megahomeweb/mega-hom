@@ -10,7 +10,7 @@ import ManualOrderModal from "./ManualOrderModal";
 import useCustomerStore from "@/zustand/useCustomerStore";
 import { FormattedPrice } from "@/utils";
 
-const kpi = "rounded-xl border border-pink-100 bg-pink-50 px-4 py-3";
+const kpi = "rounded-xl border border-brand-100 bg-brand-50 px-4 py-3";
 
 const CustomerProfile = ({ phone }: { phone: string }) => {
   const { customers, loading, fetchCustomers, upsertEnrichment } = useCustomerStore();
@@ -47,7 +47,7 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
     return (
       <div className="max-w-3xl mx-auto px-4 py-10 text-center">
         <p className="text-slate-500 mb-4">Mijoz topilmadi.</p>
-        <Link href="/admin-dashboard/customers" className="text-pink-500 hover:underline">
+        <Link href="/admin-dashboard/customers" className="text-brand-500 hover:underline">
           ← Mijozlar roʼyxati
         </Link>
       </div>
@@ -79,23 +79,23 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
     <div className="max-w-4xl mx-auto px-4 py-6">
       <Link
         href="/admin-dashboard/customers"
-        className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-pink-500 mb-4"
+        className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-brand-500 mb-4"
       >
         <GoArrowLeft className="text-xl" />
         <span>Mijozlar roʼyxati</span>
       </Link>
 
       {/* Header */}
-      <div className="rounded-xl border border-pink-100 bg-pink-50 p-5 flex flex-wrap items-center justify-between gap-4 mb-5">
+      <div className="rounded-xl border border-brand-100 bg-brand-50 p-5 flex flex-wrap items-center justify-between gap-4 mb-5">
         <div>
-          <h1 className="text-2xl font-bold text-pink-600 capitalize">{customer.name || "Mijoz"}</h1>
+          <h1 className="text-2xl font-bold text-brand-600 capitalize">{customer.name || "Mijoz"}</h1>
           <p className="text-slate-600 mt-1">{customer.displayPhone}</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setShowSell(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-pink-500 text-white font-semibold hover:bg-pink-600"
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600"
           >
             <FiPlus className="text-base" /> Yana sotish
           </button>
@@ -140,7 +140,7 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
         <h2 className="font-semibold text-slate-700 mb-3">Belgilar va izoh</h2>
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {customer.tags.map((t) => (
-            <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 text-sm rounded-full bg-pink-100 text-pink-600">
+            <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 text-sm rounded-full bg-brand-100 text-brand-600">
               {t}
               <button onClick={() => removeTag(t)} title="Olib tashlash">
                 <FiX className="text-xs" />
@@ -157,9 +157,9 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
               }
             }}
             placeholder="Belgi qoʼshish..."
-            className="px-2.5 py-1 text-sm border border-pink-200 rounded-full outline-none focus:ring-1 focus:ring-pink-300"
+            className="px-2.5 py-1 text-sm border border-brand-200 rounded-full outline-none focus:ring-1 focus:ring-brand-300"
           />
-          <button onClick={addTag} className="text-sm text-pink-500 hover:underline">
+          <button onClick={addTag} className="text-sm text-brand-500 hover:underline">
             Qoʼshish
           </button>
         </div>
@@ -180,7 +180,7 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
           <button
             onClick={saveNote}
             disabled={savingNote}
-            className="px-4 py-2 rounded-md bg-pink-500 text-white font-semibold hover:bg-pink-600 disabled:opacity-60"
+            className="px-4 py-2 rounded-md bg-brand-500 text-white font-semibold hover:bg-brand-600 disabled:opacity-60"
           >
             {savingNote ? "Saqlanmoqda…" : "Saqlash"}
           </button>
@@ -196,7 +196,7 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
               <span className="text-sm text-slate-500">
                 {o.date?.seconds ? new Date(o.date.seconds * 1000).toLocaleString() : ""}
               </span>
-              <span className="font-bold text-pink-600">{FormattedPrice(o.totalPrice)} UZS</span>
+              <span className="font-bold text-brand-600">{FormattedPrice(o.totalPrice)} UZS</span>
             </div>
             <ul className="text-sm text-slate-600 space-y-0.5">
               {(o.basketItems ?? []).map((it, idx) => (

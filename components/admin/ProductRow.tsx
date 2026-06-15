@@ -6,7 +6,7 @@ import React from 'react'
 import toast from 'react-hot-toast';
 
 const cell =
-  "h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-pink-100 stroke-slate-500 text-slate-500 first-letter:uppercase ";
+  "h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 first-letter:uppercase ";
 
 const ToggleSwitch = ({ on, onToggle }: { on: boolean; onToggle: () => void }) => (
   <Switch

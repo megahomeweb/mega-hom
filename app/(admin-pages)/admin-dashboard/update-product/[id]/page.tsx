@@ -155,10 +155,10 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
     <div className="flex justify-center items-start sm:items-center min-h-screen p-4">
       {load && <Loader />}
       {/* Login Form  */}
-      <div className="login_Form w-full max-w-md bg-pink-50 px-5 sm:px-8 py-6 border border-pink-100 rounded-xl shadow-md">
+      <div className="login_Form w-full max-w-md bg-brand-50 px-5 sm:px-8 py-6 border border-brand-100 rounded-xl shadow-md">
         {/* Top Heading  */}
         <div className="mb-5">
-          <h2 className="text-center text-2xl font-bold text-pink-500 ">
+          <h2 className="text-center text-2xl font-bold text-brand-500 ">
             Mahsulotni tahrirlash
           </h2>
         </div>
@@ -170,7 +170,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             placeholder="Mahsulot nomi"
             value={updatedProduct.title}
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, title: e.target.value })}
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
         </div>
         {/* Input Two  */}
@@ -181,7 +181,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             placeholder="Sotish narxi (UZS)"
             value={updatedProduct?.price}
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: +e.target.value })}
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
         </div>
         {/* Cost (tan narx) + Stock (zaxira) */}
@@ -193,7 +193,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, costPrice: +e.target.value })}
             placeholder="Tan narx (xarid)"
             title="Tan narx — foyda shu asosda hisoblanadi (mijozga koʼrinmaydi)"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-brand-300"
           />
           <input
             type="number"
@@ -202,7 +202,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, quantity: +e.target.value })}
             placeholder="Zaxira (dona)"
             title="Ombordagi miqdor"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-32 rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-32 rounded-md outline-none placeholder-brand-300"
           />
         </div>
         {/* Display uploaded images with delete option */}
@@ -228,13 +228,13 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             multiple
             accept="image/*"
             onChange={(e) => handleImageUpload(e.target.files)}
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
         </div>
         {/* Input Four  */}
         <div className="mb-3">
           <select 
-            className="w-full px-1 py-2 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none"
+            className="w-full px-1 py-2 text-brand-700 bg-brand-50 border border-brand-200 rounded-md outline-none"
             value={updatedProduct.category}
             onChange={(e) => {
               setUpdatedProduct({ ...updatedProduct, category: e.target.value })
@@ -267,7 +267,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
                 subCategory: e.target.value,
               });
             }}
-            className="w-full px-1 py-2 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none  "
+            className="w-full px-1 py-2 text-brand-700 bg-brand-50 border border-brand-200 rounded-md outline-none  "
           >
             <option >Subkategoriyani tanlang</option>
             {selectedCategory?.subcategory.map((value,idx) => {
@@ -291,11 +291,11 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             rows={5}
             value={updatedProduct?.description}
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, description: e.target.value })}
-            className=" w-full px-2 py-1 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none placeholder-pink-300 "
+            className=" w-full px-2 py-1 text-brand-700 bg-brand-50 border border-brand-200 rounded-md outline-none placeholder-brand-300 "
           ></textarea>
         </div>
         {/* Fiscal + POS fields (Uzbekistan ChEK) */}
-        <div className="mb-3 space-y-3 border-t border-pink-100 pt-3">
+        <div className="mb-3 space-y-3 border-t border-brand-100 pt-3">
           <input
             type="text"
             inputMode="numeric"
@@ -304,7 +304,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
               setUpdatedProduct({ ...updatedProduct, ikpu: e.target.value.replace(/\D/g, "").slice(0, 17) })
             }
             placeholder="IKPU / MXIK kodi (17 raqam) — tasnif.soliq.uz"
-            className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
           <div className="flex gap-3 w-full">
             <input
@@ -313,14 +313,14 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
               onChange={(e) => setUpdatedProduct({ ...updatedProduct, vatRate: Number(e.target.value) })}
               placeholder="QQS %"
               title="QQS (VAT) foizi"
-              className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 w-24 rounded-md outline-none placeholder-pink-300"
+              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-24 rounded-md outline-none placeholder-brand-300"
             />
             <input
               type="text"
               value={updatedProduct.barcode ?? ""}
               onChange={(e) => setUpdatedProduct({ ...updatedProduct, barcode: e.target.value })}
               placeholder="Shtrix-kod (ixtiyoriy)"
-              className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-pink-300"
+              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-brand-300"
             />
           </div>
         </div>
@@ -367,7 +367,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
           <button
             type="button"
             onClick={handleUpdate}
-            className="bg-pink-500 hover:bg-pink-600 w-full text-white text-center py-2 font-bold rounded-md"
+            className="bg-brand-500 hover:bg-brand-600 w-full text-white text-center py-2 font-bold rounded-md"
           >
             Saqlash
           </button>

@@ -91,9 +91,9 @@ const AdminDock = () => {
                     key={it.label}
                     href={it.href}
                     onClick={() => setMoreOpen(false)}
-                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-50 hover:bg-pink-50 text-slate-600 text-center"
+                    className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-slate-50 hover:bg-brand-50 text-slate-600 text-center"
                   >
-                    <it.icon className="text-2xl text-pink-500" />
+                    <it.icon className="text-2xl text-brand-500" />
                     <span className="text-[11px] leading-tight">{it.label}</span>
                   </Link>
                 ))}
@@ -117,7 +117,7 @@ const AdminDock = () => {
         transition={{ type: "spring", damping: 24, stiffness: 280 }}
         className="fixed bottom-3 inset-x-0 z-50 flex justify-center lg:hidden pointer-events-none"
       >
-        <div className="pointer-events-auto flex items-center gap-0.5 rounded-3xl bg-white/90 backdrop-blur-lg border border-pink-100 shadow-[0_10px_34px_rgba(0,0,0,0.14)] px-2 py-1.5">
+        <div className="pointer-events-auto flex items-center gap-0.5 rounded-3xl bg-white/90 backdrop-blur-lg border border-brand-100 shadow-[0_10px_34px_rgba(0,0,0,0.14)] px-2 py-1.5">
           {primary.map((it) => {
             const active = isActive(it.href);
             return (

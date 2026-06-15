@@ -1,5 +1,5 @@
 import {create} from "zustand";
-import { collection, deleteDoc, doc, addDoc, increment, query, orderBy, limit, onSnapshot, serverTimestamp, updateDoc, writeBatch, FieldValue } from "firebase/firestore";
+import { collection, deleteDoc, doc, addDoc, getDocs, increment, query, orderBy, limit, onSnapshot, serverTimestamp, updateDoc, writeBatch, FieldValue } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { ImageT, Order } from "@/lib/types";
 import { DEFAULT_ORDER_STATUS, OrderStatus, isStockCommitting } from "@/lib/orderStatus";
@@ -53,6 +53,7 @@ interface StoreState {
   fetchAllOrders: () => void;
   updateOrderStatus: (id: string, status: OrderStatus, actor?: string) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
+  deleteAllOrders: () => Promise<number>;
 }
 
 export const useOrderStore = create<StoreState>((set, get) => ({
@@ -227,5 +228,23 @@ export const useOrderStore = create<StoreState>((set, get) => ({
   deleteOrder: async (id: string) => {
     await deleteDoc(doc(fireDB, "orders", id));
     set((state) => ({ orders: state.orders.filter((o) => o.id !== id) }));
+  },
+
+  // Wipe EVERY order — i.e. reset all sales reports/analytics to zero. Reads the
+  // full collection (not the capped live query) so nothing is left behind, then
+  // deletes in ≤400-doc batches (Firestore's per-batch limit). Owner-only +
+  // type-to-confirm gated in the UI; rules enforce the real boundary. Returns
+  // how many orders were removed. NOTE: this does NOT restock products — it only
+  // clears the sales history the reports are built from.
+  deleteAllOrders: async () => {
+    const snap = await getDocs(collection(fireDB, "orders"));
+    const ids = snap.docs.map((d) => d.id);
+    for (let i = 0; i < ids.length; i += 400) {
+      const batch = writeBatch(fireDB);
+      for (const id of ids.slice(i, i + 400)) batch.delete(doc(fireDB, "orders", id));
+      await batch.commit();
+    }
+    set({ orders: [] });
+    return ids.length;
   },
 }));

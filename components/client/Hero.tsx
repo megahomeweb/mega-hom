@@ -12,6 +12,16 @@ import "swiper/css/navigation";
 
 type SwiperEventCallback = (s: SwiperType, time: number, progress: number) => void;
 
+// Brandbook (vol.1) category banners. Each source art is pre-padded to a clean
+// 16:9 with an edge-matched margin (see public/banner-*.jpg) so object-cover
+// fills the hero with zero cropping of the headline or product photography.
+const SLIDES = [
+  { src: "/banner-interior.jpg", alt: "Interier jihozlar va uy mebeli" },
+  { src: "/banner-kitchen.jpg", alt: "Maishiy texnika va oshxona jihozlari" },
+  { src: "/banner-office.jpg", alt: "Ofis mebeli — qulay ish muhiti" },
+  { src: "/banner-security.jpg", alt: "Xavfsizlik va safar" },
+];
+
 const Hero = () => {
   const progressCircle = useRef<SVGSVGElement>(null);
   const progressContent = useRef<HTMLSpanElement | null>(null);
@@ -30,8 +40,9 @@ const Hero = () => {
       <Swiper
         spaceBetween={30}
         centeredSlides={true}
+        loop={true}
         autoplay={{
-          delay: 2500,
+          delay: 4500,
           disableOnInteraction: false,
         }}
         pagination={{
@@ -40,33 +51,22 @@ const Hero = () => {
         navigation={true}
         modules={[Autoplay, Pagination, Navigation]}
         onAutoplayTimeLeft={onAutoplayTimeLeft}
-        className="mySwiper h-52 md:h-[400px] lg:h-[600px]"
+        className="mySwiper rounded-2xl overflow-hidden"
       >
-        {/* Slide 1 */}
-        <SwiperSlide className="!h-auto">
-          <div className="relative w-full h-full">
-            <Image
-              fill
-              src="/banner-1.JPG"
-              alt="Banner 1"
-              className="absolute"
-            />
-            <div className="absolute inset-0 bg-black/40 w-full h-full"></div>
-          </div>
-        </SwiperSlide>
-
-        {/* Slide 2 */}
-        <SwiperSlide className="!h-auto">
-          <div className="relative w-full h-full">
-            <Image
-              fill
-              src="/banner-2.PNG"
-              alt="Banner 2"
-              className="absolute"
-            />
-            <div className="absolute inset-0 bg-black/40 w-full h-full"></div>
-          </div>
-        </SwiperSlide>
+        {SLIDES.map((slide, i) => (
+          <SwiperSlide key={slide.src} className="!h-auto">
+            <div className="relative w-full aspect-[16/9] bg-white">
+              <Image
+                fill
+                src={slide.src}
+                alt={slide.alt}
+                className="object-cover"
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                priority={i === 0}
+              />
+            </div>
+          </SwiperSlide>
+        ))}
 
         {/* Custom Autoplay Progress */}
         <div className="autoplay-progress w-8 sm:w-12 h-8 sm:h-12 text-xs">

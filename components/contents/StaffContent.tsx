@@ -9,8 +9,8 @@ import useStaffStore, { StaffUser } from "@/zustand/useStaffStore";
 import { useRole } from "../admin/RoleContext";
 import { ASSIGNABLE_ROLES, ROLE_LABELS, Role, isAdminPlus, rankOf } from "@/lib/roles";
 
-const th = "h-12 px-4 lg:px-6 text-md font-bold border-l first:border-l-0 border-pink-100 text-slate-700 bg-slate-100";
-const td = "h-12 px-4 lg:px-6 text-md border-t border-l first:border-l-0 border-pink-100 text-slate-500";
+const th = "h-12 px-4 lg:px-6 text-md font-bold border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100";
+const td = "h-12 px-4 lg:px-6 text-md border-t border-l first:border-l-0 border-brand-100 text-slate-500";
 
 // Plain-language capability matrix shown to the owner so granting a role is
 // obvious at a glance. Mirrors lib/roles.ts + firestore.rules (Egasi = full,
@@ -90,17 +90,17 @@ const StaffContent = () => {
     <div className="max-w-5xl mx-auto px-4 py-6">
       <Link
         href="/admin-dashboard"
-        className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-pink-500 mb-3"
+        className="flex items-center gap-1 w-fit text-gray-500 text-sm hover:text-brand-500 mb-3"
       >
         <GoArrowLeft className="text-xl" />
         <span>Admin panelga qaytish</span>
       </Link>
-      <h1 className="text-xl font-bold text-pink-500">Xodimlar</h1>
+      <h1 className="text-xl font-bold text-brand-500">Xodimlar</h1>
 
-      <div className="mt-3 mb-5 bg-pink-50 border border-pink-100 rounded-lg p-4">
+      <div className="mt-3 mb-5 bg-brand-50 border border-brand-100 rounded-lg p-4">
         <p className="text-sm text-slate-600 mb-3">
           Yangi xodim avval{" "}
-          <Link href="/sign-up" className="text-pink-600 font-semibold underline">
+          <Link href="/sign-up" className="text-brand-600 font-semibold underline">
             /sign-up
           </Link>{" "}
           orqali roʼyxatdan oʼtsin — keyin shu yerda unga rol bering. Har bir rol nimaga ruxsat
@@ -118,7 +118,7 @@ const StaffContent = () => {
             </thead>
             <tbody className="text-slate-700">
               {PERMS.map((p) => (
-                <tr key={p.label} className="border-t border-pink-100/70">
+                <tr key={p.label} className="border-t border-brand-100/70">
                   <td className="py-1.5 pr-3">{p.label}</td>
                   {[p.admin, p.manager, p.staff].map((ok, i) => (
                     <td key={i} className="text-center">
@@ -145,7 +145,7 @@ const StaffContent = () => {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         placeholder="Qidirish: ism yoki email..."
-        className="w-full sm:max-w-sm px-3 py-2 border border-pink-200 rounded-lg outline-none focus:ring-1 focus:ring-pink-300 text-slate-700 placeholder-slate-400 mb-4"
+        className="w-full sm:max-w-sm px-3 py-2 border border-brand-200 rounded-lg outline-none focus:ring-1 focus:ring-brand-300 text-slate-700 placeholder-slate-400 mb-4"
       />
 
       {loading && staff.length === 0 && (
@@ -161,11 +161,11 @@ const StaffContent = () => {
             const manage = canManage(s);
             const isMe = s.id === me?.uid;
             return (
-              <div key={s.id} className={`rounded-xl border bg-white p-3 ${s.disabled ? "opacity-60 border-slate-200" : "border-pink-100"}`}>
+              <div key={s.id} className={`rounded-xl border bg-white p-3 ${s.disabled ? "opacity-60 border-slate-200" : "border-brand-100"}`}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="font-semibold text-slate-700">
-                      {s.name || "—"} {isMe && <span className="text-xs text-pink-500">(Siz)</span>}
+                      {s.name || "—"} {isMe && <span className="text-xs text-brand-500">(Siz)</span>}
                     </p>
                     <p className="text-xs text-slate-400 truncate">{s.email || "—"}</p>
                     {typeof s.date === "string" && <p className="text-[11px] text-slate-400 mt-0.5">{s.date}</p>}
@@ -181,7 +181,7 @@ const StaffContent = () => {
                     <select
                       value={ASSIGNABLE_ROLES.includes(s.role as Role) ? (s.role as Role) : "user"}
                       onChange={(e) => changeRole(s, e.target.value as Role)}
-                      className="flex-1 text-sm border border-pink-200 rounded-lg px-2 py-1.5 outline-none text-slate-700"
+                      className="flex-1 text-sm border border-brand-200 rounded-lg px-2 py-1.5 outline-none text-slate-700"
                     >
                       {roleOptions.map((r) => (
                         <option key={r} value={r}>{ROLE_LABELS[r]}</option>
@@ -214,7 +214,7 @@ const StaffContent = () => {
       {/* Desktop table */}
       {visible.length > 0 && (
         <div className="hidden lg:block w-full overflow-x-auto">
-          <table className="w-full text-left border-separate border-pink-100">
+          <table className="w-full text-left border-separate border-brand-100">
             <tbody>
               <tr>
                 <th className={th}>№</th>
@@ -232,7 +232,7 @@ const StaffContent = () => {
                   <tr key={s.id} className={s.disabled ? "opacity-60" : ""}>
                     <td className={td}>{i + 1}.</td>
                     <td className={`${td} font-medium text-slate-700`}>
-                      {s.name || "—"} {isMe && <span className="text-xs text-pink-500">(Siz)</span>}
+                      {s.name || "—"} {isMe && <span className="text-xs text-brand-500">(Siz)</span>}
                     </td>
                     <td className={td}>{s.email || "—"}</td>
                     <td className={td}>
@@ -240,7 +240,7 @@ const StaffContent = () => {
                         <select
                           value={ASSIGNABLE_ROLES.includes(s.role as Role) ? (s.role as Role) : "user"}
                           onChange={(e) => changeRole(s, e.target.value as Role)}
-                          className="text-sm border border-pink-200 rounded-md px-2 py-1 outline-none text-slate-700"
+                          className="text-sm border border-brand-200 rounded-md px-2 py-1 outline-none text-slate-700"
                         >
                           {roleOptions.map((r) => (
                             <option key={r} value={r}>

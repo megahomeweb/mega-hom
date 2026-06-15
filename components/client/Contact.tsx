@@ -14,7 +14,7 @@ const Contact = () => {
         referrerPolicy="no-referrer-when-downgrade"
       ></iframe>
       <div className="bg-gradient-to-tr from-black via-black/90 to-brand text-white flex flex-col w-full gap-8 justify-center px-6 py-10 sm:p-10">
-        <h3 className="uppercase text-2xl sm:text-3xl font-semibold">
+        <h3 className="font-brand uppercase text-2xl sm:text-3xl font-semibold">
           murojat uchun:
         </h3>
         <div className="sm:text-xl">

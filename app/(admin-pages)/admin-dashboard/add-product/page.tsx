@@ -120,10 +120,10 @@ const AddProductPage = () => {
     <div className="flex justify-center items-start sm:items-center min-h-screen p-4">
       {loading && <Loader />}
       {/* Login Form  */}
-      <div className="login_Form w-full max-w-md bg-pink-50 px-5 sm:px-8 py-6 border border-pink-100 rounded-xl shadow-md">
+      <div className="login_Form w-full max-w-md bg-brand-50 px-5 sm:px-8 py-6 border border-brand-100 rounded-xl shadow-md">
         {/* Top Heading  */}
         <div className="mb-5">
-          <h2 className="text-center text-2xl font-bold text-pink-500 ">Mahsulot qoʼshish</h2>
+          <h2 className="text-center text-2xl font-bold text-brand-500 ">Mahsulot qoʼshish</h2>
         </div>
         {/* Input title  */}
         <div className="mb-3">
@@ -138,7 +138,7 @@ const AddProductPage = () => {
               });
             }}
             placeholder="Mahsulot nomi"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
         </div>
         {/* Input price  */}
@@ -154,7 +154,7 @@ const AddProductPage = () => {
               });
             }}
             placeholder="Sotish narxi (UZS)"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
         </div>
         {/* Cost (tan narx) + Stock (zaxira) — drive margin/profit and inventory */}
@@ -166,7 +166,7 @@ const AddProductPage = () => {
             onChange={(e) => setProduct({ ...product, costPrice: e.target.value })}
             placeholder="Tan narx (xarid)"
             title="Tan narx — foyda shu asosda hisoblanadi (mijozga koʼrinmaydi)"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-brand-300"
           />
           <input
             type="number"
@@ -175,7 +175,7 @@ const AddProductPage = () => {
             onChange={(e) => setProduct({ ...product, quantity: e.target.value })}
             placeholder="Zaxira (dona)"
             title="Ombordagi miqdor"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-32 rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-32 rounded-md outline-none placeholder-brand-300"
           />
         </div>
         {/* Input img  */}
@@ -187,7 +187,7 @@ const AddProductPage = () => {
             onChange={(e) => handleImageUpload(e.target.files)}
             placeholder="Mahsulot rasmi"
             accept="image/*"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
         </div>
         {/* Input category  */}
@@ -201,7 +201,7 @@ const AddProductPage = () => {
               });
               handleGetSubCategory(e.target.value)
             }}
-            className="w-full px-1 py-2 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none  "
+            className="w-full px-1 py-2 text-brand-700 bg-brand-50 border border-brand-200 rounded-md outline-none  "
           >
             <option >Kategoriyani tanlang</option>
             {categories.map((value) => {
@@ -229,7 +229,7 @@ const AddProductPage = () => {
                 subCategory: e.target.value,
               });
             }}
-            className="w-full px-1 py-2 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none  "
+            className="w-full px-1 py-2 text-brand-700 bg-brand-50 border border-brand-200 rounded-md outline-none  "
           >
             <option >Subkategoriyani tanlang</option>
             {selectedCategory?.subcategory.map((value,idx) => {
@@ -258,11 +258,11 @@ const AddProductPage = () => {
             name="description"
             placeholder="Mahsulot tavsifi"
             rows={5}
-            className=" w-full px-2 py-1 text-pink-300 bg-pink-50 border border-pink-200 rounded-md outline-none placeholder-pink-300 "
+            className=" w-full px-2 py-1 text-brand-700 bg-brand-50 border border-brand-200 rounded-md outline-none placeholder-brand-300 "
           ></textarea>
         </div>
         {/* Fiscal + POS fields (Uzbekistan ChEK) */}
-        <div className="mb-3 space-y-3 border-t border-pink-100 pt-3">
+        <div className="mb-3 space-y-3 border-t border-brand-100 pt-3">
           <input
             type="text"
             inputMode="numeric"
@@ -271,7 +271,7 @@ const AddProductPage = () => {
               setProduct({ ...product, ikpu: e.target.value.replace(/\D/g, "").slice(0, 17) })
             }
             placeholder="IKPU / MXIK kodi (17 raqam) — tasnif.soliq.uz"
-            className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
+            className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
           <div className="flex gap-3 w-full">
             <input
@@ -280,14 +280,14 @@ const AddProductPage = () => {
               onChange={(e) => setProduct({ ...product, vatRate: Number(e.target.value) })}
               placeholder="QQS %"
               title="QQS (VAT) foizi"
-              className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 w-24 rounded-md outline-none placeholder-pink-300"
+              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-24 rounded-md outline-none placeholder-brand-300"
             />
             <input
               type="text"
               value={product.barcode}
               onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
               placeholder="Shtrix-kod (ixtiyoriy)"
-              className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-pink-300"
+              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-brand-300"
             />
           </div>
         </div>
@@ -335,7 +335,7 @@ const AddProductPage = () => {
             disabled={loading} 
             onClick={addProductFunction}
             type="button"
-            className="bg-pink-500 hover:bg-pink-600 w-full text-white text-center py-2 font-bold rounded-md "
+            className="bg-brand-500 hover:bg-brand-600 w-full text-white text-center py-2 font-bold rounded-md "
           >
             Saqlash
           </button>

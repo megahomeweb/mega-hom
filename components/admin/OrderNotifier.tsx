@@ -122,7 +122,7 @@ const OrderNotifier = () => {
               <a
                 href="/admin-dashboard/orders"
                 onClick={() => toast.dismiss(t.id)}
-                className="mt-2 inline-block rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#A91616]"
+                className="mt-2 inline-block rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-600"
               >
                 Buyurtmani koʼrish →
               </a>
