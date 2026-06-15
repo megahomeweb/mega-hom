@@ -297,7 +297,7 @@ const POSContent = () => {
                       {FormattedPrice(b.price)} × {b.quantity} = {FormattedPrice(b.price * b.quantity)}
                     </p>
                   </div>
-                  <button onClick={() => setQty(b.id, -1)} className="size-7 rounded border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">
+                  <button onClick={() => setQty(b.id, -1)} className="size-8 rounded border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50">
                     <FiMinus className="text-xs" />
                   </button>
                   <span className="w-5 text-center text-sm">{b.quantity}</span>
@@ -305,7 +305,7 @@ const POSContent = () => {
                     onClick={() => setQty(b.id, 1)}
                     disabled={stockOf(b.id) > 0 && b.quantity >= stockOf(b.id)}
                     title={stockOf(b.id) > 0 && b.quantity >= stockOf(b.id) ? "Zaxira chegarasi" : ""}
-                    className="size-7 rounded border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                    className="size-8 rounded border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed"
                   >
                     <FiPlus className="text-xs" />
                   </button>
@@ -420,6 +420,23 @@ const POSContent = () => {
           </p>
         </div>
       </div>
+
+      {/* Mobile sticky pay bar — running total + one-tap pay, floats above the dock */}
+      {basket.length > 0 && (
+        <div className="lg:hidden fixed inset-x-3 bottom-[4.75rem] z-40 flex items-center justify-between gap-3 rounded-2xl bg-white/95 backdrop-blur border border-pink-100 shadow-[0_8px_30px_rgba(0,0,0,0.18)] px-4 py-2.5">
+          <div className="min-w-0">
+            <p className="text-[11px] text-slate-500 leading-none">Savatcha ({totalQty})</p>
+            <p className="font-bold text-pink-600 text-lg leading-tight">{FormattedPrice(total)} UZS</p>
+          </div>
+          <button
+            onClick={pay}
+            disabled={busy}
+            className="px-6 py-2.5 rounded-xl bg-pink-500 text-white font-bold hover:bg-pink-600 disabled:opacity-50 shrink-0"
+          >
+            {busy ? "..." : "Toʼlash"}
+          </button>
+        </div>
+      )}
     </div>
   );
 };

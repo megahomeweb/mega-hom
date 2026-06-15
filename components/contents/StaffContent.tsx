@@ -154,8 +154,66 @@ const StaffContent = () => {
         </div>
       )}
 
+      {/* Mobile cards */}
       {visible.length > 0 && (
-        <div className="w-full overflow-x-auto">
+        <div className="lg:hidden space-y-2.5">
+          {visible.map((s) => {
+            const manage = canManage(s);
+            const isMe = s.id === me?.uid;
+            return (
+              <div key={s.id} className={`rounded-xl border bg-white p-3 ${s.disabled ? "opacity-60 border-slate-200" : "border-pink-100"}`}>
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="font-semibold text-slate-700">
+                      {s.name || "—"} {isMe && <span className="text-xs text-pink-500">(Siz)</span>}
+                    </p>
+                    <p className="text-xs text-slate-400 truncate">{s.email || "—"}</p>
+                    {typeof s.date === "string" && <p className="text-[11px] text-slate-400 mt-0.5">{s.date}</p>}
+                  </div>
+                  {manage && (
+                    <button onClick={() => removeOne(s)} title="Xodimni oʼchirish" className="text-red-400 hover:text-red-600 shrink-0">
+                      <FiTrash2 className="text-lg" />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 mt-2.5">
+                  {manage ? (
+                    <select
+                      value={ASSIGNABLE_ROLES.includes(s.role as Role) ? (s.role as Role) : "user"}
+                      onChange={(e) => changeRole(s, e.target.value as Role)}
+                      className="flex-1 text-sm border border-pink-200 rounded-lg px-2 py-1.5 outline-none text-slate-700"
+                    >
+                      {roleOptions.map((r) => (
+                        <option key={r} value={r}>{ROLE_LABELS[r]}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <span className="flex-1 text-sm text-slate-600">{ROLE_LABELS[(s.role as Role) ?? "user"] ?? s.role}</span>
+                  )}
+                  {manage ? (
+                    <button
+                      onClick={() => toggleDisabled(s)}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border shrink-0 ${
+                        s.disabled ? "bg-gray-100 text-gray-500 border-gray-300" : "bg-green-50 text-green-700 border-green-200"
+                      }`}
+                    >
+                      {s.disabled ? "Oʼchirilgan" : "Faol"}
+                    </button>
+                  ) : (
+                    <span className={`text-xs font-semibold shrink-0 ${s.disabled ? "text-gray-400" : "text-green-600"}`}>
+                      {s.disabled ? "Oʼchirilgan" : "Faol"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Desktop table */}
+      {visible.length > 0 && (
+        <div className="hidden lg:block w-full overflow-x-auto">
           <table className="w-full text-left border-separate border-pink-100">
             <tbody>
               <tr>
