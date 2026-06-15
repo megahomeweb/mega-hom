@@ -64,10 +64,10 @@ const AddCategory = () => {
   if (!isManagerPlus(me?.role)) return <NoAccess min="manager" />;
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-start sm:items-center min-h-screen p-4">
       {loading && <Loader />}
       {/* Login Form  */}
-      <div className="login_Form bg-pink-50 px-8 py-6 border border-pink-100 rounded-xl shadow-md">
+      <div className="login_Form w-full max-w-md bg-pink-50 px-5 sm:px-8 py-6 border border-pink-100 rounded-xl shadow-md">
         {/* Top Heading  */}
         <div className="mb-5">
           <h2 className="text-center text-2xl font-bold text-pink-500 ">Kategoriya qoʼshish</h2>
@@ -80,7 +80,7 @@ const AddCategory = () => {
             value={newCategory.name}
             onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
             placeholder="Kategoriya nomi"
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
+            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
           />
         </div>
         <div className="mb-3">

@@ -152,10 +152,10 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
   }
 
   return (
-    <div className="flex justify-center items-center h-screen">
+    <div className="flex justify-center items-start sm:items-center min-h-screen p-4">
       {load && <Loader />}
       {/* Login Form  */}
-      <div className="login_Form bg-pink-50 px-8 py-6 border border-pink-100 rounded-xl shadow-md">
+      <div className="login_Form w-full max-w-md bg-pink-50 px-5 sm:px-8 py-6 border border-pink-100 rounded-xl shadow-md">
         {/* Top Heading  */}
         <div className="mb-5">
           <h2 className="text-center text-2xl font-bold text-pink-500 ">
@@ -170,7 +170,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             placeholder="Mahsulot nomi"
             value={updatedProduct.title}
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, title: e.target.value })}
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
+            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
           />
         </div>
         {/* Input Two  */}
@@ -181,11 +181,11 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             placeholder="Sotish narxi (UZS)"
             value={updatedProduct?.price}
             onChange={(e) => setUpdatedProduct({ ...updatedProduct, price: +e.target.value })}
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
+            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
           />
         </div>
         {/* Cost (tan narx) + Stock (zaxira) */}
-        <div className="mb-3 flex gap-3 w-96">
+        <div className="mb-3 flex gap-3 w-full">
           <input
             type="number"
             name="costPrice"
@@ -228,7 +228,7 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             multiple
             accept="image/*"
             onChange={(e) => handleImageUpload(e.target.files)}
-            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
+            className="bg-pink-50 border text-pink-300 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
           />
         </div>
         {/* Input Four  */}
@@ -304,9 +304,9 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
               setUpdatedProduct({ ...updatedProduct, ikpu: e.target.value.replace(/\D/g, "").slice(0, 17) })
             }
             placeholder="IKPU / MXIK kodi (17 raqam) — tasnif.soliq.uz"
-            className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 w-96 rounded-md outline-none placeholder-pink-300"
+            className="bg-pink-50 border text-pink-400 border-pink-200 px-2 py-2 w-full rounded-md outline-none placeholder-pink-300"
           />
-          <div className="flex gap-3 w-96">
+          <div className="flex gap-3 w-full">
             <input
               type="number"
               value={updatedProduct.vatRate ?? 12}
