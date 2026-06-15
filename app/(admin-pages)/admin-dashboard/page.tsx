@@ -50,7 +50,7 @@ const Admin = () => {
           <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#5B0D0D]/45 via-transparent to-[#5B0D0D]/45" />
           <div className="relative z-10 flex items-center justify-between text-white px-5 py-3">
           <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
-          <div className="flex items-center gap-4">
+          <div className="hidden lg:flex items-center gap-4">
             <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/pos'}>
               Kassa
             </Link>
