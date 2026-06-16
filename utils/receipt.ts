@@ -4,6 +4,12 @@
 // render to those exact widths via `@page { size: <w>mm auto }` so the output
 // fits the paper instead of an A4 sheet. Built with DOM nodes — textContent
 // escapes every customer-provided value (no innerHTML on user data).
+//
+// POPUP RULE: browsers only allow window.open() during a user gesture (the
+// synchronous part of a click handler). A POS sale is async (await addStoreSale),
+// so opening the print window AFTER the await is blocked → nothing prints. The
+// fix: call openReceiptWindow() FIRST, synchronously in the click, hold the
+// window, then fill it with printReceipt(input, win) once the sale resolves.
 
 import { FormattedPrice } from "@/utils";
 
@@ -40,14 +46,45 @@ const PAY_LABELS: Record<string, string> = {
   transfer: "Oʼtkazma",
 };
 
-export function printReceipt(input: ReceiptInput): boolean {
+const winFeatures = (widthMm: 58 | 80) => `width=${widthMm === 58 ? 300 : 380},height=640`;
+
+/**
+ * Open the print popup SYNCHRONOUSLY — call this directly inside a click handler,
+ * BEFORE any await, or the browser blocks it as a non-user popup. Shows a small
+ * placeholder; later pass the returned window to printReceipt(input, win) to
+ * fill + print it. Returns null if the popup was blocked anyway.
+ */
+export function openReceiptWindow(widthMm: 58 | 80 = 80): Window | null {
+  if (typeof window === "undefined") return null;
+  const win = window.open("", "_blank", winFeatures(widthMm));
+  if (!win) return null;
+  win.document.title = "megahome — CHEK";
+  const p = win.document.createElement("div");
+  p.style.cssText =
+    "font-family:-apple-system,Arial,sans-serif;color:#666;text-align:center;padding:48px 16px;font-size:14px";
+  p.textContent = "Chek tayyorlanmoqda…";
+  win.document.body.appendChild(p);
+  return win;
+}
+
+/**
+ * Render the receipt into `presetWin` (from openReceiptWindow) and trigger the
+ * print dialog. When `presetWin` is omitted the window is opened here — which is
+ * only safe for SYNCHRONOUS callers (e.g. the order-slip button), never after an
+ * await. Returns false if no window could be used (popup blocked / SSR).
+ */
+export function printReceipt(input: ReceiptInput, presetWin?: Window | null): boolean {
   if (typeof window === "undefined") return false;
   const widthMm = input.widthMm ?? 80;
   const contentMm = widthMm === 58 ? 50 : 72;
 
-  const win = window.open("", "_blank", `width=${widthMm === 58 ? 300 : 380},height=640`);
+  const win = presetWin ?? window.open("", "_blank", winFeatures(widthMm));
   if (!win) return false;
   const d = win.document;
+  // Reset — clears the "Chek tayyorlanmoqda…" placeholder (or any prior content).
+  // replaceChildren() (no args) empties the node without touching innerHTML.
+  d.head.replaceChildren();
+  d.body.replaceChildren();
   d.title = `megahome — ${input.heading ?? "CHEK"} ${input.orderNo ?? ""}`.trim();
 
   const style = d.createElement("style");
@@ -159,10 +196,13 @@ export function printReceipt(input: ReceiptInput): boolean {
   d.body.appendChild(el("div", "foot", "Qaytib keling — megahome.uz"));
   if (input.orderNo) d.body.appendChild(el("div", "ono", input.orderNo));
 
-  // Give the popup a tick to lay out before invoking the print dialog.
-  win.focus();
-  win.setTimeout(() => {
-    win.print();
-  }, 250);
+  // Wait for the popup to lay out before opening the print dialog. Using the
+  // popup's own load event (with a timeout fallback) is more reliable than a
+  // bare delay across browsers/printers.
+  const fire = () => {
+    try { win.focus(); win.print(); } catch { /* window closed by user */ }
+  };
+  if (win.document.readyState === "complete") win.setTimeout(fire, 250);
+  else win.addEventListener("load", () => win.setTimeout(fire, 150));
   return true;
 }

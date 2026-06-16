@@ -13,7 +13,7 @@ import useCustomerStore from "@/zustand/useCustomerStore";
 import { useOrderStore, StoreSaleItem } from "@/zustand/useOrderStore";
 import { ProductT, CustomerT } from "@/lib/types";
 import { FormattedPrice } from "@/utils";
-import { printReceipt } from "@/utils/receipt";
+import { printReceipt, openReceiptWindow } from "@/utils/receipt";
 
 // In-store counter (POS) — cash sales recorded into the same orders collection
 // as the website (channel:"store", status:"sotildi"). Fiscal receipt + card
@@ -155,6 +155,12 @@ const POSContent = () => {
   const pay = async () => {
     if (!basket.length) return toast.error("Savatcha boʼsh");
     if (cash && cashNum < total) return toast.error("Naqd pul yetarli emas");
+    // Open the chek window NOW — synchronously, inside the click gesture — so the
+    // browser doesn't block it as a non-user popup. The sale below is async, and a
+    // window.open AFTER the await would be blocked (nothing would print). It shows
+    // a "preparing…" placeholder until the sale resolves; we fill it in then.
+    const chekWin = printChek ? openReceiptWindow(chekWidth) : null;
+    if (printChek && !chekWin) toast.error("Chek oynasi bloklandi — popup ruxsatini yoqing");
     setBusy(true);
     // Snapshot everything the receipt needs BEFORE the form is cleared.
     const receiptItems = basket.map((b) => ({
@@ -178,24 +184,26 @@ const POSContent = () => {
         paymentMethod: "naqd",
       });
       toast.success(`Sotuv yakunlandi — ${FormattedPrice(total)} UZS`);
-      if (printChek) {
-        const ok = printReceipt({
-          orderNo,
-          dateMs: Date.now(),
-          cashier: me?.name,
-          customerName: name.trim() || undefined,
-          customerPhone: phone.trim() || undefined,
-          items: receiptItems,
-          subtotal,
-          discount: discountNum,
-          total,
-          cash: tendered,
-          change: tendered !== undefined ? tendered - total : undefined,
-          paymentMethod: "naqd",
-          widthMm: chekWidth,
-          heading: "CHEK",
-        });
-        if (!ok) toast.error("Chek oynasi bloklandi — popup ruxsatini yoqing");
+      if (chekWin) {
+        printReceipt(
+          {
+            orderNo,
+            dateMs: Date.now(),
+            cashier: me?.name,
+            customerName: name.trim() || undefined,
+            customerPhone: phone.trim() || undefined,
+            items: receiptItems,
+            subtotal,
+            discount: discountNum,
+            total,
+            cash: tendered,
+            change: tendered !== undefined ? tendered - total : undefined,
+            paymentMethod: "naqd",
+            widthMm: chekWidth,
+            heading: "CHEK",
+          },
+          chekWin
+        );
       }
       setBasket([]);
       setPhone("");
@@ -205,6 +213,7 @@ const POSContent = () => {
       setDiscount("");
       searchRef.current?.focus();
     } catch {
+      chekWin?.close(); // discard the placeholder window if the sale didn't save
       toast.error("Sotuvni saqlab boʼlmadi");
     } finally {
       setBusy(false);

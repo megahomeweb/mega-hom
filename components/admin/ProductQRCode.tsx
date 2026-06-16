@@ -72,8 +72,11 @@ const ProductQRCode = ({ product, onClose }: ProductQRCodeProps) => {
     caption.textContent = "megahome.uz";
     doc.body.append(img, heading, caption);
 
-    if (img.complete) setTimeout(() => win.print(), 50);
-    else img.onload = () => win.print();
+    // Print once the QR image is actually painted in the popup. focus() helps the
+    // print dialog surface; onerror is a fallback so a load hiccup can't hang it.
+    const fire = () => { try { win.focus(); win.print(); } catch { /* closed */ } };
+    if (img.complete && img.naturalWidth > 0) setTimeout(fire, 80);
+    else { img.onload = fire; img.onerror = fire; }
   };
 
   return (
