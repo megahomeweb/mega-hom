@@ -1,5 +1,5 @@
 import { ProductT } from '@/lib/types';
-import {create} from 'zustand';
+import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
 interface BasketState {
@@ -11,80 +11,77 @@ interface BasketState {
   addToBasket: (product: ProductT) => void;
   incrementQuantity: (id: string) => void;
   decrementQuantity: (id: string) => void;
-  getItemQuantity: (id: string) => number;  
+  getItemQuantity: (id: string) => number;
   calculateTotals: () => void;
-  clearBasket: () => void; 
+  clearBasket: () => void;
 }
+
+// Totals are a PURE function of the basket lines — always derived, never trusted
+// from persisted storage. (Previously totals were persisted but only recomputed
+// on +/- presses, so a page reload could submit a stale/wrong total to the order.)
+const totalsOf = (cartProducts: ProductT[]) => ({
+  totalQuantity: cartProducts.reduce((acc, item) => acc + (Number(item.quantity) || 0), 0),
+  totalPrice: cartProducts.reduce(
+    (acc, item) => acc + (Number(item.price) || 0) * (Number(item.quantity) || 0),
+    0
+  ),
+});
 
 const useCartProductStore = create<BasketState>()(
   persist(
     (set, get) => ({
       cartProducts: [],
       cartProduct: null,
-      load: false, 
+      load: false,
       totalQuantity: 0,
       totalPrice: 0,
-      
-      addToBasket: (product) => {
+
+      addToBasket: (product) =>
         set((state) => {
-          const existingItem = state.cartProducts.find((item) => item.id === product.id);
-          
-          if (existingItem) {
-            return {
-              cartProducts: state.cartProducts.map((item) =>
+          const exists = state.cartProducts.some((item) => item.id === product.id);
+          const cartProducts = exists
+            ? state.cartProducts.map((item) =>
                 item.id === product.id ? { ...item, quantity: product.quantity } : item
-              ),
-            };
-          } else {
-            return { cartProducts: [...state.cartProducts, { ...product, quantity: product.quantity }] };
-          }
-        });
-      },
-      
-      incrementQuantity: (id) => {
-        set((state) => ({
-          cartProducts: state.cartProducts.map((item) =>
-            item.id === id ? { ...item, quantity: item.quantity + 1 } : item
-          ),
-        }));
-      },
-      
-      decrementQuantity: (id) => {
+              )
+            : [...state.cartProducts, { ...product }];
+          return { cartProducts, ...totalsOf(cartProducts) };
+        }),
+
+      incrementQuantity: (id) =>
         set((state) => {
-          const item = state.cartProducts.find((item) => item.id === id);
-          if (!item) return state;
-
-          // If quantity is 1, remove the item from the basket
-          if (item.quantity === 1) {
-            return { cartProducts: state.cartProducts.filter((item) => item.id !== id) };
-          }
-
-          // Otherwise, decrease the quantity
-          const newBasket = state.cartProducts.map((item) =>
-            item.id === id ? { ...item, quantity: item.quantity - 1 } : item
+          const cartProducts = state.cartProducts.map((item) =>
+            item.id === id ? { ...item, quantity: item.quantity + 1 } : item
           );
-          return { cartProducts: newBasket };
-        });
-      },
-      
-      getItemQuantity: (id) => {
-        const item = get().cartProducts.find((item) => item.id === id);
-        return item ? item.quantity : 1;
-      },
+          return { cartProducts, ...totalsOf(cartProducts) };
+        }),
 
-      calculateTotals: () => {
-        const totalQuantity = get().cartProducts.reduce((acc, item) => acc + item.quantity, 0);
-        const totalPrice = get().cartProducts.reduce((acc, item) => acc + item.price * item.quantity, 0);
-        set({ totalQuantity, totalPrice });
-      },
+      decrementQuantity: (id) =>
+        set((state) => {
+          // Drop the line when it would hit 0 (matches the old behaviour).
+          const cartProducts = state.cartProducts.flatMap((item) => {
+            if (item.id !== id) return [item];
+            return item.quantity <= 1 ? [] : [{ ...item, quantity: item.quantity - 1 }];
+          });
+          return { cartProducts, ...totalsOf(cartProducts) };
+        }),
 
-      clearBasket: () => {
-        set({ cartProducts: [], totalQuantity: 0, totalPrice: 0 });
-        localStorage.removeItem("basket-storage");
-      },
+      // 0 when the item isn't in the cart. (It used to return 1, which corrupted
+      // cart math and seeded the product page's quantity stepper wrongly.)
+      getItemQuantity: (id) => get().cartProducts.find((item) => item.id === id)?.quantity ?? 0,
+
+      // Kept for back-compat; every mutation above already recomputes totals.
+      calculateTotals: () => set((state) => totalsOf(state.cartProducts)),
+
+      clearBasket: () => set({ cartProducts: [], totalQuantity: 0, totalPrice: 0 }),
     }),
     {
-      name: 'basket-storage', 
+      name: 'basket-storage',
+      // Persist ONLY the lines; totals are re-derived on rehydrate so a stale
+      // persisted total can never reach checkout.
+      partialize: (state) => ({ cartProducts: state.cartProducts }),
+      onRehydrateStorage: () => (state) => {
+        if (state) Object.assign(state, totalsOf(state.cartProducts));
+      },
     }
   )
 );

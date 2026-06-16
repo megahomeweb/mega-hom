@@ -56,6 +56,10 @@ interface StoreState {
   deleteAllOrders: () => Promise<number>;
 }
 
+// Shared, app-wide live orders listener (module-scoped) — subscribe once instead
+// of opening a fresh onSnapshot on every component that calls fetchAllOrders().
+let ordersUnsub: (() => void) | null = null;
+
 export const useOrderStore = create<StoreState>((set, get) => ({
   orders: [],
   currentOrder: null,
@@ -87,33 +91,28 @@ export const useOrderStore = create<StoreState>((set, get) => ({
   },
 
   // Fetch all orders from Firestore and update the state
-  fetchAllOrders: async () => {
+  fetchAllOrders: () => {
+    if (ordersUnsub) return; // reuse the one shared subscription
     set({ loadingOrders: true });
-    try {
-      // Newest-first + capped — see ORDER_FETCH_LIMIT. orderBy is safe: every
-      // order is written with a `date` Timestamp.
-      const q = query(collection(fireDB, "orders"), orderBy("date", "desc"), limit(ORDER_FETCH_LIMIT));
-      const unsubscribe = onSnapshot(
-        q,
-        (QuerySnapshot) => {
-          const OrderArray: Order[] = [];
-          QuerySnapshot.forEach((d) => {
-            OrderArray.push({ ...(d.data() as Order), id: d.id });
-          });
-          set({ orders: OrderArray, loadingOrders: false });
-        },
-        (err) => {
-          // Surface read failures instead of hanging on the loader forever
-          // (e.g. a non-admin session, or rules denying the read).
-          console.error("Orders subscription error:", err);
-          set({ loadingOrders: false });
-        }
-      );
-      return () => unsubscribe();
-    } catch (error) {
-      console.error("Error fetching orders: ", error);
-      set({ loadingOrders: false });
-    }
+    // Newest-first + capped — see ORDER_FETCH_LIMIT. orderBy is safe: every
+    // order is written with a `date` Timestamp.
+    const q = query(collection(fireDB, "orders"), orderBy("date", "desc"), limit(ORDER_FETCH_LIMIT));
+    ordersUnsub = onSnapshot(
+      q,
+      (QuerySnapshot) => {
+        const OrderArray: Order[] = [];
+        QuerySnapshot.forEach((d) => {
+          OrderArray.push({ ...(d.data() as Order), id: d.id });
+        });
+        set({ orders: OrderArray, loadingOrders: false });
+      },
+      (err) => {
+        // Surface read failures instead of hanging on the loader forever
+        // (e.g. a non-admin session, or rules denying the read).
+        console.error("Orders subscription error:", err);
+        set({ loadingOrders: false });
+      }
+    );
   },
 
   // Move an order along the fulfillment pipeline (admin action). Single-field

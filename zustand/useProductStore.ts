@@ -17,28 +17,36 @@ interface ProductStore {
   deleteProduct: (productId: string) => Promise<void>;
 }
 
+// One shared realtime listener for the whole app (module-scoped). Without this,
+// every component calling fetchProducts() on mount opened a NEW onSnapshot whose
+// unsubscribe was discarded — leaking listeners + duplicate reads on each mount.
+let productsUnsub: (() => void) | null = null;
+
 const useProductStore = create<ProductStore>((set) => ({
   products: [],
   product: null,
   loading: false,
 
-  // Fetch all products
-  fetchProducts: async () => {
+  // Subscribe once to the live products collection (idempotent — reuses the one
+  // shared listener instead of opening a new one on every component mount).
+  fetchProducts: () => {
+    if (productsUnsub) return;
     set({ loading: true });
-    try {
-      const q = query(collection(fireDB, "products"), orderBy("time"));
-      const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
-        let productArray: any = [];
+    const q = query(collection(fireDB, "products"), orderBy("time"));
+    productsUnsub = onSnapshot(
+      q,
+      (QuerySnapshot) => {
+        const productArray: ProductT[] = [];
         QuerySnapshot.forEach((doc) => {
-          productArray.push({ ...doc.data(), id: doc.id });
+          productArray.push({ ...(doc.data() as ProductT), id: doc.id });
         });
         set({ products: productArray, loading: false });
-      });
-      return () => unsubscribe(); 
-    } catch (error) {
-      console.error('Error fetching products:', error);
-      set({ loading: false });
-    }
+      },
+      (error) => {
+        console.error("Error fetching products:", error);
+        set({ loading: false });
+      }
+    );
   },
 
   // Fetch a single product by ID

@@ -29,15 +29,19 @@ interface StockState {
   applyMovement: (input: MovementInput) => Promise<void>;
 }
 
+// Shared, app-wide live ledger listener (module-scoped) — one subscription.
+let movementsUnsub: (() => void) | null = null;
+
 const useStockStore = create<StockState>((set) => ({
   movements: [],
   loading: true,
 
   // Live ledger, newest first (capped so the page never loads the whole history).
   fetchMovements: () => {
+    if (movementsUnsub) return; // reuse the one shared subscription
     set({ loading: true });
     const q = query(collection(fireDB, "stockMovements"), orderBy("createdAt", "desc"), limit(300));
-    const unsub = onSnapshot(
+    movementsUnsub = onSnapshot(
       q,
       (snap) => {
         const list: StockMovement[] = [];
@@ -49,7 +53,6 @@ const useStockStore = create<StockState>((set) => ({
         set({ loading: false });
       }
     );
-    return () => unsub();
   },
 
   // Atomically move stock AND append the ledger row, so on-hand and its history

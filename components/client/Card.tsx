@@ -25,6 +25,7 @@ const Card = ({ img, title, description, currentPrice, href }: CardProps) => {
             src={img[0].url}
             alt={title}
             fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
             className="w-full h-full object-cover"
           />
         ) : (
@@ -40,11 +41,11 @@ const Card = ({ img, title, description, currentPrice, href }: CardProps) => {
         </div>
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm sm:text-base">
-            <span className="font-medium text-brand animate-pulse">
+            <span className="font-semibold text-brand">
               {FormattedPrice(currentPrice)} UZS
             </span>
           </div>
-          <span className="block text-center w-full rounded bg-red-500 hover:bg-red-600 transition-all ease-in-out text-white p-2">
+          <span className="block text-center w-full rounded bg-brand hover:bg-brand-600 transition-all ease-in-out text-white p-2">
             Buyurtma qilish
           </span>
         </div>

@@ -34,6 +34,7 @@ const POSContent = () => {
   const [printChek, setPrintChek] = useState(true);
   const [chekWidth, setChekWidth] = useState<58 | 80>(80);
   const searchRef = useRef<HTMLInputElement>(null);
+  const payingRef = useRef(false); // re-entry guard so a double-tap can't double-charge
 
   useEffect(() => {
     fetchProducts();
@@ -153,8 +154,10 @@ const POSContent = () => {
   };
 
   const pay = async () => {
+    if (payingRef.current) return; // already processing — blocks double-tap / both pay buttons
     if (!basket.length) return toast.error("Savatcha boʼsh");
     if (cash && cashNum < total) return toast.error("Naqd pul yetarli emas");
+    payingRef.current = true;
     // Open the chek window NOW — synchronously, inside the click gesture — so the
     // browser doesn't block it as a non-user popup. The sale below is async, and a
     // window.open AFTER the await would be blocked (nothing would print). It shows
@@ -217,6 +220,7 @@ const POSContent = () => {
       toast.error("Sotuvni saqlab boʼlmadi");
     } finally {
       setBusy(false);
+      payingRef.current = false;
     }
   };
 

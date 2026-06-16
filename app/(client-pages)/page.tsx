@@ -3,6 +3,9 @@ import Populars from "@/components/client/Populars";
 import NewProducts from "@/components/client/NewProducts";
 import BestSellers from "@/components/client/BestSellers";
 import AllProducts from "@/components/client/AllProducts";
+import Partners from "@/components/client/Partners";
+import Delivery from "@/components/client/Delivery";
+import Contact from "@/components/client/Contact";
 
 export default function Home() {
   return (
@@ -15,6 +18,9 @@ export default function Home() {
       <NewProducts />
       <BestSellers />
       <AllProducts />
+      <Partners />
+      <Delivery />
+      <Contact />
     </div>
   );
 }

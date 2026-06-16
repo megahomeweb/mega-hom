@@ -6,7 +6,6 @@ import useProductStore from '@/zustand/useProductStore'
 import Image from 'next/image'
 import Link from 'next/link'
 import NoPhoto from '@/components/NoPhoto'
-import { useRouter } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { BsCartDash } from 'react-icons/bs'
@@ -14,17 +13,20 @@ import { GoArrowLeft } from 'react-icons/go'
 
 const ProductContent = ({productID}: {productID:string}) => {
   const { fetchSingleProduct, loading, product } = useProductStore();
-  const { addToBasket, getItemQuantity, load, calculateTotals } = useCartProductStore();
+  const { addToBasket, getItemQuantity, load } = useCartProductStore();
   const [quantity, setQuantity] = useState(1);
-  const navigate = useRouter();
-  
-  const quantityInBasket = getItemQuantity(productID);
+
+  // Fetch only when the id changes (NOT on every cart change — that re-fetched
+  // the product on each add-to-cart).
   useEffect(() => {
-    if (productID) {
-      fetchSingleProduct(productID);
-      setQuantity(quantityInBasket || 1);
-    }
-  }, [fetchSingleProduct, productID, quantityInBasket]);
+    if (productID) fetchSingleProduct(productID);
+  }, [fetchSingleProduct, productID]);
+
+  // Seed the stepper from whatever is already in the cart for this product.
+  useEffect(() => {
+    const inCart = getItemQuantity(productID);
+    if (inCart > 0) setQuantity(inCart);
+  }, [productID, getItemQuantity]);
 
   if (loading || !product) {
     return (
@@ -34,26 +36,28 @@ const ProductContent = ({productID}: {productID:string}) => {
     );
   }
 
+  const stock = Number(product.quantity) || 0;
+  const outOfStock = stock <= 0;
+
   const handleAddQuantity = () => {
-    setQuantity(quantity + 1);
+    setQuantity((q) => (stock > 0 ? Math.min(q + 1, stock) : q + 1));
   };
 
   const handledeleteQuantity = () => {
-    setQuantity(quantity - 1);
+    setQuantity((q) => Math.max(1, q - 1));
   };
 
-  const handleSubmit = async () => {
-    addToBasket({...product, quantity: quantity});
-    calculateTotals();
-    toast.success("Add cart product successfully");
-    navigate.push("/");
+  const handleSubmit = () => {
+    if (outOfStock) return;
+    addToBasket({ ...product, quantity });
+    toast.success("Savatga qoʼshildi ✓");
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6">
       <Link
         href="/"
-        className="flex items-center gap-1 w-fit text-gray-500 text-sm transition-all ease-in-out hover:text-red-500 py-4"
+        className="flex items-center gap-1 w-fit text-gray-500 text-sm transition-all ease-in-out hover:text-brand py-4"
       >
         <GoArrowLeft className="text-xl" />
         <span>Orqaga</span>
@@ -82,22 +86,32 @@ const ProductContent = ({productID}: {productID:string}) => {
             <div className="w-14 border-b">
               <span className="block text-center">{quantity}</span>
             </div>
-            <button onClick={handleAddQuantity} className="size-9 bg-brand text-white flex items-center justify-center rounded-full">
+            <button
+              onClick={handleAddQuantity}
+              disabled={outOfStock || (stock > 0 && quantity >= stock)}
+              className="size-9 bg-brand text-white flex items-center justify-center rounded-full disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               +
             </button>
           </div>
           <div>
             <div className="text-sm text-gray-500">Umumiy</div>
-            <div className="font-bold">{FormattedPrice(product.price)} UZS</div>
+            <div className="font-bold">{FormattedPrice(product.price * quantity)} UZS</div>
+            {outOfStock ? (
+              <div className="text-sm font-medium text-brand mt-1">Hozircha sotuvda yoʼq</div>
+            ) : stock <= 5 ? (
+              <div className="text-sm font-medium text-amber-600 mt-1">Faqat {stock} dona qoldi</div>
+            ) : null}
           </div>
           <button
             onClick={handleSubmit}
-            className="flex items-center justify-center gap-2 bg-brand transition-all ease-in-out hover:bg-brand-600 rounded-xl max-w-lg w-full text-white p-3"
+            disabled={outOfStock}
+            className="flex items-center justify-center gap-2 bg-brand transition-all ease-in-out hover:bg-brand-600 rounded-xl max-w-lg w-full text-white p-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {load ? <Loader /> : (
               <>
                 <BsCartDash className="text-white text-xl" />
-                <span>Savatga qo&apos;shish</span>
+                <span>{outOfStock ? "Sotuvda yoʼq" : "Savatga qoʼshish"}</span>
               </>
             )}
           </button>          
