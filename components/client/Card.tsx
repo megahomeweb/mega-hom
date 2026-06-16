@@ -11,9 +11,13 @@ interface CardProps {
   description: string;
   currentPrice: number;
   href: string;
+  quantity?: number;
 }
 
-const Card = ({ img, title, description, currentPrice, href }: CardProps) => {
+const Card = ({ img, title, description, currentPrice, href, quantity }: CardProps) => {
+  const stock = Number(quantity ?? 0);
+  const outOfStock = quantity !== undefined && stock <= 0;
+  const lowStock = stock > 0 && stock <= 5;
   return (
     <Link
       href={href}
@@ -26,11 +30,20 @@ const Card = ({ img, title, description, currentPrice, href }: CardProps) => {
             alt={title}
             fill
             sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            className="w-full h-full object-cover"
+            className={`w-full h-full object-cover ${outOfStock ? "opacity-60" : ""}`}
           />
         ) : (
           <NoPhoto className="absolute inset-0" />
         )}
+        {outOfStock ? (
+          <span className="absolute top-2 left-2 bg-slate-800/85 text-white text-[11px] font-semibold px-2 py-0.5 rounded">
+            Sotuvda yoʼq
+          </span>
+        ) : lowStock ? (
+          <span className="absolute top-2 left-2 bg-amber-500 text-white text-[11px] font-semibold px-2 py-0.5 rounded">
+            Faqat {stock} dona
+          </span>
+        ) : null}
       </div>
       <div className="flex flex-col gap-3 justify-between h-full p-3 sm:p-4">
         <div className="space-y-1">
@@ -45,8 +58,12 @@ const Card = ({ img, title, description, currentPrice, href }: CardProps) => {
               {FormattedPrice(currentPrice)} UZS
             </span>
           </div>
-          <span className="block text-center w-full rounded bg-brand hover:bg-brand-600 transition-all ease-in-out text-white p-2">
-            Buyurtma qilish
+          <span
+            className={`block text-center w-full rounded transition-all ease-in-out text-white p-2 ${
+              outOfStock ? "bg-slate-300" : "bg-brand hover:bg-brand-600"
+            }`}
+          >
+            {outOfStock ? "Sotuvda yoʼq" : "Buyurtma qilish"}
           </span>
         </div>
       </div>

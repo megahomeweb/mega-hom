@@ -36,6 +36,7 @@ const AllProducts = () => {
             title={card.title}
             description={card.description}
             currentPrice={card.price}
+            quantity={card.quantity}
             href={`/product/${card.id}`}
           />
         ))}
