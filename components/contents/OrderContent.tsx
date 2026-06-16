@@ -34,6 +34,7 @@ const OrderContent = () => {
   const [search, setSearch] = useState("");
   const [channel, setChannel] = useState<"all" | "web" | "store">("all");
   const [range, setRange] = useState<"all" | "today" | "7" | "30">("all");
+  const [selected, setSelected] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchAllOrders()
@@ -137,6 +138,28 @@ const OrderContent = () => {
     if (!ok) toast.error("Brauzer oynani bloklab qoʼydi — popup ruxsatini yoqing");
   };
 
+  /* ----------------------------- bulk actions ---------------------------- */
+  const toggleSelect = (id: string) =>
+    setSelected((p) => {
+      const n = new Set(p);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const allVisibleSelected = visibleOrders.length > 0 && visibleOrders.every((o) => selected.has(o.id));
+  const toggleSelectAll = () =>
+    setSelected(() => (allVisibleSelected ? new Set() : new Set(visibleOrders.map((o) => o.id))));
+  const bulkStatus = async (status: OrderStatus) => {
+    const ids = visibleOrders.filter((o) => selected.has(o.id)).map((o) => o.id);
+    if (!ids.length) return;
+    let ok = 0;
+    for (const id of ids) {
+      try { await updateOrderStatus(id, status, me?.name); ok++; } catch { /* keep going */ }
+    }
+    toast.success(`${ok} ta buyurtma holati yangilandi`);
+    setSelected(new Set());
+  };
+
   return (
     <>
       <div className="flex flex-wrap gap-3 justify-between items-center">
@@ -228,6 +251,32 @@ const OrderContent = () => {
         </div>
       )}
 
+      {/* Select-all + bulk status bar */}
+      {visibleOrders.length > 0 && (
+        <label className="flex items-center gap-2 text-sm text-slate-500 mt-3 cursor-pointer w-fit">
+          <input type="checkbox" checked={allVisibleSelected} onChange={toggleSelectAll} className="size-4 accent-brand-500" />
+          Hammasini tanlash ({visibleOrders.length})
+        </label>
+      )}
+      {selected.size > 0 && (
+        <div className="sticky top-0 z-20 flex flex-wrap items-center gap-2 bg-brand-50 border border-brand-200 rounded-lg px-3 py-2 mt-2 shadow-sm">
+          <span className="text-sm font-semibold text-brand-700">{selected.size} tanlandi</span>
+          <span className="text-sm text-slate-500">Holatga oʼtkazish:</span>
+          {ORDER_STATUSES.filter((s) => s.key !== "qaytarildi").map((s) => (
+            <button
+              key={s.key}
+              onClick={() => bulkStatus(s.key)}
+              className="px-2.5 py-1 text-xs font-semibold rounded-md bg-white border border-brand-200 text-brand-600 hover:bg-brand-100"
+            >
+              {s.label}
+            </button>
+          ))}
+          <button onClick={() => setSelected(new Set())} className="ml-auto text-sm text-slate-500 hover:underline">
+            Tozalash
+          </button>
+        </div>
+      )}
+
       <div className="mt-6 space-y-4 lg:px-4">
         {loadingOrders && (
           <div className="flex items-center justify-center">
@@ -245,6 +294,15 @@ const OrderContent = () => {
               {({ open }) => (
                 <div>
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 w-full px-4 py-2.5 bg-white shadow-lg rounded-lg border border-gray-200">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <input
+                      type="checkbox"
+                      checked={selected.has(order.id)}
+                      onChange={() => toggleSelect(order.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      aria-label="Tanlash"
+                      className="size-4 accent-brand-500 shrink-0"
+                    />
                     <DisclosureButton className="flex items-center gap-4 text-left flex-1 min-w-0">
                       <div className="min-w-0">
                         <h3 className="font-medium capitalize truncate flex items-center gap-2">
@@ -275,6 +333,7 @@ const OrderContent = () => {
                         }`}
                       />
                     </DisclosureButton>
+                    </div>
                     <div className="flex items-center gap-2 flex-wrap justify-end sm:shrink-0">
                       {orderStatusMeta(order.status).key === "qaytarildi" ? (
                         <span
