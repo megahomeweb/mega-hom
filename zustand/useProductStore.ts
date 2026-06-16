@@ -82,7 +82,9 @@ const useProductStore = create<ProductStore>((set) => ({
           loading: false
         });
       } else {
-        set({ loading: false });
+        // Clear any stale product so the page can render a real "not found"
+        // state instead of showing the previously-viewed product.
+        set({ product: null, loading: false });
         console.error('Product not found');
       }
     } catch (error) {

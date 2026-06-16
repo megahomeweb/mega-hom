@@ -24,28 +24,52 @@ import { printReceipt } from "@/utils/receipt";
 import { ORDER_STATUSES, OrderStatus, orderStatusMeta } from "@/lib/orderStatus";
 import { isAdminPlus, isManagerPlus } from "@/lib/roles";
 import { formatPhone } from "@/utils/phone";
+import { startOfToday, startOfDaysAgo } from "@/lib/reports";
 
 const OrderContent = () => {
   const { orders, fetchAllOrders, loadingOrders, updateOrderStatus, deleteOrder } = useOrderStore();
   const me = useRole();
   const [tab, setTab] = useState<"all" | OrderStatus>("all");
   const [showManual, setShowManual] = useState(false);
+  const [search, setSearch] = useState("");
+  const [channel, setChannel] = useState<"all" | "web" | "store">("all");
+  const [range, setRange] = useState<"all" | "today" | "7" | "30">("all");
 
   useEffect(() => {
     fetchAllOrders()
   }, [fetchAllOrders]);
 
-  // Counts per status (missing/unknown status counts as "yangi") drive the tabs.
+  // Everything EXCEPT the status tab — so the tab counts reflect the current
+  // search / channel / date scope, and the tab then narrows further by status.
+  const filteredBase = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const from =
+      range === "today" ? startOfToday() : range === "7" ? startOfDaysAgo(7) : range === "30" ? startOfDaysAgo(30) : 0;
+    return orders.filter((o) => {
+      if (channel !== "all" && (o.channel ?? "web") !== channel) return false;
+      if (from > 0) {
+        const ms = o.date?.seconds ? o.date.seconds * 1000 : 0;
+        if (ms < from) return false;
+      }
+      if (q) {
+        const hay = `${o.clientName ?? ""} ${o.clientLastName ?? ""} ${o.clientPhone ?? ""} ${o.orderNo ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [orders, search, channel, range]);
+
+  // Per-status counts within the current scope drive the tabs.
   const counts = useMemo(() => {
-    const c: Record<string, number> = { all: orders.length };
+    const c: Record<string, number> = { all: filteredBase.length };
     for (const s of ORDER_STATUSES) c[s.key] = 0;
-    for (const o of orders) c[orderStatusMeta(o.status).key]++;
+    for (const o of filteredBase) c[orderStatusMeta(o.status).key]++;
     return c;
-  }, [orders]);
+  }, [filteredBase]);
 
   const visibleOrders = useMemo(
-    () => (tab === "all" ? orders : orders.filter((o) => orderStatusMeta(o.status).key === tab)),
-    [orders, tab]
+    () => (tab === "all" ? filteredBase : filteredBase.filter((o) => orderStatusMeta(o.status).key === tab)),
+    [filteredBase, tab]
   );
 
   const handleStatus = async (id: string, status: OrderStatus) => {
@@ -126,7 +150,7 @@ const OrderContent = () => {
             <FiPlus className="text-base" /> Yangi buyurtma
           </button>
           {orders.length > 0 && (
-            <ImportExport entityLabel="orders" onExportCSV={() => ordersToCSV(orders)} />
+            <ImportExport entityLabel="orders" onExportCSV={() => ordersToCSV(visibleOrders)} />
           )}
         </div>
       </div>
@@ -171,6 +195,39 @@ const OrderContent = () => {
         </div>
       )}
 
+      {/* Search + channel + date filters (operate on the in-memory order list) */}
+      {orders.length > 0 && (
+        <div className="flex flex-wrap items-center gap-2 mt-3">
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Ism, telefon yoki MH-… raqami boʼyicha qidirish"
+            className="flex-1 min-w-[180px] rounded-lg border border-slate-200 px-3 py-1.5 text-sm outline-none focus:border-brand"
+          />
+          <select
+            value={channel}
+            onChange={(e) => setChannel(e.target.value as "all" | "web" | "store")}
+            title="Sotuv kanali"
+            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-600 outline-none focus:border-brand"
+          >
+            <option value="all">Barcha kanal</option>
+            <option value="web">Veb</option>
+            <option value="store">Doʼkon</option>
+          </select>
+          <select
+            value={range}
+            onChange={(e) => setRange(e.target.value as "all" | "today" | "7" | "30")}
+            title="Davr"
+            className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm text-slate-600 outline-none focus:border-brand"
+          >
+            <option value="all">Butun davr</option>
+            <option value="today">Bugun</option>
+            <option value="7">7 kun</option>
+            <option value="30">30 kun</option>
+          </select>
+        </div>
+      )}
+
       <div className="mt-6 space-y-4 lg:px-4">
         {loadingOrders && (
           <div className="flex items-center justify-center">
@@ -179,7 +236,7 @@ const OrderContent = () => {
         )}
 
         {!loadingOrders && orders.length > 0 && visibleOrders.length === 0 && (
-          <p className="text-center text-slate-400 py-10">Bu holatda buyurtma yoʼq.</p>
+          <p className="text-center text-slate-400 py-10">Filtrlarga mos buyurtma topilmadi.</p>
         )}
 
         {visibleOrders.length > 0 && visibleOrders.map((order) => (
@@ -210,7 +267,7 @@ const OrderContent = () => {
                         )}
                       </div>
                       <p className="text-sm text-gray-500 hidden md:block whitespace-nowrap">
-                        {new Date(order.date.seconds * 1000).toLocaleString()}
+                        {order.date?.seconds ? new Date(order.date.seconds * 1000).toLocaleString() : "—"}
                       </p>
                       <IoIosArrowDown
                         className={`text-xl transition-all duration-300 ml-auto shrink-0 ${
@@ -300,37 +357,37 @@ const OrderContent = () => {
                                 scope="col"
                                 className="h-12 px-6 text-md border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100 font-bold fontPara"
                               >
-                                S.No.
+                                №
                               </th>
                               <th
                                 scope="col"
                                 className="h-12 px-6 text-md border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100 font-bold fontPara"
                               >
-                                Image
+                                Rasm
                               </th>
                               <th
                                 scope="col"
                                 className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100"
                               >
-                                Title
+                                Nomi
                               </th>
                               <th
                                 scope="col"
                                 className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100"
                               >
-                                Price
+                                Narx
                               </th>
                               <th
                                 scope="col"
                                 className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100"
                               >
-                                soni
+                                Soni
                               </th>
                               <th
                                 scope="col"
                                 className="h-12 px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100"
                               >
-                                Category
+                                Kategoriya
                               </th>
                             </tr>
                           </thead>
@@ -339,7 +396,7 @@ const OrderContent = () => {
                               const { title, price, category, quantity, productImageUrl } =
                                 item;
                               return (
-                                <tr key={index} className="text-brand-300">
+                                <tr key={index}>
                                   <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 ">
                                     {index + 1}.
                                   </td>

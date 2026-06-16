@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Loader from "../Loader";
 import { CiEdit } from "react-icons/ci";
 import { MdDeleteForever } from "react-icons/md";
@@ -34,6 +34,8 @@ const ProductDetail = () => {
   const [qrProduct, setQrProduct] = useState<ProductT | null>(null);
   const [stockProduct, setStockProduct] = useState<ProductT | null>(null);
   const [search, setSearch] = useState("");
+  const [sort, setSort] = useState<"new" | "stock" | "price-asc" | "price-desc" | "name">("new");
+  const [shown, setShown] = useState(24);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [pendingDelete, setPendingDelete] = useState<Set<string>>(new Set());
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -49,12 +51,35 @@ const ProductDetail = () => {
     fetchProducts();
   }, [fetchProducts]);
 
-  const visible = products.filter((p) => {
-    if (pendingDelete.has(p.id)) return false;
+  const visible = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return true;
-    return (p.title ?? "").toLowerCase().includes(q) || (p.category ?? "").toLowerCase().includes(q);
-  });
+    const filtered = products.filter((p) => {
+      if (pendingDelete.has(p.id)) return false;
+      if (!q) return true;
+      return (
+        (p.title ?? "").toLowerCase().includes(q) ||
+        (p.category ?? "").toLowerCase().includes(q) ||
+        (p.barcode ?? "").toLowerCase().includes(q) ||
+        p.id.toLowerCase().includes(q)
+      );
+    });
+    const sec = (p: ProductT) => (p.time as unknown as { seconds?: number })?.seconds ?? 0;
+    const cmp = (a: ProductT, b: ProductT) => {
+      switch (sort) {
+        case "stock": return (a.quantity ?? 0) - (b.quantity ?? 0); // low → high (reorder view)
+        case "price-asc": return (a.price ?? 0) - (b.price ?? 0);
+        case "price-desc": return (b.price ?? 0) - (a.price ?? 0);
+        case "name": return (a.title ?? "").localeCompare(b.title ?? "");
+        default: return sec(b) - sec(a); // newest first
+      }
+    };
+    return [...filtered].sort(cmp);
+  }, [products, pendingDelete, search, sort]);
+
+  // Reset the visible window whenever the filter/sort changes.
+  useEffect(() => { setShown(24); }, [search, sort]);
+
+  const paged = visible.slice(0, shown);
   const allSelected = visible.length > 0 && visible.every((p) => selected.has(p.id));
   const selectedProducts = products.filter((p) => selected.has(p.id));
 
@@ -143,17 +168,28 @@ const ProductDetail = () => {
 
   const applyPriceChange = async () => {
     const val = parseFloat(priceValue);
-    if (isNaN(val)) return toast.error("Qiymat notoʼgʼri");
+    if (isNaN(val) || val < 0) return toast.error("Qiymat notoʼgʼri");
     const targets = selectedProducts;
     if (!targets.length) return;
-    const batch = writeBatch(fireDB);
-    for (const p of targets) {
+    // Preview the resulting range + warn on below-cost, so a mis-entered bulk
+    // change can't silently slash every price (or push them under cost).
+    const results = targets.map((p) => {
       let np = p.price;
       if (priceMode === "inc") np = Math.round(p.price * (1 + val / 100));
       else if (priceMode === "dec") np = Math.round(p.price * (1 - val / 100));
-      else np = val;
-      batch.set(doc(fireDB, "products", p.id), { price: Math.max(0, np) }, { merge: true });
-    }
+      else np = Math.round(val);
+      return { p, np: Math.max(0, np) };
+    });
+    const min = Math.min(...results.map((r) => r.np));
+    const max = Math.max(...results.map((r) => r.np));
+    const belowCost = results.filter((r) => r.p.costPrice && r.np < (r.p.costPrice ?? 0)).length;
+    const msg =
+      `${targets.length} ta mahsulot narxi: ${FormattedPrice(min)} – ${FormattedPrice(max)} UZS.` +
+      (belowCost ? `\n⚠ ${belowCost} tasi tan narxdan past boʼladi.` : "") +
+      `\nDavom etilsinmi?`;
+    if (typeof window !== "undefined" && !window.confirm(msg)) return;
+    const batch = writeBatch(fireDB);
+    for (const r of results) batch.set(doc(fireDB, "products", r.p.id), { price: r.np }, { merge: true });
     try {
       await batch.commit();
       toast.success(`${targets.length} mahsulot narxi yangilandi`);
@@ -181,7 +217,7 @@ const ProductDetail = () => {
         productImageUrl: [], // its OWN (empty) images — never share storageFileId
         storageFileId: uuidv4(),
         time: Timestamp.now(),
-        date: new Date().toLocaleString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
+        date: Timestamp.now(),
       });
       toast.success("Nusxa qoʼshildi (yashirin) — rasm qoʼshib, koʼrsating");
     } catch {
@@ -199,6 +235,7 @@ const ProductDetail = () => {
     const current = products.find((p) => p.id === id);
     setEditingId(null);
     if (isNaN(val) || val < 0 || !current || current.price === val) return;
+    if (val > 1_000_000_000) return toast.error("Narx juda katta");
     try {
       await patchProduct(id, { price: val });
       toast.success("Narx yangilandi");
@@ -217,6 +254,7 @@ const ProductDetail = () => {
     const current = products.find((p) => p.id === id);
     setEditingStockId(null);
     if (isNaN(val) || val < 0 || !current || current.quantity === val) return;
+    if (val > 10_000_000) return toast.error("Zaxira qiymati juda katta");
     try {
       await patchProduct(id, { quantity: val });
       toast.success("Zaxira yangilandi");
@@ -226,6 +264,13 @@ const ProductDetail = () => {
   };
   // Stock at/under this flags "kam qoldi" (red). Per-product override or default 5.
   const lowStock = (p: ProductT) => (p.quantity ?? 0) <= (p.lowStockThreshold ?? 5);
+  // Sana column — products carry `time` (Timestamp) consistently; older rows may
+  // have a string `date`. Render whichever is readable instead of "[object]".
+  const fmtDate = (p: ProductT) => {
+    const t = p.time as unknown as { seconds?: number } | undefined;
+    if (t?.seconds) return new Date(t.seconds * 1000).toLocaleDateString();
+    return typeof (p.date as unknown) === "string" ? (p.date as unknown as string) : "—";
+  };
 
   const handleDelete = (item: ProductT) => deleteWithUndo([item]);
 
@@ -260,16 +305,30 @@ const ProductDetail = () => {
         </div>
       </div>
 
-      {/* Search */}
-      <div className="mb-4">
+      {/* Search + sort */}
+      <div className="mb-4 flex flex-wrap items-center gap-2">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Mahsulot izlash (nomi yoki kategoriya)..."
-          className="w-full sm:max-w-md px-3 py-2 border border-brand-200 rounded-lg outline-none focus:ring-1 focus:ring-brand-300 text-slate-700 placeholder-slate-400"
+          placeholder="Nomi, kategoriya, shtrix-kod yoki ID boʼyicha izlash..."
+          className="flex-1 min-w-[200px] sm:max-w-md px-3 py-2 border border-brand-200 rounded-lg outline-none focus:ring-1 focus:ring-brand-300 text-slate-700 placeholder-slate-400"
         />
-        {search && <p className="text-xs text-slate-400 mt-1">{visible.length} ta mahsulot topildi</p>}
+        <select
+          value={sort}
+          onChange={(e) => setSort(e.target.value as typeof sort)}
+          title="Saralash"
+          className="px-3 py-2 border border-brand-200 rounded-lg outline-none text-slate-600 text-sm focus:ring-1 focus:ring-brand-300"
+        >
+          <option value="new">Avval yangi</option>
+          <option value="stock">Zaxira (kam → koʼp)</option>
+          <option value="price-asc">Narx (arzon → qimmat)</option>
+          <option value="price-desc">Narx (qimmat → arzon)</option>
+          <option value="name">Nomi (A→Z)</option>
+        </select>
+        <p className="text-xs text-slate-400 w-full sm:w-auto sm:ml-1">
+          {visible.length} ta mahsulot{search ? " topildi" : ""}
+        </p>
       </div>
 
       {/* Bulk action toolbar */}
@@ -299,7 +358,7 @@ const ProductDetail = () => {
 
       {/* ---------- Mobile cards (lg:hidden) ---------- */}
       <div className="lg:hidden space-y-3 mb-5">
-        {visible.map((item) => {
+        {paged.map((item) => {
           const { id, title, price, costPrice, category, productImageUrl } = item;
           const isSel = selected.has(id);
           return (
@@ -391,8 +450,8 @@ const ProductDetail = () => {
               <th scope="col" className={th}>Tahrir</th>
               <th scope="col" className={th}>Oʼchirish</th>
             </tr>
-            {visible.map((item, index) => {
-              const { id, title, price, costPrice, category, date, productImageUrl } = item;
+            {paged.map((item, index) => {
+              const { id, title, price, costPrice, category, productImageUrl } = item;
               const isSel = selected.has(id);
               return (
                 <tr key={id} className={`text-brand-300 ${isSel ? "bg-brand-50/60" : ""}`}>
@@ -487,7 +546,7 @@ const ProductDetail = () => {
                     </div>
                   </td>
                   <td className={`${td} text-slate-500 first-letter:uppercase`}>{category}</td>
-                  <td className={`${td} text-slate-500 first-letter:uppercase`}>{date.toString()}</td>
+                  <td className={`${td} text-slate-500 whitespace-nowrap`}>{fmtDate(item)}</td>
                   <ProductRow item={item} />
                   <td className={td}>
                     <div className="flex items-center justify-center gap-3">
@@ -520,6 +579,22 @@ const ProductDetail = () => {
           </tbody>
         </table>
       </div>
+
+      {!loading && visible.length === 0 && (
+        <p className="text-center text-slate-400 py-12">
+          {search ? "Qidiruv boʼyicha mahsulot topilmadi." : "Hozircha mahsulot yoʼq."}
+        </p>
+      )}
+      {visible.length > shown && (
+        <div className="flex justify-center pb-6">
+          <button
+            onClick={() => setShown((s) => s + 24)}
+            className="px-5 py-2 rounded-lg border border-brand-200 text-brand-600 font-medium hover:bg-brand-50"
+          >
+            Yana koʼrsatish ({visible.length - shown})
+          </button>
+        </div>
+      )}
 
       {/* QR dialog */}
       {qrProduct && <ProductQRCode product={qrProduct} onClose={() => setQrProduct(null)} />}

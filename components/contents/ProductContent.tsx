@@ -28,10 +28,25 @@ const ProductContent = ({productID}: {productID:string}) => {
     if (inCart > 0) setQuantity(inCart);
   }, [productID, getItemQuantity]);
 
-  if (loading || !product) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-40">
         <Loader />
+      </div>
+    );
+  }
+  // Loaded but nothing came back → a real "not found" state instead of an
+  // infinite spinner (e.g. a stale/shared product link).
+  if (!product) {
+    return (
+      <div className="flex flex-col items-center justify-center text-center h-64 gap-3">
+        <p className="text-lg font-medium text-slate-600">Mahsulot topilmadi</p>
+        <Link
+          href="/"
+          className="rounded-xl bg-brand hover:bg-brand-600 text-white px-5 py-2.5 font-semibold transition-colors"
+        >
+          Bosh sahifaga qaytish
+        </Link>
       </div>
     );
   }
