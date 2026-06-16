@@ -3,9 +3,10 @@ import useCartProductStore from "@/zustand/useCartStore";
 import { useOrderStore } from "@/zustand/useOrderStore";
 import { Timestamp } from "firebase/firestore";
 import { useRouter } from "next/navigation";
-import React, { Dispatch, SetStateAction, useState } from "react";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { FormattedPrice } from "@/utils";
+import { normalizePhone, formatPhone } from "@/utils/phone";
 import Loader from "./Loader";
 
 interface props {
@@ -23,6 +24,16 @@ const SubmitModal = ({ setOpen }: props) => {
   const { addOrder } = useOrderStore();
   // navigate
   const navigate = useRouter();
+
+  // Close on Escape (but never mid-submit).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !loading) setOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [loading, setOpen]);
+
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
     if (value.startsWith("998")) {
@@ -41,23 +52,16 @@ const SubmitModal = ({ setOpen }: props) => {
   };
 
   const handleSubmit = async () => {
-    if(cartProducts.length === 0) {
-      return toast.error("Your basket is empty.");
-    };
-
-    if (
-      firstName == "" ||
-      lastName == "" ||
-      phoneNumber== ""
-    ) {
-      return toast.error("all fields are required");
-    }
+    if (loading) return; // guard against a double-submit before the button disables
+    if (cartProducts.length === 0) return toast.error("Savatingiz boʼsh");
+    if (!firstName.trim() || !lastName.trim()) return toast.error("Ism va familyani toʼldiring");
+    if (!normalizePhone(phoneNumber)) return toast.error("Telefon raqamini toʼliq kiriting");
 
     const submitData = {
       id: "",
-      clientName: firstName,
-      clientLastName: lastName,
-      clientPhone: phoneNumber,
+      clientName: firstName.trim(),
+      clientLastName: lastName.trim(),
+      clientPhone: formatPhone(phoneNumber),
       date: Timestamp.now(),
       basketItems: cartProducts,
       totalPrice: totalPrice,
@@ -101,12 +105,18 @@ const SubmitModal = ({ setOpen }: props) => {
   };
 
   return (
-    <div className="fixed z-[9999] w-full h-full inset-0 flex items-center justify-center">
+    <div className="fixed z-[9999] w-full h-full inset-0 flex items-center justify-center p-4">
       <div
-        onClick={() => setOpen(false)}
+        onClick={() => !loading && setOpen(false)}
         className="absolute inset-0 size-full bg-black/80 z-0"
       ></div>
-      <div className="max-w-sm w-full bg-white rounded-md space-y-3 p-5 z-10">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Buyurtma maʼlumotlari"
+        className="max-w-sm w-full bg-white rounded-xl space-y-3 p-5 z-10 max-h-[90vh] overflow-y-auto"
+      >
+        <h2 className="text-lg font-bold text-slate-800">Buyurtma maʼlumotlari</h2>
         <div>
           <label
             htmlFor="first-name"
@@ -119,6 +129,7 @@ const SubmitModal = ({ setOpen }: props) => {
               id="first-name"
               name="first-name"
               type="text"
+              autoFocus
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               autoComplete="given-name"
@@ -157,6 +168,8 @@ const SubmitModal = ({ setOpen }: props) => {
               id="phone-number"
               name="phone-number"
               type="text"
+              inputMode="tel"
+              autoComplete="tel"
               value={phoneNumber}
               onChange={handlePhoneNumberChange}
               className="block w-full rounded-md border-0 py-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:outline-none focus:ring-inset focus:ring-red-600 sm:text-sm px-2"
@@ -198,12 +211,20 @@ const SubmitModal = ({ setOpen }: props) => {
           </div>
         </div>
 
-        <div className="pt-3">
+        <div className="pt-3 flex gap-2">
+          <button
+            onClick={() => setOpen(false)}
+            type="button"
+            disabled={loading}
+            className="rounded-xl px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 disabled:opacity-50"
+          >
+            Bekor
+          </button>
           <button
             onClick={handleSubmit}
             type="button"
             disabled={loading}
-            className="flex items-center justify-center bg-red-500 transition-all ease-in-out hover:bg-red-600 rounded-xl max-w-lg w-full text-white p-2 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="flex flex-1 items-center justify-center gap-2 bg-brand transition-all ease-in-out hover:bg-brand-600 rounded-xl text-white p-2.5 font-semibold disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? <div className="size-8"><Loader /></div> : "Buyurtmani Yuborish"}
           </button>

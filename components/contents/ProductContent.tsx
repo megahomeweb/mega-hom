@@ -54,7 +54,7 @@ const ProductContent = ({productID}: {productID:string}) => {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-28 lg:pb-0">
       <Link
         href="/"
         className="flex items-center gap-1 w-fit text-gray-500 text-sm transition-all ease-in-out hover:text-brand py-4"
@@ -106,7 +106,7 @@ const ProductContent = ({productID}: {productID:string}) => {
           <button
             onClick={handleSubmit}
             disabled={outOfStock}
-            className="flex items-center justify-center gap-2 bg-brand transition-all ease-in-out hover:bg-brand-600 rounded-xl max-w-lg w-full text-white p-3 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="hidden lg:flex items-center justify-center gap-2 bg-brand transition-all ease-in-out hover:bg-brand-600 rounded-xl max-w-lg w-full text-white p-3 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {load ? <Loader /> : (
               <>
@@ -116,6 +116,22 @@ const ProductContent = ({productID}: {productID:string}) => {
             )}
           </button>          
         </div>
+      </div>
+
+      {/* Mobile sticky add-to-cart bar — keeps the primary CTA in reach on phones */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-slate-200 px-4 py-3 flex items-center gap-3">
+        <div className="leading-tight shrink-0">
+          <p className="text-[11px] text-slate-400">Narx</p>
+          <p className="font-bold text-brand">{FormattedPrice(product.price * quantity)} UZS</p>
+        </div>
+        <button
+          onClick={handleSubmit}
+          disabled={outOfStock}
+          className="ml-auto flex flex-1 items-center justify-center gap-2 bg-brand hover:bg-brand-600 transition-colors rounded-xl text-white p-3 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <BsCartDash className="text-white text-xl" />
+          <span>{outOfStock ? "Sotuvda yoʼq" : "Savatga qoʼshish"}</span>
+        </button>
       </div>
     </div>
   )

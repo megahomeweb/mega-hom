@@ -11,6 +11,7 @@ interface BasketState {
   addToBasket: (product: ProductT) => void;
   incrementQuantity: (id: string) => void;
   decrementQuantity: (id: string) => void;
+  removeFromBasket: (id: string) => void;
   getItemQuantity: (id: string) => number;
   calculateTotals: () => void;
   clearBasket: () => void;
@@ -62,6 +63,12 @@ const useCartProductStore = create<BasketState>()(
             if (item.id !== id) return [item];
             return item.quantity <= 1 ? [] : [{ ...item, quantity: item.quantity - 1 }];
           });
+          return { cartProducts, ...totalsOf(cartProducts) };
+        }),
+
+      removeFromBasket: (id) =>
+        set((state) => {
+          const cartProducts = state.cartProducts.filter((item) => item.id !== id);
           return { cartProducts, ...totalsOf(cartProducts) };
         }),
 
