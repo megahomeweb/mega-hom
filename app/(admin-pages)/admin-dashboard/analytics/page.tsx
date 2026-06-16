@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import Loader from "@/components/Loader";
 import { useOrderStore } from "@/zustand/useOrderStore";
 import { useRole } from "@/components/admin/RoleContext";
-import { isManagerPlus, rankOf, ROLE_RANK } from "@/lib/roles";
+import { isManagerPlus, isAdminPlus } from "@/lib/roles";
 import NoAccess from "@/components/admin/NoAccess";
 import { FormattedPrice } from "@/utils";
 import { dailySeries, byCategory, aggregateOrders, startOfDaysAgo } from "@/lib/reports";
@@ -54,7 +54,10 @@ const AnalyticsPage = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [wiping, setWiping] = useState(false);
-  const isOwner = rankOf(me?.role) >= ROLE_RANK.owner;
+  // Admin+ (Administrator/Egasi) can wipe reports — destructive, but the
+  // type-to-confirm modal below is the real guard, and rules already allow
+  // admin+ to delete orders. Managers can view analytics but not wipe them.
+  const canWipe = isAdminPlus(me?.role);
 
   const handleWipe = async () => {
     if (confirmText.trim().toUpperCase() !== "OCHIRISH") return;
@@ -188,8 +191,8 @@ const AnalyticsPage = () => {
         </div>
       )}
 
-      {/* Danger zone — owner-only: wipe ALL orders → reset every report to zero */}
-      {isOwner && (
+      {/* Danger zone — admin+: wipe ALL orders → reset every report to zero */}
+      {canWipe && (
         <div className="mt-8 rounded-xl border border-red-200 bg-red-50/60 p-4">
           <h3 className="font-bold text-brand-700 flex items-center gap-2">
             <GoTrash /> Xavfli hudud
