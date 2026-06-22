@@ -14,6 +14,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { v4 as uuidv4 } from "uuid";
 
 const emptyTimestamp = new Timestamp(0, 0);
 
@@ -102,22 +103,36 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
     }
   }
 
+  // Append images to an existing product. try/finally guarantees the spinner is
+  // always released (the old code had no catch — a denied/failed upload hung the
+  // edit page). Falls back to the doc id as the folder for legacy products that
+  // were created without a storageFileId, and persists that id so later deletes
+  // target the right folder.
   const handleImageUpload = async (files: FileList | null) => {
-    if (!files) return;
+    if (!files || files.length === 0) return;
     setLoad(true);
-    const uploadPromises = Array.from(files).map(async (file) => {
-      const storageRef = ref(fireStorage, `products/${updatedProduct.storageFileId}/${file.name}`);
-      await uploadBytes(storageRef, file);
-      const downloadUrl = await getDownloadURL(storageRef);
-      return { url: downloadUrl, path: storageRef.fullPath };
-    });
-
-    const imageUrls = await Promise.all(uploadPromises);
-    setUpdatedProduct((prevProduct) => ({
-      ...prevProduct,
-      productImageUrl: [...prevProduct.productImageUrl, ...imageUrls],
-    }));
-    setLoad(false);
+    try {
+      const folder = updatedProduct.storageFileId || projectId;
+      const uploadPromises = Array.from(files).map(async (file) => {
+        const safeName = `${uuidv4().slice(0, 8)}-${file.name}`;
+        const storageRef = ref(fireStorage, `products/${folder}/${safeName}`);
+        await uploadBytes(storageRef, file);
+        const downloadUrl = await getDownloadURL(storageRef);
+        return { url: downloadUrl, path: storageRef.fullPath };
+      });
+      const imageUrls = await Promise.all(uploadPromises);
+      setUpdatedProduct((prevProduct) => ({
+        ...prevProduct,
+        storageFileId: prevProduct.storageFileId || projectId,
+        productImageUrl: [...prevProduct.productImageUrl, ...imageUrls],
+      }));
+      toast.success(imageUrls.length > 1 ? `${imageUrls.length} ta rasm yuklandi` : "Rasm yuklandi");
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      toast.error("Rasmni yuklab boʼlmadi — ruxsat yoki internet aloqasini tekshiring");
+    } finally {
+      setLoad(false);
+    }
   };
 
   const handleDeleteImage = async (imageUrl: string) => {
@@ -227,7 +242,10 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             type="file"
             multiple
             accept="image/*"
-            onChange={(e) => handleImageUpload(e.target.files)}
+            onChange={(e) => {
+              handleImageUpload(e.target.files);
+              e.target.value = ""; // allow re-selecting the same file after a remove
+            }}
             className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
         </div>

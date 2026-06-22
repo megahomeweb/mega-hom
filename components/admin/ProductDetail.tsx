@@ -9,7 +9,7 @@ import { FiCopy, FiLink, FiBox } from "react-icons/fi";
 import useProductStore from "@/zustand/useProductStore";
 import toast, { Toast } from "react-hot-toast";
 import { ProductT } from "@/lib/types";
-import { deleteObject, listAll, ref } from "firebase/storage";
+import { deleteObject, getDownloadURL, listAll, ref, uploadBytes } from "firebase/storage";
 import { Timestamp, addDoc, collection, doc, writeBatch } from "firebase/firestore";
 import { v4 as uuidv4 } from "uuid";
 import { FormattedPrice } from "@/utils";
@@ -45,6 +45,7 @@ const ProductDetail = () => {
   const [priceModalOpen, setPriceModalOpen] = useState(false);
   const [priceMode, setPriceMode] = useState<"inc" | "dec" | "set">("inc");
   const [priceValue, setPriceValue] = useState("");
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
   const skipSave = useRef(false);
 
   useEffect(() => {
@@ -287,6 +288,74 @@ const ProductDetail = () => {
       on ? "bg-brand-500 text-white border-brand-500" : "bg-white text-slate-400 border-slate-200"
     }`;
 
+  // Inline image add — attach photos to a product straight from the list. This
+  // is the fast path for BULK-IMPORTED products, which arrive with no images
+  // (a CSV can carry text but not local photo files). Uploads into the product's
+  // storage folder and patches productImageUrl; try/finally so a failed upload
+  // can never hang the per-row spinner.
+  const addImages = async (item: ProductT, files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    setUploadingId(item.id);
+    try {
+      const folder = item.storageFileId || item.id;
+      const uploads = await Promise.all(
+        Array.from(files).map(async (file) => {
+          const safeName = `${uuidv4().slice(0, 8)}-${file.name}`;
+          const sref = ref(fireStorage, `products/${folder}/${safeName}`);
+          await uploadBytes(sref, file);
+          const url = await getDownloadURL(sref);
+          return { url, path: sref.fullPath };
+        })
+      );
+      await patchProduct(item.id, {
+        productImageUrl: [...(item.productImageUrl ?? []), ...uploads],
+        storageFileId: folder,
+      });
+      toast.success(uploads.length > 1 ? `${uploads.length} ta rasm qoʼshildi` : "Rasm qoʼshildi");
+    } catch (error) {
+      console.error("Inline image upload failed:", error);
+      toast.error("Rasmni yuklab boʼlmadi — ruxsatni tekshiring");
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  // Clickable thumbnail that doubles as an "add photo" control. boxClass sizes
+  // the square (size-16 on cards, size-20 in the table). Shows a count badge for
+  // multi-image products and a spinner while uploading.
+  const imageUploader = (item: ProductT, boxClass: string) => (
+    <label className={`relative block ${boxClass} cursor-pointer group rounded overflow-hidden`} title="Rasm qoʼshish">
+      {item.productImageUrl?.[0]?.url ? (
+        <Image fill sizes="80px" className="object-cover" src={item.productImageUrl[0].url} alt="" />
+      ) : (
+        <NoPhoto className="w-full h-full" />
+      )}
+      {(item.productImageUrl?.length ?? 0) > 1 && (
+        <span className="absolute bottom-0 right-0 bg-brand-600 text-white text-[9px] px-1 rounded-tl">
+          {item.productImageUrl.length}
+        </span>
+      )}
+      <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition">
+        + Rasm
+      </span>
+      {uploadingId === item.id && (
+        <span className="absolute inset-0 flex items-center justify-center bg-white/70">
+          <span className="size-5 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+        </span>
+      )}
+      <input
+        type="file"
+        multiple
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          addImages(item, e.target.files);
+          e.target.value = "";
+        }}
+      />
+    </label>
+  );
+
   return (
     <div>
       <div className="py-5 flex flex-wrap gap-3 justify-between items-center">
@@ -359,18 +428,14 @@ const ProductDetail = () => {
       {/* ---------- Mobile cards (lg:hidden) ---------- */}
       <div className="lg:hidden space-y-3 mb-5">
         {paged.map((item) => {
-          const { id, title, price, costPrice, category, productImageUrl } = item;
+          const { id, title, price, costPrice, category } = item;
           const isSel = selected.has(id);
           return (
             <div key={id} className={`rounded-xl border p-3 ${isSel ? "border-brand-300 bg-brand-50/60" : "border-brand-100 bg-white"}`}>
               <div className="flex gap-3">
                 <input type="checkbox" checked={isSel} onChange={() => toggleSelect(id)} className="size-4 accent-brand-500 mt-1 shrink-0" />
                 <div className="shrink-0">
-                  {productImageUrl?.[0]?.url ? (
-                    <Image width={64} height={64} className="size-16 rounded object-cover" src={productImageUrl[0].url} alt="" />
-                  ) : (
-                    <NoPhoto className="size-16 rounded" />
-                  )}
+                  {imageUploader(item, "size-16")}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-slate-700 capitalize leading-tight line-clamp-2">{title}</p>
@@ -451,7 +516,7 @@ const ProductDetail = () => {
               <th scope="col" className={th}>Oʼchirish</th>
             </tr>
             {paged.map((item, index) => {
-              const { id, title, price, costPrice, category, productImageUrl } = item;
+              const { id, title, price, costPrice, category } = item;
               const isSel = selected.has(id);
               return (
                 <tr key={id} className={`text-brand-300 ${isSel ? "bg-brand-50/60" : ""}`}>
@@ -461,11 +526,7 @@ const ProductDetail = () => {
                   <td className={`${td} text-slate-500`}>{index + 1}.</td>
                   <td className={`${td} text-slate-500 first-letter:uppercase`}>
                     <div className="flex justify-center">
-                      {productImageUrl?.[0]?.url ? (
-                        <Image width={80} height={80} className="w-20" src={productImageUrl[0].url} alt="" />
-                      ) : (
-                        <NoPhoto className="w-20 h-20 rounded" />
-                      )}
+                      {imageUploader(item, "size-20")}
                     </div>
                   </td>
                   <td className={`${td} text-slate-500 first-letter:uppercase`}>{title}</td>

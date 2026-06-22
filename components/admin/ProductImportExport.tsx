@@ -39,7 +39,11 @@ const ProductImportExport = () => {
 
       // Row whose Product ID matches the store → update only the filled-in cells.
       if (rec.id && existingIds.has(rec.id)) {
-        const data = buildProductWrite(rec, enabled);
+        const data = buildProductWrite(rec, enabled) as Record<string, unknown>;
+        // Images aren't a scalar PRODUCT_FIELDS column; apply them explicitly when
+        // the file carried a non-empty Images column (export→edit→import keeps
+        // photos, and a URL list can be bulk-applied). A blank cell never wipes.
+        if (rec.images && rec.images.length) data.productImageUrl = rec.images;
         if (!Object.keys(data).length) {
           skipped++; // nothing filled in — leave the product untouched, no complaint
           return;
@@ -114,7 +118,7 @@ const ProductImportExport = () => {
         planProductImport(items, new Set(products.map((p) => p.id)), enabled)
       }
       commitImport={commitImport}
-      importHint="Excel (.xlsx) yoki CSV boʼladi. Faqat toʼldirilgan kataklar yoziladi — boʼsh katak mahsulotni buzmaydi. 'Product ID' boʼsh boʼlsa yangi mahsulot qoʼshiladi, rasmlarini keyin tahrirlash sahifasida yuklaysiz."
+      importHint="Excel (.xlsx) yoki CSV boʼladi. Faqat toʼldirilgan kataklar yoziladi — boʼsh katak mahsulotni buzmaydi. 'Product ID' boʼsh boʼlsa yangi mahsulot qoʼshiladi. Rasmlarni roʼyxatdagi mahsulot rasmiga bosib yuklang, yoki 'Images' ustuniga URL (bir nechta boʼlsa | bilan ajrating) yozing."
     />
   );
 };
