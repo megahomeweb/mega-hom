@@ -266,8 +266,10 @@ export type ProductFieldKey = (typeof PRODUCT_FIELDS)[number]["key"];
 
 // Human-first column order (business fields first, the technical key last) —
 // mirrors how Shopify/WooCommerce lay out their product CSVs. Cost + Quantity
-// drive margin and inventory; image URLs are omitted (images are preserved
-// server-side on update, so the editable sheet stays clean).
+// drive margin and inventory. "Images" is a pipe-separated list of image URLs:
+// it round-trips on export and, on import, can create or replace a product's
+// photos from URLs (a blank cell never wipes existing photos). Local photo files
+// are added straight from the product list instead (CSV can't carry binaries).
 export const PRODUCT_CSV_HEADERS = [
   "Title",
   "Price",
@@ -281,6 +283,7 @@ export const PRODUCT_CSV_HEADERS = [
   "Description",
   "New",
   "Best",
+  "Images",
   "Product ID",
 ] as const;
 
@@ -341,6 +344,7 @@ export function productsToCSV(products: ProductT[]): string {
       p.description ?? "",
       yesNo(p.isNew),
       yesNo(p.isBest),
+      (p.productImageUrl ?? []).map((im) => im.url).join(" | "),
       p.id ?? "",
     ]);
   }
@@ -416,7 +420,8 @@ export function planProductImport(
   let skip = 0;
   for (const rec of items) {
     if (rec.id && existingIds.has(rec.id)) {
-      if (Object.keys(buildProductWrite(rec, enabled)).length) update++;
+      const hasImages = !!(rec.images && rec.images.length);
+      if (Object.keys(buildProductWrite(rec, enabled)).length || hasImages) update++;
       else skip++;
     } else if (enabled.has("title") && rec.title) {
       create++;

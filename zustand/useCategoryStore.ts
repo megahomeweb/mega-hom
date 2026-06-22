@@ -13,6 +13,12 @@ interface CategoryStoreI {
   deleteCategory: (categoryId: string) => void;
 }
 
+// One shared realtime listener for the whole app (module-scoped). Mirrors
+// useProductStore — without this, every component calling fetchCategories() on
+// mount opened a NEW onSnapshot whose unsubscribe was discarded (a listener leak
+// that re-fired set({categories}) and re-rendered every consumer on each mount).
+let categoriesUnsub: (() => void) | null = null;
+
 const useCategoryStore = create<CategoryStoreI>((set) => ({
   categories: [],
   category: null,
@@ -57,23 +63,28 @@ const useCategoryStore = create<CategoryStoreI>((set) => ({
     }
   },
 
-  // Fetch all categories
-  fetchCategories: async () => {
+  // Subscribe once to the live categories collection (idempotent — reuses the one
+  // shared listener instead of opening a new one on every component mount). The
+  // error callback releases the loading flag so a denied/failed read can't hang
+  // the storefront nav on a spinner forever.
+  fetchCategories: () => {
+    if (categoriesUnsub) return;
     set({ loading: true });
-    try {
-      const q = query(collection(fireDB, "categories"));
-      const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
-        let CategoryArray: any = [];
+    const q = query(collection(fireDB, "categories"));
+    categoriesUnsub = onSnapshot(
+      q,
+      (QuerySnapshot) => {
+        const CategoryArray: CategoryI[] = [];
         QuerySnapshot.forEach((doc) => {
-          CategoryArray.push({ ...doc.data(), id: doc.id });
+          CategoryArray.push({ ...(doc.data() as CategoryI), id: doc.id });
         });
         set({ categories: CategoryArray, loading: false });
-      });
-      return () => unsubscribe(); 
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-      set({ loading: false });
-    }
+      },
+      (error) => {
+        console.error("Error fetching categories:", error);
+        set({ loading: false });
+      }
+    );
   },
 
   // delete category with id

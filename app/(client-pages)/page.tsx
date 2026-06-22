@@ -17,10 +17,15 @@ export default function Home() {
       <Populars />
       <NewProducts />
       <BestSellers />
-      <AllProducts />
+      {/* Anchor targets for the storefront nav (Header PRIMARY_LINKS). */}
+      <section id="mahsulotlar" className="scroll-mt-4">
+        <AllProducts />
+      </section>
       <Partners />
       <Delivery />
-      <Contact />
+      <section id="aloqa" className="scroll-mt-4">
+        <Contact />
+      </section>
     </div>
   );
 }

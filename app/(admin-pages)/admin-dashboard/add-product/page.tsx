@@ -8,7 +8,8 @@ import NoAccess from "@/components/admin/NoAccess";
 import useCategoryStore from "@/zustand/useCategoryStore";
 import { Switch } from "@headlessui/react";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -19,6 +20,12 @@ const AddProductPage = () => {
   const [selectedCategory, setSelectedCategory] = useState<CategoryI | null>(null);
   const { categories, fetchCategories } = useCategoryStore();
   const me = useRole();
+  // Stable per-form storage folder id, generated once. Every image for this new
+  // product goes under products/<storageFileId>/ and the SAME id is saved on the
+  // doc, so a later delete targets the right folder. (The old code minted a fresh
+  // uuid on every upload batch and then overwrote storageFileId with it, leaving
+  // it pointing at an empty folder when images were added in more than one go.)
+  const [storageFileId] = useState(() => uuidv4());
 
   useEffect(() => {
     fetchCategories();
@@ -51,26 +58,49 @@ const AddProductPage = () => {
     storageFileId: ""
   });
 
+  // Upload one or more images into this product's stable storage folder and
+  // append them to the gallery. Wrapped in try/finally so a rejected upload
+  // (Storage rules denying a non-admin, a dropped connection, an oversized file)
+  // can NEVER leave the form stuck on the loading spinner — the old code had no
+  // catch, so any failure hung the page forever and the product could never be
+  // saved (the image URL was never captured, so the required-image guard tripped).
   const handleImageUpload = async (files: FileList | null) => {
-    if (!files) return;
+    if (!files || files.length === 0) return;
     setLoading(true);
+    try {
+      const uploadPromises = Array.from(files).map(async (file) => {
+        // uuid-prefix the name so two files both called "image.jpg" can't collide.
+        const safeName = `${uuidv4().slice(0, 8)}-${file.name}`;
+        const storageRef = ref(fireStorage, `products/${storageFileId}/${safeName}`);
+        await uploadBytes(storageRef, file);
+        const downloadUrl = await getDownloadURL(storageRef);
+        return { url: downloadUrl, path: storageRef.fullPath };
+      });
+      const imageUrls = await Promise.all(uploadPromises);
+      setProduct((prevProduct) => ({
+        ...prevProduct,
+        productImageUrl: [...prevProduct.productImageUrl, ...imageUrls],
+      }));
+      toast.success(imageUrls.length > 1 ? `${imageUrls.length} ta rasm yuklandi` : "Rasm yuklandi");
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      toast.error("Rasmni yuklab boʼlmadi — ruxsat yoki internet aloqasini tekshiring");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    const uuid = uuidv4();
-    const uploadPromises = Array.from(files).map(async (file) => {
-      const storageRef = product.storageFileId.length === 0 ? ref(fireStorage, `products/${uuid}/${file.name}`) : ref(fireStorage, `products/${product.storageFileId}/${file.name}`);
-      
-      await uploadBytes(storageRef, file);
-      const downloadUrl = await getDownloadURL(storageRef);
-      return { url: downloadUrl, path: storageRef.fullPath };
-    });
-
-    const imageUrls = await Promise.all(uploadPromises);
+  // Remove an already-uploaded image from the gallery and delete it from Storage.
+  const handleRemoveImage = async (image: ImageT) => {
     setProduct((prevProduct) => ({
       ...prevProduct,
-      productImageUrl: [...prevProduct.productImageUrl, ...imageUrls],
-      storageFileId: uuid
+      productImageUrl: prevProduct.productImageUrl.filter((im) => im.path !== image.path),
     }));
-    setLoading(false);
+    try {
+      await deleteObject(ref(fireStorage, image.path));
+    } catch (error) {
+      console.error("Error removing image:", error);
+    }
   };
 
   // get sub category
@@ -103,6 +133,7 @@ const AddProductPage = () => {
         price: Number(product.price) || 0,
         costPrice: Number(product.costPrice) || 0,
         quantity: Number(product.quantity) || 0,
+        storageFileId,
       });
       toast.success("Mahsulot qoʼshildi");
       navigate.push("/admin-dashboard");
@@ -178,17 +209,38 @@ const AddProductPage = () => {
             className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-32 rounded-md outline-none placeholder-brand-300"
           />
         </div>
-        {/* Input img  */}
+        {/* Input img — multiple images supported (e.g. one product in several
+            colours). Uploaded images preview below, each with a remove button. */}
         <div className="mb-3">
+          {product.productImageUrl.length > 0 && (
+            <div className="mb-2 flex flex-wrap gap-2">
+              {product.productImageUrl.map((img, index) => (
+                <div key={img.path || index} className="relative w-20 h-20">
+                  <Image src={img.url} alt={`Rasm ${index + 1}`} fill sizes="80px" className="rounded-md object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveImage(img)}
+                    className="absolute -top-1 -right-1 size-5 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center"
+                    title="Rasmni oʼchirish"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <input
             type="file"
             multiple
             name="productImageUrl"
-            onChange={(e) => handleImageUpload(e.target.files)}
-            placeholder="Mahsulot rasmi"
+            onChange={(e) => {
+              handleImageUpload(e.target.files);
+              e.target.value = ""; // allow re-selecting the same file after a remove
+            }}
             accept="image/*"
             className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
+          <p className="text-xs text-brand-400 mt-1">Bir nechta rasm tanlashingiz mumkin (har xil ranglar uchun).</p>
         </div>
         {/* Input category  */}
         <div className="mb-3">
