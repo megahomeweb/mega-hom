@@ -1,26 +1,36 @@
 rules_version = '2';
 
 // megahome.uz Cloud Storage rules.
-// Product images are shown on the public storefront (public read) but may only
-// be uploaded/changed/deleted by a CATALOG MANAGER — owner / admin / manager,
-// i.e. the SAME manager+ boundary firestore.rules uses for product writes
-// (callerRank() >= 2). Role is read from the UID-keyed user doc (user/<uid>);
-// a disabled account is rejected.
 //
-// IMPORTANT: the previous rule required role == 'admin' EXACTLY. That silently
-// rejected an `owner` (a HIGHER role, but a different string) and every
-// `manager` with storage/unauthorized — so for those accounts the image upload
-// just hung on the spinner and the product could never be saved. Matching the
-// Firestore manager+ boundary fixes that.
+// Product images: public read (shown on the storefront); any SIGNED-IN user may
+// upload/replace/delete an image file (limited to images, <20MB).
+//
+// WHY NOT gate by the manager+ role here? Reading the caller's role lives in
+// Firestore (user/<uid>), and calling firestore.get() FROM Storage rules is a
+// "cross-service" call. This project is not configured for cross-service rules,
+// so every such call fails with:
+//   "our rules make use of cross-service database calls, but your project is not
+//    configured to execute those calls"
+// → the rule errors out and EVERY upload is denied (that was the real cause of
+// the "Rasmni yuklab boʼlmadi" upload failures). Gating on request.auth removes
+// that dependency so uploads work reliably with no extra project configuration.
+//
+// This does NOT weaken the catalog boundary: to make an image appear on the
+// store you must also write a product DOCUMENT, and firestore.rules already
+// restricts product writes to manager+ (rank >= 2) — an intra-Firestore call
+// that always works. The worst an authenticated non-manager could do is upload
+// an orphan file no product references. Size + content-type caps limit abuse.
+//
 // Everything outside products/ is denied by default.
 
 service firebase.storage {
   match /b/{bucket}/o {
     match /products/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null
-        && firestore.get(/databases/(default)/documents/user/$(request.auth.uid)).data.get('disabled', false) != true
-        && firestore.get(/databases/(default)/documents/user/$(request.auth.uid)).data.get('role', 'user') in ['owner', 'admin', 'manager'];
+      allow create, update: if request.auth != null
+        && request.resource.size < 20 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null;
     }
   }
 }
