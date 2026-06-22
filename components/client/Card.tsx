@@ -23,7 +23,7 @@ const Card = ({ img, title, description, currentPrice, href, quantity }: CardPro
       href={href}
       className="flex flex-col h-full rounded border divide-y overflow-hidden shadow-sm"
     >
-      <div className="relative w-full h-44 sm:h-72 shrink-0">
+      <div className="relative w-full aspect-square shrink-0">
         {img?.[0]?.url ? (
           <Image
             src={img[0].url}
@@ -34,6 +34,11 @@ const Card = ({ img, title, description, currentPrice, href, quantity }: CardPro
           />
         ) : (
           <NoPhoto className="absolute inset-0" />
+        )}
+        {(img?.length ?? 0) > 1 && (
+          <span className="absolute top-2 right-2 bg-black/55 text-white text-[10px] font-medium px-1.5 py-0.5 rounded-full z-10">
+            {img.length} rasm
+          </span>
         )}
         {outOfStock ? (
           <span className="absolute top-2 left-2 bg-slate-800/85 text-white text-[11px] font-semibold px-2 py-0.5 rounded">

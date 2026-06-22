@@ -27,6 +27,10 @@ const navLinkClass =
 const Header = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
+  // The landing page has its own hero + section flow, so the category/menu bar
+  // is hidden there (per request) and kept on product/category pages where it
+  // actually aids navigation.
+  const isHome = pathname === "/";
 
   const { categories, fetchCategories, loading } = useCategoryStore();
 
@@ -70,6 +74,7 @@ const Header = () => {
           <AccountMenu />
         </div>
 
+        {!isHome && (
         <div className="relative bg-brand">
           <div className="max-w-7xl mx-auto px-4 min-h-[44px]">
             <div className="md:hidden flex items-center justify-between py-2">
@@ -130,6 +135,7 @@ const Header = () => {
             </nav>
           </div>
         </div>
+        )}
       </div>
     </header>
   );

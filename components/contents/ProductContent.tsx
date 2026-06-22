@@ -15,6 +15,7 @@ const ProductContent = ({productID}: {productID:string}) => {
   const { fetchSingleProduct, loading, product } = useProductStore();
   const { addToBasket, getItemQuantity, load } = useCartProductStore();
   const [quantity, setQuantity] = useState(1);
+  const [selectedImage, setSelectedImage] = useState(0);
 
   // Fetch only when the id changes (NOT on every cart change — that re-fetched
   // the product on each add-to-cart).
@@ -27,6 +28,11 @@ const ProductContent = ({productID}: {productID:string}) => {
     const inCart = getItemQuantity(productID);
     if (inCart > 0) setQuantity(inCart);
   }, [productID, getItemQuantity]);
+
+  // Reset the gallery to the first photo when navigating to a different product.
+  useEffect(() => {
+    setSelectedImage(0);
+  }, [productID]);
 
   if (loading) {
     return (
@@ -53,6 +59,7 @@ const ProductContent = ({productID}: {productID:string}) => {
 
   const stock = Number(product.quantity) || 0;
   const outOfStock = stock <= 0;
+  const images = product.productImageUrl ?? [];
 
   const handleAddQuantity = () => {
     setQuantity((q) => (stock > 0 ? Math.min(q + 1, stock) : q + 1));
@@ -78,11 +85,41 @@ const ProductContent = ({productID}: {productID:string}) => {
         <span>Orqaga</span>
       </Link>
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center gap-20 py-6">
-        <div className="relative max-w-md w-full sm:w-[448px] h-64 sm:h-[448px] rounded-xl overflow-hidden">
-          {product.productImageUrl?.[0]?.url ? (
-            <Image className="absolute w-full h-full sm:object-cover" fill src={product.productImageUrl[0].url} alt={product.title} />
-          ) : (
-            <NoPhoto className="absolute inset-0" />
+        {/* Gallery: large selected image + thumbnail strip (shows ALL photos a
+            product has — e.g. one product in several colours). */}
+        <div className="w-full sm:w-[448px] space-y-3">
+          <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-slate-100">
+            {images.length > 0 ? (
+              <Image
+                key={(images[selectedImage] ?? images[0]).path || selectedImage}
+                className="absolute w-full h-full object-cover"
+                fill
+                sizes="448px"
+                priority
+                src={(images[selectedImage] ?? images[0]).url}
+                alt={product.title}
+              />
+            ) : (
+              <NoPhoto className="absolute inset-0" />
+            )}
+          </div>
+          {images.length > 1 && (
+            <div className="flex gap-2 flex-wrap">
+              {images.map((img, i) => (
+                <button
+                  key={img.path || i}
+                  type="button"
+                  onClick={() => setSelectedImage(i)}
+                  aria-label={`Rasm ${i + 1}`}
+                  aria-current={i === selectedImage}
+                  className={`relative size-16 rounded-lg overflow-hidden border-2 transition-colors ${
+                    i === selectedImage ? "border-brand" : "border-transparent hover:border-brand-300"
+                  }`}
+                >
+                  <Image fill sizes="64px" className="object-cover" src={img.url} alt="" />
+                </button>
+              ))}
+            </div>
           )}
         </div>
         <div className="space-y-8">
