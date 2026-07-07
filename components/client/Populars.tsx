@@ -9,12 +9,10 @@ import useCategoryStore from "@/zustand/useCategoryStore";
 // listing page /products/<categoryId>. Icons + colors are cycled so newly
 // added categories always render a proper, on-brand tile.
 const ICON_POOL = [
-  "/dishes.svg",
-  "/decors.svg",
-  "/appliances.svg",
-  "/luggage.svg",
-  "/safe.svg",
-  "/chair.svg",
+  "/uy-interier-mebel.svg",
+  "/havfsizlik-safar.svg",
+  "/maishiy-texnika.svg",
+  "/ofis-mebeli.svg",
 ];
 // Brandbook palette — category tiles cycle through the brand red ramp + ink
 // (red/black/white only), white icon + label on each. Tighter, on-brand look.
@@ -37,7 +35,7 @@ const Populars = () => {
           <Link
             key={cat.id}
             href={`/products/${cat.id}`}
-            className={`flex items-center gap-3 sm:gap-5 rounded ${COLOR_POOL[i % COLOR_POOL.length]} hover:shadow-brand transition-all ease-in-out p-4 sm:p-5`}
+            className={`flex items-center flex-col lg:flex-row gap-3 sm:gap-5 rounded ${COLOR_POOL[i % COLOR_POOL.length]} hover:shadow-brand transition-all ease-in-out p-4 sm:p-5`}
           >
             <Image
               src={ICON_POOL[i % ICON_POOL.length]}
@@ -46,7 +44,7 @@ const Populars = () => {
               alt=""
               className="w-12 sm:w-16 shrink-0"
             />
-            <h3 className="text-white font-medium text-lg capitalize">{cat.name}</h3>
+            <h3 className="text-white font-medium sm:text-lg capitalize">{cat.name}</h3>
           </Link>
         ))}
       </div>
