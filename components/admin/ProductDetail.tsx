@@ -20,6 +20,7 @@ import StockMovementModal from "./StockMovementModal";
 import ProductImportExport from "./ProductImportExport";
 import ProductQRCode from "./ProductQRCode";
 import { productUrl } from "@/lib/site";
+import { optimizeImageForUpload } from "@/utils/optimizeImage";
 
 const th =
   "h-12 px-4 lg:px-6 text-md font-bold fontPara border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100";
@@ -302,9 +303,10 @@ const ProductDetail = () => {
       const folder = item.storageFileId || item.id;
       const uploads = await Promise.all(
         Array.from(files).map(async (file) => {
-          const safeName = `${uuidv4().slice(0, 8)}-${file.name}`;
+          const optimized = await optimizeImageForUpload(file);
+          const safeName = `${uuidv4().slice(0, 8)}-${optimized.name}`;
           const sref = ref(fireStorage, `products/${folder}/${safeName}`);
-          await uploadBytes(sref, file);
+          await uploadBytes(sref, optimized);
           const url = await getDownloadURL(sref);
           return { url, path: sref.fullPath };
         })

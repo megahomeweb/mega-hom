@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { v4 as uuidv4 } from 'uuid';
+import { optimizeImageForUpload } from "@/utils/optimizeImage";
 
 const AddProductPage = () => {
   const [loading, setLoading] = useState(false);
@@ -69,10 +70,11 @@ const AddProductPage = () => {
     setLoading(true);
     try {
       const uploadPromises = Array.from(files).map(async (file) => {
+        const optimized = await optimizeImageForUpload(file);
         // uuid-prefix the name so two files both called "image.jpg" can't collide.
-        const safeName = `${uuidv4().slice(0, 8)}-${file.name}`;
+        const safeName = `${uuidv4().slice(0, 8)}-${optimized.name}`;
         const storageRef = ref(fireStorage, `products/${storageFileId}/${safeName}`);
-        await uploadBytes(storageRef, file);
+        await uploadBytes(storageRef, optimized);
         const downloadUrl = await getDownloadURL(storageRef);
         return { url: downloadUrl, path: storageRef.fullPath };
       });
