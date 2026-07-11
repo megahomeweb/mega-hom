@@ -14,12 +14,11 @@ import { Timestamp, addDoc, collection, doc, writeBatch } from "firebase/firesto
 import { v4 as uuidv4 } from "uuid";
 import { FormattedPrice } from "@/utils";
 import { fireDB, fireStorage } from "@/firebase/FirebaseConfig";
-import Image from "next/image";
+import ProductImage, { firstImageUrl } from "@/components/ProductImage";
 import ProductRow from "./ProductRow";
 import StockMovementModal from "./StockMovementModal";
 import ProductImportExport from "./ProductImportExport";
 import ProductQRCode from "./ProductQRCode";
-import NoPhoto from "@/components/NoPhoto";
 import { productUrl } from "@/lib/site";
 
 const th =
@@ -122,8 +121,11 @@ const ProductDetail = () => {
       if (cancelled) return;
       for (const item of items) {
         try {
-          if (item.storageFileId) {
-            const folder = await listAll(ref(fireStorage, `products/${item.storageFileId}`));
+          // Prefer storageFileId; fall back to doc id for legacy products uploaded
+          // before storageFileId existed (uploads used products/{docId}/).
+          const folderId = item.storageFileId || item.id;
+          if (folderId) {
+            const folder = await listAll(ref(fireStorage, `products/${folderId}`));
             await Promise.all(folder.items.map((r) => deleteObject(r)));
           }
           await deleteProduct(item.id);
@@ -325,17 +327,19 @@ const ProductDetail = () => {
   // multi-image products and a spinner while uploading.
   const imageUploader = (item: ProductT, boxClass: string) => (
     <label className={`relative block ${boxClass} cursor-pointer group rounded overflow-hidden`} title="Rasm qoʼshish">
-      {item.productImageUrl?.[0]?.url ? (
-        <Image fill sizes="80px" className="object-cover" src={item.productImageUrl[0].url} alt="" />
-      ) : (
-        <NoPhoto className="w-full h-full" />
-      )}
+      <ProductImage
+        fill
+        sizes="80px"
+        className="object-cover"
+        src={firstImageUrl(item.productImageUrl)}
+        alt=""
+      />
       {(item.productImageUrl?.length ?? 0) > 1 && (
-        <span className="absolute bottom-0 right-0 bg-brand-600 text-white text-[9px] px-1 rounded-tl">
+        <span className="absolute bottom-0 right-0 bg-brand-600 text-white text-[9px] px-1 rounded-tl z-10">
           {item.productImageUrl.length}
         </span>
       )}
-      <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition">
+      <span className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/40 text-white text-[10px] font-medium opacity-0 group-hover:opacity-100 transition z-10">
         + Rasm
       </span>
       {uploadingId === item.id && (

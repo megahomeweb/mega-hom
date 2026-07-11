@@ -1,12 +1,11 @@
 "use client";
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { GoArrowLeft } from "react-icons/go";
 import { FiMinus, FiPlus, FiSearch, FiTrash2 } from "react-icons/fi";
 import toast from "react-hot-toast";
 import Loader from "../Loader";
-import NoPhoto from "../NoPhoto";
+import ProductImage, { firstImageUrl } from "@/components/ProductImage";
 import { useRole } from "./RoleContext";
 import useProductStore from "@/zustand/useProductStore";
 import useCustomerStore from "@/zustand/useCustomerStore";
@@ -273,11 +272,12 @@ const POSContent = () => {
                   className={`border border-slate-200 rounded-lg p-2 text-left hover:border-brand-400 hover:shadow-sm transition ${stock <= 0 ? "opacity-60" : ""}`}
                 >
                   <div className="relative aspect-square w-full overflow-hidden rounded mb-1 bg-slate-50">
-                    {p.productImageUrl?.[0]?.url ? (
-                      <Image src={p.productImageUrl[0].url} alt={p.title} fill className="object-cover" />
-                    ) : (
-                      <NoPhoto className="absolute inset-0" />
-                    )}
+                    <ProductImage
+                      src={firstImageUrl(p.productImageUrl)}
+                      alt={p.title}
+                      fill
+                      className="object-cover"
+                    />
                     <span
                       className={`absolute top-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
                         stock <= 0

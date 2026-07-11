@@ -10,7 +10,7 @@ import useProductStore from "@/zustand/useProductStore";
 import { Switch } from "@headlessui/react";
 import { Timestamp } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import Image from "next/image";
+import ProductImage from "@/components/ProductImage";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -135,16 +135,22 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
     }
   };
 
-  const handleDeleteImage = async (imageUrl: string) => {
-    // Remove the image URL from the state
+  // Remove a gallery image from state and Storage. Prefer the stored full path
+  // (same as add-product); skip Storage delete for CSV-imported URLs with empty path.
+  // Legacy products may lack storageFileId — never rebuild a path from that alone.
+  const handleDeleteImage = async (image: ImageT) => {
     setUpdatedProduct((prevProduct) => ({
       ...prevProduct,
-      productImageUrl: prevProduct.productImageUrl.filter((url) => url.path !== imageUrl),
+      productImageUrl: prevProduct.productImageUrl.filter((im) => im.url !== image.url),
     }));
-    
-    const imageRef = ref(fireStorage, `products/${updatedProduct.storageFileId}/${imageUrl.split('/').pop()}`);
+
+    if (!image.path?.trim()) {
+      toast.success("Rasm oʼchirildi");
+      return;
+    }
+
     try {
-      await deleteObject(imageRef);
+      await deleteObject(ref(fireStorage, image.path));
       toast.success("Rasm oʼchirildi");
     } catch (error) {
       console.error("Error deleting image:", error);
@@ -223,11 +229,19 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
         {/* Display uploaded images with delete option */}
         <div className="mb-3 flex flex-wrap gap-2">
           {updatedProduct.productImageUrl.map((img, index) => (
-            <div key={index} className="relative w-20 h-20">
-              <Image src={img.url} alt={`Product Image ${index + 1}`} className="w-full h-full rounded-md object-cover" fill />
+            <div key={img.path || img.url || index} className="relative w-20 h-20">
+              <ProductImage
+                src={img.url}
+                alt={`Product Image ${index + 1}`}
+                className="rounded-md object-cover"
+                fill
+                sizes="80px"
+                fallbackClassName="absolute inset-0 rounded-md"
+              />
               <button
-                onClick={() => handleDeleteImage(img.path)}
-                className="absolute size-5 top-0 right-0 bg-red-500 text-white rounded-full p-1 text-[8px]"
+                type="button"
+                onClick={() => handleDeleteImage(img)}
+                className="absolute size-5 top-0 right-0 bg-red-500 text-white rounded-full p-1 text-[8px] z-10"
                 title="Delete Image"
               >
                 X

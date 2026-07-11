@@ -1,9 +1,28 @@
 import { fireDB } from '@/firebase/FirebaseConfig';
-import { ProductT } from '@/lib/types';
+import { ImageT, ProductT } from '@/lib/types';
 import { collection, deleteDoc, doc, getDoc, onSnapshot, orderBy, query, setDoc, writeBatch } from 'firebase/firestore';
 import {create} from 'zustand';
 
 const FIRESTORE_BATCH_LIMIT = 400;
+
+/** Coerce Firestore image field into a clean ImageT[] (handles missing/malformed data). */
+function normalizeImages(raw: unknown): ImageT[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((x) => {
+      if (typeof x === "string") {
+        const url = x.trim();
+        return url ? { url, path: "" } : null;
+      }
+      if (x && typeof x === "object") {
+        const url = String((x as ImageT).url ?? "").trim();
+        if (!url) return null;
+        return { url, path: String((x as ImageT).path ?? "") };
+      }
+      return null;
+    })
+    .filter((im): im is ImageT => im !== null);
+}
 
 interface ProductStore {
   products: ProductT[];
@@ -38,7 +57,12 @@ const useProductStore = create<ProductStore>((set) => ({
       (QuerySnapshot) => {
         const productArray: ProductT[] = [];
         QuerySnapshot.forEach((doc) => {
-          productArray.push({ ...(doc.data() as ProductT), id: doc.id });
+          const data = doc.data() as ProductT;
+          productArray.push({
+            ...data,
+            id: doc.id,
+            productImageUrl: normalizeImages(data.productImageUrl),
+          });
         });
         set({ products: productArray, loading: false });
       },
@@ -64,7 +88,7 @@ const useProductStore = create<ProductStore>((set) => ({
             price: productData.price,
             costPrice: productData.costPrice,
             lowStockThreshold: productData.lowStockThreshold,
-            productImageUrl: productData.productImageUrl,
+            productImageUrl: normalizeImages(productData.productImageUrl),
             category: productData.category,
             subCategory: productData.subCategory,
             description: productData.description,

@@ -3,9 +3,8 @@ import Loader from '@/components/Loader'
 import { FormattedPrice } from '@/utils'
 import useCartProductStore from '@/zustand/useCartStore'
 import useProductStore from '@/zustand/useProductStore'
-import Image from 'next/image'
 import Link from 'next/link'
-import NoPhoto from '@/components/NoPhoto'
+import ProductImage from '@/components/ProductImage'
 import React, { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 import { BsCartDash } from 'react-icons/bs'
@@ -59,7 +58,9 @@ const ProductContent = ({productID}: {productID:string}) => {
 
   const stock = Number(product.quantity) || 0;
   const outOfStock = stock <= 0;
-  const images = product.productImageUrl ?? [];
+  // Skip empty/malformed entries so the gallery never feeds next/image an empty src.
+  const images = (product.productImageUrl ?? []).filter((im) => im?.url?.trim());
+  const active = images[selectedImage] ?? images[0];
 
   const handleAddQuantity = () => {
     setQuantity((q) => (stock > 0 ? Math.min(q + 1, stock) : q + 1));
@@ -89,25 +90,21 @@ const ProductContent = ({productID}: {productID:string}) => {
             product has — e.g. one product in several colours). */}
         <div className="w-full sm:w-[448px] space-y-3">
           <div className="relative w-full aspect-square rounded-xl overflow-hidden border border-slate-100">
-            {images.length > 0 ? (
-              <Image
-                key={(images[selectedImage] ?? images[0]).path || selectedImage}
-                className="absolute w-full h-full object-cover"
-                fill
-                sizes="448px"
-                priority
-                src={(images[selectedImage] ?? images[0]).url}
-                alt={product.title}
-              />
-            ) : (
-              <NoPhoto className="absolute inset-0" />
-            )}
+            <ProductImage
+              key={active?.path || active?.url || "none"}
+              className="absolute w-full h-full object-cover"
+              fill
+              sizes="448px"
+              priority
+              src={active?.url}
+              alt={product.title}
+            />
           </div>
           {images.length > 1 && (
             <div className="flex gap-2 flex-wrap">
               {images.map((img, i) => (
                 <button
-                  key={img.path || i}
+                  key={img.path || img.url || i}
                   type="button"
                   onClick={() => setSelectedImage(i)}
                   aria-label={`Rasm ${i + 1}`}
@@ -116,7 +113,7 @@ const ProductContent = ({productID}: {productID:string}) => {
                     i === selectedImage ? "border-brand" : "border-transparent hover:border-brand-300"
                   }`}
                 >
-                  <Image fill sizes="64px" className="object-cover" src={img.url} alt="" />
+                  <ProductImage fill sizes="64px" className="object-cover" src={img.url} alt="" />
                 </button>
               ))}
             </div>

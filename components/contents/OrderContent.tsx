@@ -12,12 +12,11 @@ import { IoIosArrowDown } from "react-icons/io";
 import { FiPrinter, FiTrash2, FiPlus, FiRotateCcw } from "react-icons/fi";
 import Loader from "../Loader";
 import { FormattedPrice } from '@/utils'
-import Image from "next/image";
+import ProductImage, { firstImageUrl } from "@/components/ProductImage";
 import ImportExport from "../admin/ImportExport";
 import ManualOrderModal from "../admin/ManualOrderModal";
 import ContactButtons from "../admin/ContactButtons";
 import { useRole } from "../admin/RoleContext";
-import NoPhoto from "../NoPhoto";
 import { Order } from "@/lib/types";
 import { ordersToCSV } from "@/utils/importExport";
 import { printReceipt } from "@/utils/receipt";
@@ -461,11 +460,14 @@ const OrderContent = () => {
                                   </td>
                                   <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">
                                     <div className="flex justify-center">
-                                      {productImageUrl?.[0]?.url ? (
-                                        <Image width={80} height={80} className="w-20" src={productImageUrl[0].url} alt="" />
-                                      ) : (
-                                        <NoPhoto className="w-20 h-20 rounded" />
-                                      )}
+                                      <ProductImage
+                                        width={80}
+                                        height={80}
+                                        className="w-20 h-20 object-cover rounded"
+                                        fallbackClassName="w-20 h-20 rounded"
+                                        src={firstImageUrl(productImageUrl)}
+                                        alt=""
+                                      />
                                     </div>
                                   </td>
                                   <td className="h-12 px-6 text-md transition duration-300 border-t border-l first:border-l-0 border-brand-100 stroke-slate-500 text-slate-500 first-letter:uppercase ">

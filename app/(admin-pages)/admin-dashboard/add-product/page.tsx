@@ -9,7 +9,7 @@ import useCategoryStore from "@/zustand/useCategoryStore";
 import { Switch } from "@headlessui/react";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
-import Image from "next/image";
+import ProductImage from "@/components/ProductImage";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -94,8 +94,9 @@ const AddProductPage = () => {
   const handleRemoveImage = async (image: ImageT) => {
     setProduct((prevProduct) => ({
       ...prevProduct,
-      productImageUrl: prevProduct.productImageUrl.filter((im) => im.path !== image.path),
+      productImageUrl: prevProduct.productImageUrl.filter((im) => im.url !== image.url),
     }));
+    if (!image.path?.trim()) return;
     try {
       await deleteObject(ref(fireStorage, image.path));
     } catch (error) {
@@ -215,12 +216,19 @@ const AddProductPage = () => {
           {product.productImageUrl.length > 0 && (
             <div className="mb-2 flex flex-wrap gap-2">
               {product.productImageUrl.map((img, index) => (
-                <div key={img.path || index} className="relative w-20 h-20">
-                  <Image src={img.url} alt={`Rasm ${index + 1}`} fill sizes="80px" className="rounded-md object-cover" />
+                <div key={img.path || img.url || index} className="relative w-20 h-20">
+                  <ProductImage
+                    src={img.url}
+                    alt={`Rasm ${index + 1}`}
+                    fill
+                    sizes="80px"
+                    className="rounded-md object-cover"
+                    fallbackClassName="absolute inset-0 rounded-md"
+                  />
                   <button
                     type="button"
                     onClick={() => handleRemoveImage(img)}
-                    className="absolute -top-1 -right-1 size-5 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center"
+                    className="absolute -top-1 -right-1 size-5 bg-red-500 text-white rounded-full text-xs leading-none flex items-center justify-center z-10"
                     title="Rasmni oʼchirish"
                   >
                     ×

@@ -1,6 +1,5 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import Image from "next/image";
 import { Timestamp } from "firebase/firestore";
 import toast from "react-hot-toast";
 import { FiSearch, FiPlus, FiMinus, FiTrash2, FiX } from "react-icons/fi";
@@ -8,7 +7,7 @@ import useProductStore from "@/zustand/useProductStore";
 import { useOrderStore } from "@/zustand/useOrderStore";
 import { ProductT } from "@/lib/types";
 import { FormattedPrice } from "@/utils";
-import NoPhoto from "../NoPhoto";
+import ProductImage, { firstImageUrl } from "@/components/ProductImage";
 
 interface Line {
   product: ProductT;
@@ -151,11 +150,12 @@ const ManualOrderModal = ({
                   className="border border-slate-200 rounded-lg p-1.5 text-left hover:border-brand-400 transition"
                 >
                   <div className="relative aspect-square w-full overflow-hidden rounded mb-1 bg-slate-50">
-                    {p.productImageUrl?.[0]?.url ? (
-                      <Image src={p.productImageUrl[0].url} alt={p.title} fill className="object-cover" />
-                    ) : (
-                      <NoPhoto className="absolute inset-0" />
-                    )}
+                    <ProductImage
+                      src={firstImageUrl(p.productImageUrl)}
+                      alt={p.title}
+                      fill
+                      className="object-cover"
+                    />
                   </div>
                   <p className="text-[11px] text-slate-700 line-clamp-2 leading-tight min-h-7">{p.title}</p>
                   <p className="text-[11px] text-brand-600 font-bold">{FormattedPrice(p.price)}</p>

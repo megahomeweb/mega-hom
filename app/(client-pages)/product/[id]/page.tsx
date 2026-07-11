@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { doc, getDoc } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { ProductT } from "@/lib/types";
+import { firstImageUrl } from "@/lib/images";
 import ProductContent from '@/components/contents/ProductContent'
 
 type tParams = Promise<{ id: string }>;
@@ -19,7 +20,7 @@ export async function generateMetadata(props: { params: tParams }): Promise<Meta
     const description =
       (p.description || "").trim().slice(0, 160) ||
       "MegaHome — dekorativ uy jihozlari va anjomlari.";
-    const img = p.productImageUrl?.[0]?.url;
+    const img = firstImageUrl(p.productImageUrl);
     return {
       title,
       description,
