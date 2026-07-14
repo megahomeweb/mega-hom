@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FiHome, FiShoppingCart, FiClipboard, FiBox, FiUsers, FiDollarSign,
   FiTruck, FiUserCheck, FiMoreHorizontal, FiLogOut, FiX, FiBarChart2,
+  FiShoppingBag,
 } from "react-icons/fi";
 import { BsQrCode } from "react-icons/bs";
 import { IconType } from "react-icons";
@@ -36,6 +37,10 @@ const AdminDock = () => {
   ];
 
   const more: Item[] = [
+    // Back to the storefront WITHOUT logging out — the session stays, and the
+    // store header's account menu links back here (Admin panel) to complete
+    // the loop. Visible to every rank.
+    { icon: FiShoppingBag, label: "Doʼkonga qaytish", href: "/" },
     ...(mgr ? [{ icon: FiBarChart2, label: "Tahlil", href: "/admin-dashboard/analytics" }] : []),
     ...(mgr ? [{ icon: FiUsers, label: "Mijozlar", href: "/admin-dashboard/customers" }] : []),
     ...(mgr ? [{ icon: FiDollarSign, label: "Xarajatlar", href: "/admin-dashboard/expenses" }] : []),

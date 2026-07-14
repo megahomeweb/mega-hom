@@ -51,6 +51,13 @@ const Admin = () => {
           <div className="relative z-10 flex items-center justify-between text-white px-5 py-3">
           <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
           <div className="hidden lg:flex items-center gap-4">
+            <Link
+              className="font-medium text-white bg-white/15 hover:bg-white/25 border border-white/30 rounded-lg px-3 py-1.5 transition-colors"
+              href={'/'}
+              title="Profildan chiqmagan holda doʼkonga qaytish"
+            >
+              ← Doʼkon
+            </Link>
             <Link className="font-medium text-white/90 hover:text-white" href={'/admin-dashboard/pos'}>
               Kassa
             </Link>
@@ -100,9 +107,14 @@ const Admin = () => {
                   <p className="font-semibold text-white">{me?.name}</p>
                   <p className="text-xs text-white/60">{ROLE_LABELS[(me?.role as Role) ?? "user"]}</p>
                 </div>
+                <div className="block rounded-lg transition hover:bg-white/20">
+                  <Link href="/" className="block py-2 px-3 font-semibold text-white">
+                    Doʼkonga qaytish
+                  </Link>
+                </div>
                 <div className="block rounded-lg py-2 px-3 transition hover:bg-white/20 cursor-pointer">
                   <button onClick={handleLogout} className="font-semibold text-white">
-                    Log out
+                    Chiqish
                   </button>
                 </div>
               </PopoverPanel>
