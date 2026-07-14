@@ -129,6 +129,10 @@ const OrderContent = () => {
         vatRate: it.vatRate,
       })),
       total: order.totalPrice,
+      // POS sales store the applied chegirma — pass it so the reprint shows the
+      // same Oraliq jami / Chegirma rows (and the same QQS) as the original chek.
+      discount: order.discount,
+      subtotal: order.discount ? order.totalPrice + order.discount : undefined,
       paymentMethod: order.paymentMethod,
       deliveryAddress: order.deliveryAddress,
       note: order.note,

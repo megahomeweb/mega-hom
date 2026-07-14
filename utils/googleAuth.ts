@@ -1,5 +1,5 @@
 import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
-import { Timestamp, doc, getDoc, setDoc } from "firebase/firestore";
+import { Timestamp, doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, fireDB } from "@/firebase/FirebaseConfig";
 
 export interface AuthedUser {
@@ -36,6 +36,8 @@ export async function signInWithGoogle(): Promise<AuthedUser> {
     email: u.email,
     uid: u.uid,
     role: "user",
+    phone: null, // Google gives no phone; the CRM keys these accounts by uid until one is known
+    createdAt: serverTimestamp(),
     time: Timestamp.now(),
     date: new Date().toLocaleString("en-US", { month: "short", day: "2-digit", year: "numeric" }),
   };

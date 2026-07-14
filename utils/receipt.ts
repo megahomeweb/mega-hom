@@ -151,10 +151,12 @@ export function printReceipt(input: ReceiptInput, presetWin?: Window | null): bo
 
   // Items
   let vatTotal = 0;
+  let grossItems = 0;
   for (const it of input.items) {
     const qty = Number(it.quantity) || 0;
     const unit = Number(it.price) || 0;
     const line = qty * unit;
+    grossItems += line;
     if (it.vatRate && it.vatRate > 0) vatTotal += (line * it.vatRate) / (100 + it.vatRate);
 
     d.body.appendChild(el("div", "item-name", it.title || "—"));
@@ -164,6 +166,14 @@ export function printReceipt(input: ReceiptInput, presetWin?: Window | null): bo
     d.body.appendChild(sub);
   }
   rule();
+
+  // QQS is owed on what the customer actually pays: when JAMI is below the
+  // line total (chegirma), the discount is allocated pro-rata across lines and
+  // the VAT base shrinks with it. Also self-corrects reprints of discounted
+  // sales where only the final total reached us.
+  if (vatTotal > 0 && grossItems > 0 && input.total < grossItems) {
+    vatTotal *= Math.max(0, input.total) / grossItems;
+  }
 
   // Totals — show subtotal + discount lines only when a discount was applied.
   if (input.discount && input.discount > 0) {

@@ -4,6 +4,7 @@ import { useOrderStore } from "@/zustand/useOrderStore";
 import { orderStatusMeta } from "@/lib/orderStatus";
 import { aggregateOrders, startOfToday, startOfDaysAgo } from "@/lib/reports";
 import useExpenseStore from "@/zustand/useExpenseStore";
+import ReportsExplainer from "./ReportsExplainer";
 import { FormattedPrice } from "@/utils";
 import { motion, useReducedMotion } from "framer-motion";
 
@@ -91,6 +92,11 @@ const DashboardKPIs = () => {
           <p className="text-[10px] text-slate-400">
             Sayt {FormattedPrice(kpi.web.revenue)} · Doʼkon {FormattedPrice(kpi.store.revenue)}
           </p>
+          {kpi.all.vat > 0 && (
+            <p className="text-[10px] text-slate-400">
+              shu jumladan QQS {FormattedPrice(Math.round(kpi.all.vat))}
+            </p>
+          )}
         </motion.div>
         <motion.div variants={cardItem} className={card}>
           <p className="text-xs text-slate-500">Yalpi foyda</p>
@@ -115,6 +121,10 @@ const DashboardKPIs = () => {
           <p className="text-[10px] text-slate-400">jami navbatda</p>
         </motion.div>
       </motion.div>
+
+      <div className="mt-3">
+        <ReportsExplainer />
+      </div>
     </div>
   );
 };

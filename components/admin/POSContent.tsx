@@ -81,6 +81,17 @@ const POSContent = () => {
   const total = Math.max(0, subtotal - discountNum);
   const cashNum = parseFloat(cash) || 0;
   const change = cashNum - total;
+  // QQS contained in the payable total (extraction from VAT-inclusive prices,
+  // discount allocated pro-rata) — the same figure the printed chek shows.
+  const basketVat = useMemo(() => {
+    let vat = 0;
+    for (const b of basket) {
+      const r = Number(b.vatRate) || 0;
+      if (r > 0) vat += (b.price * b.quantity * r) / (100 + r);
+    }
+    if (vat > 0 && subtotal > 0 && total < subtotal) vat *= total / subtotal;
+    return vat;
+  }, [basket, subtotal, total]);
 
   // Live on-hand for a product (the POS list is a real-time snapshot).
   const stockOf = (id: string) => products.find((p) => p.id === id)?.quantity ?? 0;
@@ -116,7 +127,10 @@ const POSContent = () => {
           // Snapshot cost + fiscal codes at sale time (profit + future ChEK).
           costAtSale: p.costPrice ?? 0,
           ikpu: p.ikpu ?? "",
-          vatRate: p.vatRate ?? 0,
+          // Canonical default 12 — same as add/update-product and CSV import —
+          // so a legacy product's fiscal treatment can't depend on which screen
+          // last touched it. Explicit 0 still means "QQS yoʼq".
+          vatRate: p.vatRate ?? 12,
         },
       ];
     });
@@ -357,6 +371,12 @@ const POSContent = () => {
               <span className="font-bold text-slate-700">Jami</span>
               <span className="font-bold text-lg text-brand-600">{FormattedPrice(total)} UZS</span>
             </div>
+            {basketVat > 0 && (
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span>shu jumladan QQS</span>
+                <span>{FormattedPrice(Math.round(basketVat))} UZS</span>
+              </div>
+            )}
           </div>
 
           <div className="space-y-2 mt-3">

@@ -5,6 +5,7 @@ import { CategoryI, ImageT, ProductT } from "@/lib/types";
 import { isManagerPlus } from "@/lib/roles";
 import { useRole } from "@/components/admin/RoleContext";
 import NoAccess from "@/components/admin/NoAccess";
+import VatExplainer from "@/components/admin/VatExplainer";
 import useCategoryStore from "@/zustand/useCategoryStore";
 import useProductStore from "@/zustand/useProductStore";
 import { Switch } from "@headlessui/react";
@@ -131,7 +132,13 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
       toast.success(imageUrls.length > 1 ? `${imageUrls.length} ta rasm yuklandi` : "Rasm yuklandi");
     } catch (error) {
       console.error("Image upload failed:", error);
-      toast.error("Rasmni yuklab boʼlmadi — ruxsat yoki internet aloqasini tekshiring");
+      // optimizeImageForUpload throws a specific Uzbek message for HEIC/TIFF —
+      // show it; anything else gets the generic permission/network hint.
+      toast.error(
+        error instanceof Error && error.message.includes(":")
+          ? error.message
+          : "Rasmni yuklab boʼlmadi — ruxsat yoki internet aloqasini tekshiring"
+      );
     } finally {
       setLoad(false);
     }
@@ -341,22 +348,47 @@ const UpdateProductContent = ({ params }: { params: Promise<{ id: string }> }) =
             className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
           <div className="flex gap-3 w-full">
-            <input
-              type="number"
-              value={updatedProduct.vatRate ?? 12}
-              onChange={(e) => setUpdatedProduct({ ...updatedProduct, vatRate: Number(e.target.value) })}
-              placeholder="QQS %"
-              title="QQS (VAT) foizi"
-              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-24 rounded-md outline-none placeholder-brand-300"
-            />
-            <input
-              type="text"
-              value={updatedProduct.barcode ?? ""}
-              onChange={(e) => setUpdatedProduct({ ...updatedProduct, barcode: e.target.value })}
-              placeholder="Shtrix-kod (ixtiyoriy)"
-              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-brand-300"
-            />
+            <div className="w-28">
+              <label htmlFor="upd-vat-rate" className="block text-xs text-brand-500 mb-1">
+                QQS stavkasi %
+              </label>
+              <input
+                id="upd-vat-rate"
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={updatedProduct.vatRate ?? 12}
+                onChange={(e) => {
+                  const n = Math.round(Number(e.target.value));
+                  setUpdatedProduct({
+                    ...updatedProduct,
+                    vatRate: Math.min(100, Math.max(0, Number.isFinite(n) ? n : 0)),
+                  });
+                }}
+                placeholder="QQS %"
+                title="QQS (VAT) foizi"
+                className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor="upd-barcode" className="block text-xs text-brand-500 mb-1">
+                Shtrix-kod (ixtiyoriy)
+              </label>
+              <input
+                id="upd-barcode"
+                type="text"
+                value={updatedProduct.barcode ?? ""}
+                onChange={(e) => setUpdatedProduct({ ...updatedProduct, barcode: e.target.value })}
+                placeholder="Shtrix-kod"
+                className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
+              />
+            </div>
           </div>
+          <VatExplainer
+            price={Number(updatedProduct.price) || 0}
+            vatRate={updatedProduct.vatRate ?? 12}
+          />
         </div>
         <div className="flex items-start divide-x-2 gap-4 mb-3">
           <div>

@@ -46,6 +46,26 @@ export function orderCogs(o: Order): number {
   return cogs;
 }
 
+/** Output QQS contained in one order's totalPrice (0 if cancelled). Prices are
+ *  VAT-inclusive, so tax is EXTRACTED per line at the snapshotted vatRate
+ *  (amount × r/(100+r)) and scaled pro-rata when a discount made totalPrice
+ *  smaller than the line sum — the same math as the printed chek. */
+export function orderVat(o: Order): number {
+  if (!isRealized(o)) return 0;
+  let gross = 0;
+  let vat = 0;
+  for (const line of o.basketItems ?? []) {
+    const c = line as unknown as { price?: number; quantity?: number; vatRate?: number };
+    const amount = (Number(c.price) || 0) * (Number(c.quantity) || 0);
+    gross += amount;
+    const r = Number(c.vatRate) || 0;
+    if (r > 0) vat += (amount * r) / (100 + r);
+  }
+  const total = Number(o.totalPrice) || 0;
+  if (vat > 0 && gross > 0 && total < gross) vat *= Math.max(0, total) / gross;
+  return vat;
+}
+
 export interface OrderFilter {
   from?: number;                 // epoch ms (inclusive)
   to?: number;                   // epoch ms (exclusive)
@@ -67,23 +87,25 @@ export function matchesFilter(o: Order, f: OrderFilter = {}): boolean {
 
 export interface OrderAggregate {
   count: number;       // number of orders
-  revenue: number;     // sum of totalPrice
+  revenue: number;     // sum of totalPrice (VAT-inclusive gross)
   cogs: number;        // sum of cost of goods
   profit: number;      // revenue − cogs
   items: number;       // total units sold
+  vat: number;         // output QQS contained in revenue (informational)
 }
 
 /** Reduce a filtered slice of orders to the headline numbers. */
 export function aggregateOrders(orders: Order[], f: OrderFilter = {}): OrderAggregate {
-  let count = 0, revenue = 0, cogs = 0, items = 0;
+  let count = 0, revenue = 0, cogs = 0, items = 0, vat = 0;
   for (const o of orders) {
     if (!matchesFilter(o, f)) continue;
     count++;
     revenue += Number(o.totalPrice) || 0;
     cogs += orderCogs(o);
     items += Number(o.totalQuantity) || 0;
+    vat += orderVat(o);
   }
-  return { count, revenue, cogs, profit: revenue - cogs, items };
+  return { count, revenue, cogs, profit: revenue - cogs, items, vat };
 }
 
 /* ----------------------------- date helpers ------------------------------ */

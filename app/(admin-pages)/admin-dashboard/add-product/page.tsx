@@ -5,6 +5,7 @@ import { CategoryI, ImageT } from "@/lib/types";
 import { isManagerPlus } from "@/lib/roles";
 import { useRole } from "@/components/admin/RoleContext";
 import NoAccess from "@/components/admin/NoAccess";
+import VatExplainer from "@/components/admin/VatExplainer";
 import useCategoryStore from "@/zustand/useCategoryStore";
 import { Switch } from "@headlessui/react";
 import { addDoc, collection, Timestamp } from "firebase/firestore";
@@ -86,7 +87,13 @@ const AddProductPage = () => {
       toast.success(imageUrls.length > 1 ? `${imageUrls.length} ta rasm yuklandi` : "Rasm yuklandi");
     } catch (error) {
       console.error("Image upload failed:", error);
-      toast.error("Rasmni yuklab boʼlmadi — ruxsat yoki internet aloqasini tekshiring");
+      // optimizeImageForUpload throws a specific Uzbek message for HEIC/TIFF —
+      // show it; anything else gets the generic permission/network hint.
+      toast.error(
+        error instanceof Error && error.message.includes(":")
+          ? error.message
+          : "Rasmni yuklab boʼlmadi — ruxsat yoki internet aloqasini tekshiring"
+      );
     } finally {
       setLoading(false);
     }
@@ -336,22 +343,44 @@ const AddProductPage = () => {
             className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
           />
           <div className="flex gap-3 w-full">
-            <input
-              type="number"
-              value={product.vatRate}
-              onChange={(e) => setProduct({ ...product, vatRate: Number(e.target.value) })}
-              placeholder="QQS %"
-              title="QQS (VAT) foizi"
-              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-24 rounded-md outline-none placeholder-brand-300"
-            />
-            <input
-              type="text"
-              value={product.barcode}
-              onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
-              placeholder="Shtrix-kod (ixtiyoriy)"
-              className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 flex-1 rounded-md outline-none placeholder-brand-300"
-            />
+            <div className="w-28">
+              <label htmlFor="add-vat-rate" className="block text-xs text-brand-500 mb-1">
+                QQS stavkasi %
+              </label>
+              <input
+                id="add-vat-rate"
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                value={product.vatRate}
+                onChange={(e) => {
+                  const n = Math.round(Number(e.target.value));
+                  setProduct({
+                    ...product,
+                    vatRate: Math.min(100, Math.max(0, Number.isFinite(n) ? n : 0)),
+                  });
+                }}
+                placeholder="QQS %"
+                title="QQS (VAT) foizi"
+                className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
+              />
+            </div>
+            <div className="flex-1">
+              <label htmlFor="add-barcode" className="block text-xs text-brand-500 mb-1">
+                Shtrix-kod (ixtiyoriy)
+              </label>
+              <input
+                id="add-barcode"
+                type="text"
+                value={product.barcode}
+                onChange={(e) => setProduct({ ...product, barcode: e.target.value })}
+                placeholder="Shtrix-kod"
+                className="bg-brand-50 border text-brand-700 border-brand-200 px-2 py-2 w-full rounded-md outline-none placeholder-brand-300"
+              />
+            </div>
           </div>
+          <VatExplainer price={Number(product.price) || 0} vatRate={product.vatRate} />
         </div>
         <div className="flex items-start divide-x-2 gap-4 mb-3">
           <div>

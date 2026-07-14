@@ -14,6 +14,15 @@ function extensionFor(mime: string): string {
   return "jpg";
 }
 
+/** Formats browsers can't render in <img> (iPhone HEIC, TIFF). Uploading one
+ *  as-is puts a permanently broken "?" photo on the storefront for everyone
+ *  except Safari users — they MUST be converted, or rejected with a clear error. */
+function isBrowserHostileFormat(file: File): boolean {
+  return (
+    /image\/(hei[cf]|tiff?)/i.test(file.type) || /\.(hei[cf]|tiff?)$/i.test(file.name)
+  );
+}
+
 function baseName(filename: string): string {
   const i = filename.lastIndexOf(".");
   return i > 0 ? filename.slice(0, i) : filename;
@@ -41,18 +50,28 @@ async function detectWebpSupport(): Promise<boolean> {
  * Returns the original file when it's already small enough.
  */
 export async function optimizeImageForUpload(file: File): Promise<File> {
-  if (!file.type.startsWith("image/")) return file;
+  const hostile = isBrowserHostileFormat(file);
+  if (!file.type.startsWith("image/") && !hostile) return file;
 
   let bitmap: ImageBitmap;
   try {
     bitmap = await createImageBitmap(file);
   } catch {
-    return file; // undecodable — let Storage reject or accept as-is
+    if (hostile) {
+      // Chrome/Android can't decode HEIC at all — refuse instead of shipping a
+      // photo that renders as "?" for most visitors.
+      throw new Error(
+        `"${file.name}": HEIC/TIFF formatini brauzer koʼrsata olmaydi. iPhone'da Sozlamalar → Kamera → Formatlar → "Most Compatible" qilib qayta suratga oling yoki JPG/PNG yuklang.`
+      );
+    }
+    return file; // other undecodable image — let Storage reject or accept as-is
   }
 
   const { width, height } = bitmap;
   const longEdge = Math.max(width, height);
-  const alreadySmall = file.size <= SKIP_UNDER_BYTES && longEdge <= MAX_EDGE;
+  // A hostile format is NEVER "already small" — it must be re-encoded even
+  // when tiny (Safari decodes HEIC fine and would otherwise skip conversion).
+  const alreadySmall = !hostile && file.size <= SKIP_UNDER_BYTES && longEdge <= MAX_EDGE;
 
   if (alreadySmall) {
     bitmap.close();
@@ -82,10 +101,15 @@ export async function optimizeImageForUpload(file: File): Promise<File> {
   if (!blob || blob.size === 0) {
     blob = await canvasToBlob(canvas, "image/jpeg", QUALITY);
   }
-  if (!blob) return file;
+  if (!blob) {
+    if (hostile)
+      throw new Error(`"${file.name}": rasmni JPG/WebP formatiga oʼgirib boʼlmadi`);
+    return file;
+  }
 
-  // Prefer the smaller of optimized vs original when dimensions didn't change much.
-  if (blob.size >= file.size && longEdge <= MAX_EDGE) {
+  // Prefer the smaller of optimized vs original when dimensions didn't change
+  // much — but never hand back a browser-hostile original.
+  if (!hostile && blob.size >= file.size && longEdge <= MAX_EDGE) {
     return file;
   }
 

@@ -9,8 +9,9 @@ rules_version = '2';
 //   read products/categories: public        write: manager+ (2)
 //   orders: read/update(status) staff+ (1)  create: anyone  delete: admin+ (3)
 //   customers (CRM/PII): manager+ (2)
-//   user docs: read own or admin+; manage others admin+ (never self, never a
-//   rank >= your own) so there's no privilege escalation or self-lockout.
+//   user docs: read own or manager+ (CRM lists registered customers); manage
+//   others admin+ (never self, never a rank >= your own) so there's no
+//   privilege escalation or self-lockout.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -120,8 +121,11 @@ service cloud.firestore {
 
     // Staff accounts. Self-signup may create ONLY a non-privileged 'user'.
     // admin+ manages others — never themselves, never at/above their own rank.
+    // Read is manager+ (2): the Mijozlar CRM lists registered storefront
+    // accounts (role "user"), and CRM viewers are managers — same PII class as
+    // the orders/customers data they already read. Role WRITES stay admin+.
     match /user/{uid} {
-      allow read: if request.auth.uid == uid || callerRank() >= 3;
+      allow read: if request.auth.uid == uid || callerRank() >= 2;
       allow create: if (request.auth != null
                         && request.auth.uid == uid
                         && request.resource.data.get('role', 'user') == 'user')

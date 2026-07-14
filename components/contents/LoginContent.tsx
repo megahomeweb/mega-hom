@@ -6,6 +6,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, fireDB } from "../../firebase/FirebaseConfig";
 import { collection, doc, getDoc, getDocs, query, setDoc, where } from "firebase/firestore";
 import { isStaffPlus } from "@/lib/roles";
+import { isSyntheticEmail, loginIdentifierToEmail } from "@/utils/authEmail";
 import GoogleAuthButton from "./GoogleAuthButton";
 import AuthShell from "./AuthShell";
 import Loader from "../Loader";
@@ -17,6 +18,7 @@ interface StoredUser {
   name: string;
   uid: string;
   email: string;
+  phone?: string;
   role: string; // owner | admin | manager | staff | user
   date?: string;
 }
@@ -26,7 +28,7 @@ const friendlyAuthError = (code: string): string => {
     case "auth/invalid-credential":
     case "auth/wrong-password":
     case "auth/user-not-found":
-      return "Email yoki parol noto'g'ri";
+      return "Email/telefon yoki parol noto'g'ri";
     case "auth/invalid-email":
       return "Email manzili noto'g'ri formatda";
     case "auth/too-many-requests":
@@ -52,17 +54,22 @@ const LoginContent = () => {
 
   const handleLogin = async () => {
     if (!form.email.trim() || !form.password) {
-      toast.error("Email va parolni kiriting");
+      toast.error("Email/telefon va parolni kiriting");
       return;
     }
 
     setLoading(true);
     try {
+      // Phone-registered accounts authenticate via their synthetic address —
+      // the user types the same phone number they signed up with.
       const cred = await signInWithEmailAndPassword(
         auth,
-        form.email.trim(),
+        loginIdentifierToEmail(form.email),
         form.password
       );
+
+      // Never surface a phone-derived synthetic auth address as the email.
+      const visibleAuthEmail = isSyntheticEmail(cred.user.email) ? "" : cred.user.email || "";
 
       let stored: StoredUser;
       try {
@@ -93,9 +100,9 @@ const LoginContent = () => {
           // Auth account exists but no Firestore profile — most common cause
           // of "correct password but error". Fall back gracefully.
           stored = {
-            name: cred.user.displayName || cred.user.email || "User",
+            name: cred.user.displayName || visibleAuthEmail || "User",
             uid: cred.user.uid,
-            email: cred.user.email || "",
+            email: visibleAuthEmail,
             role: "user",
           };
           toast.error(
@@ -103,9 +110,10 @@ const LoginContent = () => {
           );
         } else {
           stored = {
-            name: data.name || cred.user.email || "User",
+            name: data.name || visibleAuthEmail || "User",
             uid: data.uid || cred.user.uid,
-            email: data.email || cred.user.email || "",
+            email: data.email || visibleAuthEmail,
+            phone: (data as { phone?: string | null }).phone || undefined,
             role: data.role || "user",
           };
         }
@@ -116,9 +124,9 @@ const LoginContent = () => {
           "Profil ma'lumotini olishda xatolik (Firestore qoidalari yoki tarmoq)"
         );
         stored = {
-          name: cred.user.email || "User",
+          name: visibleAuthEmail || "User",
           uid: cred.user.uid,
-          email: cred.user.email || "",
+          email: visibleAuthEmail,
           role: "user",
         };
       }
@@ -165,7 +173,7 @@ const LoginContent = () => {
               htmlFor="login-email"
               className="block text-sm font-medium text-[#1A1414]"
             >
-              Email manzil
+              Email yoki telefon raqam
             </label>
             <div className="relative mt-2">
               <FiMail
@@ -174,11 +182,10 @@ const LoginContent = () => {
               />
               <input
                 id="login-email"
-                type="email"
+                type="text"
                 name="email"
-                autoComplete="email"
-                inputMode="email"
-                placeholder="siz@megahome.uz"
+                autoComplete="username"
+                placeholder="siz@megahome.uz yoki +998 90 123 45 67"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className="block w-full rounded-xl border border-[#E5E1E1] bg-white py-3.5 pl-11 pr-4 text-base text-[#1A1414] placeholder-[#9A9595] outline-none transition-colors focus:border-brand focus-visible:border-brand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 focus-visible:ring-offset-1"

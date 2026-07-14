@@ -1,6 +1,6 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, initializeFirestore } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore, initializeFirestore } from "firebase/firestore";
+import { connectAuthEmulator, getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
 const firebaseConfig = {
@@ -36,3 +36,16 @@ export const fireDB = (() => {
 })();
 export const auth = getAuth(app);
 export const fireStorage = getStorage(app);
+
+// Local end-to-end testing against `firebase emulators:start --only auth,firestore`
+// (never in production builds): NEXT_PUBLIC_FIREBASE_EMULATOR=1 next dev.
+// Keeps e2e runs — role grants, fake orders, throwaway accounts — off the real
+// project while still enforcing the same firestore.rules.
+if (process.env.NEXT_PUBLIC_FIREBASE_EMULATOR === "1" && typeof window !== "undefined") {
+  const g = window as unknown as { __emuConnected?: boolean };
+  if (!g.__emuConnected) {
+    g.__emuConnected = true; // HMR guard — connect*Emulator throws on repeat calls
+    connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
+    connectFirestoreEmulator(fireDB, "127.0.0.1", 8080);
+  }
+}

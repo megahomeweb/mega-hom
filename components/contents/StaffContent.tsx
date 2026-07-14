@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import Loader from "../Loader";
 import useStaffStore, { StaffUser } from "@/zustand/useStaffStore";
 import { useRole } from "../admin/RoleContext";
-import { ASSIGNABLE_ROLES, ROLE_LABELS, Role, isAdminPlus, rankOf } from "@/lib/roles";
+import { ASSIGNABLE_ROLES, ROLE_LABELS, Role, isAdminPlus, isStaffPlus, rankOf } from "@/lib/roles";
 
 const th = "h-12 px-4 lg:px-6 text-md font-bold border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100";
 const td = "h-12 px-4 lg:px-6 text-md border-t border-l first:border-l-0 border-brand-100 text-slate-500";
@@ -28,6 +28,7 @@ const StaffContent = () => {
   const { staff, loading, fetchStaff, setRole, setDisabled, removeStaff } = useStaffStore();
   const me = useRole();
   const [search, setSearch] = useState("");
+  const [showPending, setShowPending] = useState(false);
 
   useEffect(() => {
     fetchStaff();
@@ -35,15 +36,30 @@ const StaffContent = () => {
 
   const myRank = rankOf(me?.role);
 
-  const visible = useMemo(() => {
+  // The `user` collection holds BOTH employees and storefront registrants
+  // (role "user"). Xodimlar shows only actual staff; registrants live in a
+  // separate promote-only section below (and in Mijozlar as customers) so the
+  // staff table can't be flooded — or misclicked — by ordinary shoppers.
+  const { visible, pending } = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const list = q
-      ? staff.filter(
-          (s) => (s.name ?? "").toLowerCase().includes(q) || (s.email ?? "").toLowerCase().includes(q)
-        )
-      : staff;
-    return [...list].sort((a, b) => rankOf(b.role) - rankOf(a.role)); // highest rank first
+    const match = (s: StaffUser) =>
+      !q ||
+      (s.name ?? "").toLowerCase().includes(q) ||
+      (s.email ?? "").toLowerCase().includes(q);
+    return {
+      visible: staff
+        .filter((s) => isStaffPlus(s.role))
+        .filter(match)
+        .sort((a, b) => rankOf(b.role) - rankOf(a.role)), // highest rank first
+      pending: staff
+        .filter((s) => !isStaffPlus(s.role))
+        .filter(match)
+        .sort((a, b) => (b.date ?? "").localeCompare(a.date ?? "")),
+    };
   }, [staff, search]);
+
+  // A search that only hits registrants should surface them immediately.
+  const pendingOpen = showPending || (search.trim() !== "" && pending.length > 0);
 
   // A row is manageable if I'm admin+, it's not me, and it's not above my rank.
   const canManage = (s: StaffUser) =>
@@ -103,8 +119,9 @@ const StaffContent = () => {
           <Link href="/sign-up" className="text-brand-600 font-semibold underline">
             /sign-up
           </Link>{" "}
-          orqali roʼyxatdan oʼtsin — keyin shu yerda unga rol bering. Har bir rol nimaga ruxsat
-          berishini quyida koʼring:
+          orqali roʼyxatdan oʼtsin — soʼng pastdagi{" "}
+          <b>“Rol berilmagan hisoblar”</b> boʼlimidan topib, rol bering. Har bir rol nimaga
+          ruxsat berishini quyida koʼring:
         </p>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[480px] text-sm">
@@ -135,8 +152,9 @@ const StaffContent = () => {
           </table>
         </div>
         <p className="text-xs text-slate-400 mt-2">
-          <b>Egasi</b> — toʼliq huquq (administratorlarni ham boshqaradi). <b>Ruxsatsiz</b> — admin
-          panelga umuman kira olmaydi (faqat saytdan xarid qiladi).
+          <b>Egasi</b> — toʼliq huquq (administratorlarni ham boshqaradi). Saytdan roʼyxatdan
+          oʼtgan oddiy xaridorlar bu jadvalga tushmaydi — ular <b>Mijozlar</b> boʼlimida
+          koʼrinadi.
         </p>
       </div>
 
@@ -287,6 +305,83 @@ const StaffContent = () => {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {!loading && visible.length === 0 && (
+        <p className="text-center text-slate-400 py-10">
+          {search.trim() ? "Qidiruvga mos xodim topilmadi." : "Hozircha rol berilgan xodimlar yoʼq."}
+        </p>
+      )}
+
+      {/* Registered storefront accounts with no role yet. They are CUSTOMERS
+          (already listed in Mijozlar) — shown here only so a new employee can
+          be found and promoted after self-registering at /sign-up. */}
+      {pending.length > 0 && (
+        <div className="mt-8 rounded-xl border border-slate-200 bg-slate-50/60">
+          <button
+            type="button"
+            onClick={() => setShowPending((v) => !v)}
+            aria-expanded={pendingOpen}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 text-left"
+          >
+            <span className="text-sm font-semibold text-slate-600">
+              Rol berilmagan hisoblar ({pending.length})
+            </span>
+            <span className="text-xs text-slate-400">{pendingOpen ? "Yashirish ▲" : "Koʼrsatish ▼"}</span>
+          </button>
+          {pendingOpen && (
+            <div className="px-4 pb-4">
+              <p className="text-xs text-slate-500 mb-3">
+                Bular saytdan roʼyxatdan oʼtgan <b>mijozlar</b> — ular Mijozlar boʼlimida ham
+                koʼrinadi va admin panelga kira olmaydi. Yangi xodimga shu yerdan rol bering.
+              </p>
+              <div className="space-y-2">
+                {pending.map((s) => {
+                  const manage = canManage(s);
+                  return (
+                    <div
+                      key={s.id}
+                      className="flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-slate-700 truncate">{s.name || "—"}</p>
+                        <p className="text-xs text-slate-400 truncate">
+                          {s.email || (s as { phone?: string | null }).phone || "—"}
+                          {typeof s.date === "string" && ` · ${s.date}`}
+                        </p>
+                      </div>
+                      {manage ? (
+                        <>
+                          <select
+                            value="user"
+                            onChange={(e) => changeRole(s, e.target.value as Role)}
+                            className="text-sm border border-brand-200 rounded-md px-2 py-1 outline-none text-slate-700"
+                            title="Rol berish"
+                          >
+                            {roleOptions.map((r) => (
+                              <option key={r} value={r}>
+                                {r === "user" ? "Rol berish…" : ROLE_LABELS[r]}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => removeOne(s)}
+                            title="Hisobni oʼchirish"
+                            className="text-red-400 hover:text-red-600"
+                          >
+                            <FiTrash2 className="text-base" />
+                          </button>
+                        </>
+                      ) : (
+                        <span className="text-xs text-slate-400">Ruxsatsiz</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

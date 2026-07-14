@@ -5,13 +5,27 @@ import { GoArrowLeft } from "react-icons/go";
 import Loader from "../Loader";
 import ContactButtons from "../admin/ContactButtons";
 import CustomerImportExport from "../admin/CustomerImportExport";
+import AddCustomerModal from "../admin/AddCustomerModal";
 import { useRole } from "../admin/RoleContext";
 import useCustomerStore from "@/zustand/useCustomerStore";
 import { isManagerPlus } from "@/lib/roles";
 import { FormattedPrice } from "@/utils";
+import { CustomerT } from "@/lib/types";
+import { FiPlus } from "react-icons/fi";
 
-type Segment = "all" | "repeat" | "new" | "nophone";
+type Segment = "all" | "repeat" | "new" | "registered" | "nophone";
 type SortKey = "recent" | "spent" | "orders" | "name";
+
+// Profile pages are phone-keyed; the shared "no-phone" bucket and phoneless
+// registered accounts (user:<uid>) have no meaningful profile to open.
+const canOpenProfile = (c: CustomerT) =>
+  c.phone !== "no-phone" && !c.phone.startsWith("user:");
+
+const RegisteredBadge = () => (
+  <span className="inline-block px-2 py-0.5 text-[10px] font-semibold rounded-full bg-blue-50 text-blue-600 border border-blue-200 whitespace-nowrap">
+    Roʼyxatdan oʼtgan
+  </span>
+);
 
 const th =
   "h-12 px-4 lg:px-6 text-md font-bold border-l first:border-l-0 border-brand-100 text-slate-700 bg-slate-100";
@@ -26,6 +40,7 @@ const CustomerContent = () => {
   const [search, setSearch] = useState("");
   const [segment, setSegment] = useState<Segment>("all");
   const [sort, setSort] = useState<SortKey>("recent");
+  const [showAdd, setShowAdd] = useState(false);
 
   useEffect(() => {
     fetchCustomers();
@@ -38,6 +53,7 @@ const CustomerContent = () => {
       total: customers.length,
       repeat: customers.filter((c) => c.orderCount >= 2).length,
       newThisMonth: customers.filter((c) => c.firstOrderAt && c.firstOrderAt >= monthStart).length,
+      registered: customers.filter((c) => c.registered).length,
     };
   }, [customers]);
 
@@ -45,18 +61,25 @@ const CustomerContent = () => {
     let list = customers;
     if (segment === "repeat") list = list.filter((c) => c.orderCount >= 2);
     else if (segment === "new") list = list.filter((c) => c.orderCount === 1);
+    else if (segment === "registered") list = list.filter((c) => c.registered);
     else if (segment === "nophone") list = list.filter((c) => c.phone === "no-phone");
 
     const q = search.trim().toLowerCase();
     if (q) {
       const qDigits = q.replace(/\D/g, "");
       list = list.filter(
-        (c) => c.name.toLowerCase().includes(q) || (qDigits && c.phone.includes(qDigits))
+        (c) =>
+          c.name.toLowerCase().includes(q) ||
+          (c.email ?? "").toLowerCase().includes(q) ||
+          (qDigits && c.phone.includes(qDigits))
       );
     }
 
     const sorted = [...list];
-    if (sort === "recent") sorted.sort((a, b) => (b.lastOrderAt ?? 0) - (a.lastOrderAt ?? 0));
+    if (sort === "recent")
+      sorted.sort(
+        (a, b) => (b.lastOrderAt ?? b.registeredAt ?? 0) - (a.lastOrderAt ?? a.registeredAt ?? 0)
+      );
     else if (sort === "spent") sorted.sort((a, b) => b.totalSpent - a.totalSpent);
     else if (sort === "orders") sorted.sort((a, b) => b.orderCount - a.orderCount);
     else sorted.sort((a, b) => a.name.localeCompare(b.name));
@@ -107,10 +130,24 @@ const CustomerContent = () => {
             <span className="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
               Bu oy yangi: {stats.newThisMonth}
             </span>
+            <span className="px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+              Roʼyxatdan oʼtgan: {stats.registered}
+            </span>
           </div>
         </div>
-        <CustomerImportExport />
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowAdd(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-2 text-sm rounded-lg bg-brand-500 text-white font-semibold hover:bg-brand-600"
+          >
+            <FiPlus className="text-base" /> Yangi mijoz
+          </button>
+          <CustomerImportExport />
+        </div>
       </div>
+
+      {showAdd && <AddCustomerModal onClose={() => setShowAdd(false)} />}
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <input
@@ -136,6 +173,7 @@ const CustomerContent = () => {
         {segTab("all", "Hammasi", customers.length)}
         {segTab("repeat", "Takroriy", stats.repeat)}
         {segTab("new", "Yangi (1 buyurtma)", customers.filter((c) => c.orderCount === 1).length)}
+        {segTab("registered", "Roʼyxatdan oʼtgan", stats.registered)}
         {segTab("nophone", "Telefonsiz", customers.filter((c) => c.phone === "no-phone").length)}
       </div>
 
@@ -147,7 +185,8 @@ const CustomerContent = () => {
 
       {!loading && customers.length === 0 && (
         <p className="text-center text-slate-400 py-20">
-          Hali mijozlar yoʼq — birinchi buyurtma kelganda mijoz shu yerda paydo boʼladi.
+          Hali mijozlar yoʼq — buyurtma kelganda yoki saytdan roʼyxatdan oʼtilganda mijoz shu
+          yerda paydo boʼladi. “Yangi mijoz” tugmasi bilan qoʼlda ham qoʼshishingiz mumkin.
         </p>
       )}
 
@@ -158,10 +197,15 @@ const CustomerContent = () => {
             <div key={c.phone} className="rounded-xl border border-brand-100 bg-white p-3">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="font-semibold text-slate-700 capitalize truncate">{c.name || "Mijoz"}</p>
+                  <p className="font-semibold text-slate-700 capitalize truncate">
+                    {c.name || "Mijoz"} {c.registered && <RegisteredBadge />}
+                  </p>
                   <p className="text-sm text-slate-500">{c.displayPhone}</p>
+                  {c.email && <p className="text-xs text-slate-400 truncate">{c.email}</p>}
                 </div>
-                {c.phone !== "no-phone" && <ContactButtons phone={c.phone} />}
+                {c.phone !== "no-phone" && !c.phone.startsWith("user:") && (
+                  <ContactButtons phone={c.phone} />
+                )}
               </div>
               <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-slate-500">
                 <span>Buyurtma: <b className="text-slate-700">{c.orderCount}</b></span>
@@ -176,7 +220,7 @@ const CustomerContent = () => {
                   ))}
                 </div>
               )}
-              {c.phone !== "no-phone" && (
+              {canOpenProfile(c) && (
                 <Link
                   href={`/admin-dashboard/customers/${encodeURIComponent(c.phone)}`}
                   className="inline-block mt-2 text-sm font-medium text-brand-500 hover:underline"
@@ -198,6 +242,7 @@ const CustomerContent = () => {
                 <th className={th}>№</th>
                 <th className={th}>Mijoz</th>
                 <th className={th}>Telefon</th>
+                <th className={th}>Email</th>
                 <th className={th}>Buyurtmalar</th>
                 <th className={th}>Jami xarid</th>
                 <th className={th}>Oʼrtacha chek</th>
@@ -208,13 +253,20 @@ const CustomerContent = () => {
               {visible.map((c, i) => (
                 <tr key={c.phone} className="hover:bg-brand-50/40">
                   <td className={td}>{i + 1}.</td>
-                  <td className={`${td} capitalize font-medium text-slate-700`}>{c.name || "—"}</td>
+                  <td className={`${td} capitalize font-medium text-slate-700`}>
+                    <span className="inline-flex items-center gap-1.5">
+                      {c.name || "—"} {c.registered && <RegisteredBadge />}
+                    </span>
+                  </td>
                   <td className={td}>
                     <div className="flex items-center gap-2">
                       <span>{c.displayPhone}</span>
-                      {c.phone !== "no-phone" && <ContactButtons phone={c.phone} />}
+                      {c.phone !== "no-phone" && !c.phone.startsWith("user:") && (
+                        <ContactButtons phone={c.phone} />
+                      )}
                     </div>
                   </td>
+                  <td className={`${td} lowercase`}>{c.email || "—"}</td>
                   <td className={td}>{c.orderCount}</td>
                   <td className={td}>{FormattedPrice(c.totalSpent)} UZS</td>
                   <td className={td}>{FormattedPrice(c.avgTicket)} UZS</td>
@@ -229,7 +281,7 @@ const CustomerContent = () => {
                     </div>
                   </td>
                   <td className={td}>
-                    {c.phone !== "no-phone" && (
+                    {canOpenProfile(c) && (
                       <Link
                         href={`/admin-dashboard/customers/${encodeURIComponent(c.phone)}`}
                         className="text-brand-500 hover:underline text-sm font-medium"

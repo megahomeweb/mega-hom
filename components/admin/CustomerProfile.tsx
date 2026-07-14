@@ -15,6 +15,8 @@ const kpi = "rounded-xl border border-brand-100 bg-brand-50 px-4 py-3";
 const CustomerProfile = ({ phone }: { phone: string }) => {
   const { customers, loading, fetchCustomers, upsertEnrichment } = useCustomerStore();
   const [tagInput, setTagInput] = useState("");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [note, setNote] = useState("");
   const [city, setCity] = useState("");
   const [savingNote, setSavingNote] = useState(false);
@@ -29,6 +31,8 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
 
   useEffect(() => {
     if (customer && !hydrated) {
+      setName(customer.name ?? "");
+      setEmail(customer.email ?? "");
       setNote(customer.note ?? "");
       setCity(customer.city ?? "");
       setHydrated(true);
@@ -54,7 +58,13 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
     );
   }
 
-  const save = async (patch: { tags?: string[]; note?: string; city?: string }) => {
+  const save = async (patch: {
+    tags?: string[];
+    note?: string;
+    city?: string;
+    name?: string;
+    email?: string;
+  }) => {
     try {
       await upsertEnrichment(customer.phone, patch);
       toast.success("Saqlandi");
@@ -70,8 +80,13 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
   };
   const removeTag = (t: string) => save({ tags: customer.tags.filter((x) => x !== t) });
   const saveNote = async () => {
+    const cleanEmail = email.trim();
+    if (cleanEmail && !/^\S+@\S+\.\S+$/.test(cleanEmail)) {
+      toast.error("Email manzili notoʼgʼri formatda");
+      return;
+    }
     setSavingNote(true);
-    await save({ note, city });
+    await save({ note, city, name: name.trim(), email: cleanEmail });
     setSavingNote(false);
   };
 
@@ -90,6 +105,7 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
         <div>
           <h1 className="text-2xl font-bold text-brand-600 capitalize">{customer.name || "Mijoz"}</h1>
           <p className="text-slate-600 mt-1">{customer.displayPhone}</p>
+          {customer.email && <p className="text-sm text-slate-500 mt-0.5">{customer.email}</p>}
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -135,9 +151,9 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
         </div>
       </div>
 
-      {/* Tags + note */}
+      {/* Tags + contact details + note */}
       <div className="rounded-xl border border-slate-200 p-5 mb-6">
-        <h2 className="font-semibold text-slate-700 mb-3">Belgilar va izoh</h2>
+        <h2 className="font-semibold text-slate-700 mb-3">Mijoz maʼlumotlari</h2>
         <div className="flex flex-wrap items-center gap-2 mb-3">
           {customer.tags.map((t) => (
             <span key={t} className="inline-flex items-center gap-1 px-2.5 py-1 text-sm rounded-full bg-brand-100 text-brand-600">
@@ -162,6 +178,24 @@ const CustomerProfile = ({ phone }: { phone: string }) => {
           <button onClick={addTag} className="text-sm text-brand-500 hover:underline">
             Qoʼshish
           </button>
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3 mb-3">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ism"
+            aria-label="Mijoz ismi"
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg outline-none text-slate-700"
+          />
+          <input
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            inputMode="email"
+            placeholder="Email (ixtiyoriy)"
+            aria-label="Mijoz emaili"
+            className="w-full px-3 py-2 border border-slate-200 rounded-lg outline-none text-slate-700"
+          />
         </div>
         <input
           value={city}

@@ -95,6 +95,9 @@ export interface Order {
   channel?: "web" | "store";  // where the sale came from (default web)
   cashierUid?: string;        // staff who rang up an in-store (POS) sale
   paymentMethod?: string;     // e.g. "naqd" (cash) — POS sales
+  discount?: number;          // POS chegirma subtracted from the item subtotal to reach totalPrice
+  uid?: string;               // auth uid of the signed-in buyer (web checkout; guests omit)
+  clientEmail?: string;       // buyer email when known (signed-in web checkout)
   // Fulfillment (web/phone orders) — captured at checkout, shown on the packing slip.
   deliveryAddress?: string;
   deliveryDate?: string;      // free-text or ISO date the customer wants it by
@@ -103,19 +106,26 @@ export interface Order {
 
 export interface  userT {
   name: string;
-  email: string | null;
+  email: string | null;    // real inbox only — phone-only signups store null (auth uses a synthetic address)
   uid: string;
   role: string;
+  phone?: string | null;   // normalized 998XXXXXXXXX captured at signup (accounts created before the phone field lack it)
+  createdAt?: Timestamp;   // server-stamped signup moment (older accounts have only client `time`)
   time: Timestamp;
   date: string;
 }
 
-// Derived customer (computed from orders, keyed by normalized phone; enriched
-// by the optional `customers` collection). Never stored as-is.
+// Derived customer (computed from orders + registered storefront accounts,
+// keyed by normalized phone; enriched by the optional `customers` collection).
+// Never stored as-is.
 export interface CustomerT {
-  phone: string;        // normalized key, e.g. 998901234567 ("no-phone" bucket otherwise)
+  phone: string;        // normalized key, e.g. 998901234567 ("no-phone" bucket / "user:<uid>" for phoneless registrants)
   displayPhone: string; // pretty +998 .. (or "Telefonsiz")
   name: string;
+  email?: string;             // from registration or CRM enrichment
+  registered?: boolean;       // has a storefront account (user collection, role "user")
+  registeredAt?: number | null; // ms epoch of signup (registered accounts only)
+  uid?: string;               // auth uid when this customer is a registered account
   orderCount: number;
   totalSpent: number;
   totalItems: number;

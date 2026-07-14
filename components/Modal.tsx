@@ -34,6 +34,20 @@ const SubmitModal = ({ setOpen }: props) => {
     return () => window.removeEventListener("keydown", onKey);
   }, [loading, setOpen]);
 
+  // Prefill the phone for signed-in customers (stored normalized at signup).
+  useEffect(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem("users") ?? "{}");
+      const digits = String(s.phone ?? "").replace(/\D/g, "");
+      if (digits.length === 12 && digits.startsWith("998")) {
+        const v = digits.slice(3);
+        setPhoneNumber(`+998 (${v.slice(0, 2)}) ${v.slice(2, 5)}-${v.slice(5, 7)}-${v.slice(7)}`);
+      }
+    } catch {
+      /* guest checkout */
+    }
+  }, []);
+
   const handlePhoneNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, ""); // Remove non-numeric characters
     if (value.startsWith("998")) {
@@ -57,6 +71,15 @@ const SubmitModal = ({ setOpen }: props) => {
     if (!firstName.trim() || !lastName.trim()) return toast.error("Ism va familyani toʼldiring");
     if (!normalizePhone(phoneNumber)) return toast.error("Telefon raqamini toʼliq kiriting");
 
+    // Stamp the signed-in session (if any) onto the order so the CRM can join
+    // this purchase to the registered account. Guests order exactly as before.
+    let session: { uid?: string; email?: string } = {};
+    try {
+      session = JSON.parse(localStorage.getItem("users") ?? "{}");
+    } catch {
+      /* corrupt/absent session — order proceeds as guest */
+    }
+
     const submitData = {
       id: "",
       clientName: firstName.trim(),
@@ -68,6 +91,8 @@ const SubmitModal = ({ setOpen }: props) => {
       totalQuantity: totalQuantity,
       deliveryAddress: address.trim() || undefined,
       note: note.trim() || undefined,
+      uid: session.uid || undefined,
+      clientEmail: session.email || undefined,
     };
       
     try {

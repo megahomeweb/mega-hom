@@ -541,6 +541,7 @@ export function planCategoryImport(
 export interface ImportCustomer {
   phone: string; // normalized key
   name?: string;
+  email?: string;
   city?: string;
   tags?: string[];
   note?: string;
@@ -548,6 +549,7 @@ export interface ImportCustomer {
 
 export const CUSTOMER_FIELDS = [
   { key: "name", label: "Ism" },
+  { key: "email", label: "Email" },
   { key: "city", label: "Shahar" },
   { key: "tags", label: "Belgilar" },
   { key: "note", label: "Izoh" },
@@ -566,6 +568,7 @@ function normalizeImportCustomer(rec: Record<string, unknown>): ImportCustomer {
   return {
     phone: normalizePhone(rec.phone),
     name: optStr(rec.name),
+    email: optStr(rec.email),
     city: optStr(rec.city),
     tags,
     note: optStr(rec.note),
@@ -577,6 +580,7 @@ export function customersToCSV(customers: CustomerT[]): string {
     [
       "Name",
       "Phone",
+      "Email",
       "City",
       "Tags",
       "Note",
@@ -591,6 +595,7 @@ export function customersToCSV(customers: CustomerT[]): string {
     rows.push([
       c.name ?? "",
       c.displayPhone ?? "",
+      c.email ?? "",
       c.city ?? "",
       (c.tags ?? []).join(", "),
       c.note ?? "",
@@ -618,6 +623,7 @@ export function parseCustomersFile(text: string, filename: string): ImportCustom
       normalizeImportCustomer({
         phone: read(r, ["Phone", "Telefon", "Телефон", "phone"]),
         name: read(r, ["Name", "Ism", "Имя", "Mijoz"]),
+        email: read(r, ["Email", "E-mail", "Почта", "email"]),
         city: read(r, ["City", "Shahar", "Город"]),
         tags: read(r, ["Tags", "Belgilar", "Teglar", "Теги"]),
         note: read(r, ["Note", "Izoh", "Заметка", "Примечание"]),

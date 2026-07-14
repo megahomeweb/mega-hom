@@ -11,6 +11,7 @@ import { useOrderStore } from "@/zustand/useOrderStore";
 import { useRole } from "@/components/admin/RoleContext";
 import { isManagerPlus, isAdminPlus } from "@/lib/roles";
 import NoAccess from "@/components/admin/NoAccess";
+import ReportsExplainer from "@/components/admin/ReportsExplainer";
 import { FormattedPrice } from "@/utils";
 import { dailySeries, byCategory, aggregateOrders, startOfDaysAgo } from "@/lib/reports";
 
@@ -118,16 +119,24 @@ const AnalyticsPage = () => {
         <div className={card}>
           <p className="text-xs text-slate-500">Savdo</p>
           <p className="text-lg sm:text-2xl font-bold text-brand">{FormattedPrice(agg.revenue)}</p>
+          {agg.vat > 0 && (
+            <p className="text-[10px] text-slate-400">
+              shu jumladan QQS {FormattedPrice(Math.round(agg.vat))}
+            </p>
+          )}
         </div>
         <div className={card}>
-          <p className="text-xs text-slate-500">Foyda</p>
+          <p className="text-xs text-slate-500">Yalpi foyda</p>
           <p className="text-lg sm:text-2xl font-bold text-green-600">{FormattedPrice(agg.profit)}</p>
+          <p className="text-[10px] text-slate-400">savdo − tan narx</p>
         </div>
         <div className={card}>
           <p className="text-xs text-slate-500">Buyurtma</p>
           <p className="text-lg sm:text-2xl font-bold text-brand">{agg.count}</p>
         </div>
       </div>
+
+      <ReportsExplainer />
 
       {!mounted ? (
         <div className="flex justify-center py-20"><Loader /></div>
