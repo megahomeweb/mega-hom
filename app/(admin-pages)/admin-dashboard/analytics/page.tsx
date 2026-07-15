@@ -17,6 +17,20 @@ import { dailySeries, byCategory, aggregateOrders, startOfDaysAgo } from "@/lib/
 
 type Period = 7 | 30 | 90;
 
+// Danger-zone reset scopes. Partial scopes delete only that window's orders
+// ([from, to) on the order date) — other periods' history stays.
+type WipeScope = "today" | "week" | "month" | "range" | "all";
+const WIPE_SCOPES: { value: WipeScope; label: string }[] = [
+  { value: "today", label: "Bugun" },
+  { value: "week", label: "Oxirgi 7 kun" },
+  { value: "month", label: "Shu oy" },
+  { value: "range", label: "Sana oraligʻi" },
+  { value: "all", label: "Hammasi" },
+];
+const dayStart = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const toISODate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
 const compact = (n: number): string => {
   const a = Math.abs(n);
   if (a >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
@@ -49,23 +63,75 @@ const panel = "rounded-xl border border-brand-100 bg-white p-4";
 
 const AnalyticsPage = () => {
   const me = useRole();
-  const { orders, fetchAllOrders, deleteAllOrders } = useOrderStore();
+  const { orders, fetchAllOrders, deleteAllOrders, deleteOrdersInRange } = useOrderStore();
   const [period, setPeriod] = useState<Period>(30);
   const [mounted, setMounted] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [confirmText, setConfirmText] = useState("");
   const [wiping, setWiping] = useState(false);
+  // Tozalash scope — which slice of history the danger zone removes.
+  const [wipeScope, setWipeScope] = useState<WipeScope>("today");
+  const [wipeFrom, setWipeFrom] = useState(() => toISODate(new Date()));
+  const [wipeTo, setWipeTo] = useState(() => toISODate(new Date()));
   // Admin+ (Administrator/Egasi) can wipe reports — destructive, but the
   // type-to-confirm modal below is the real guard, and rules already allow
   // admin+ to delete orders. Managers can view analytics but not wipe them.
   const canWipe = isAdminPlus(me?.role);
 
+  // [fromMs, toMs) window for the chosen scope; null = full wipe. Upper bound
+  // is the NEXT day's midnight (exclusive), so "Bugun"/the "to" date cover the
+  // whole day regardless of wall clock.
+  const wipeWindow = useMemo((): { fromMs: number; toMs: number } | null => {
+    const now = new Date();
+    const tomorrow0 = dayStart(now).getTime() + 86_400_000;
+    switch (wipeScope) {
+      case "today":
+        return { fromMs: dayStart(now).getTime(), toMs: tomorrow0 };
+      case "week":
+        return { fromMs: dayStart(now).getTime() - 6 * 86_400_000, toMs: tomorrow0 };
+      case "month":
+        return { fromMs: new Date(now.getFullYear(), now.getMonth(), 1).getTime(), toMs: tomorrow0 };
+      case "range": {
+        const f = new Date(`${wipeFrom}T00:00:00`);
+        const t = new Date(`${wipeTo}T00:00:00`);
+        if (isNaN(f.getTime()) || isNaN(t.getTime()) || f.getTime() > t.getTime()) return null;
+        return { fromMs: f.getTime(), toMs: t.getTime() + 86_400_000 };
+      }
+      case "all":
+        return null;
+    }
+  }, [wipeScope, wipeFrom, wipeTo]);
+
+  // Advisory pre-count so the admin sees exactly what the wipe will hit
+  // (the delete re-queries server-side; rules stay the real boundary).
+  const wipeMatchCount = useMemo(() => {
+    if (!wipeWindow) return orders.length;
+    let n = 0;
+    for (const o of orders) {
+      const ms = o.date?.seconds ? o.date.seconds * 1000 : 0;
+      if (ms >= wipeWindow.fromMs && ms < wipeWindow.toMs) n++;
+    }
+    return n;
+  }, [orders, wipeWindow]);
+
+  const wipeScopeLabel = WIPE_SCOPES.find((s) => s.value === wipeScope)?.label ?? "";
+  const wipePeriodText = wipeWindow
+    ? `${new Date(wipeWindow.fromMs).toLocaleDateString()} — ${new Date(wipeWindow.toMs - 1).toLocaleDateString()}`
+    : "";
+  const wipeRangeInvalid = wipeScope === "range" && !wipeWindow;
+
   const handleWipe = async () => {
     if (confirmText.trim().toUpperCase() !== "OCHIRISH") return;
     setWiping(true);
     try {
-      const n = await deleteAllOrders();
-      toast.success(`${n} ta buyurtma oʼchirildi — hisobotlar tozalandi`);
+      const n = wipeWindow
+        ? await deleteOrdersInRange(wipeWindow.fromMs, wipeWindow.toMs)
+        : await deleteAllOrders();
+      toast.success(
+        wipeWindow
+          ? `${wipeScopeLabel}: ${n} ta buyurtma oʼchirildi — davr hisobotlari tozalandi`
+          : `${n} ta buyurtma oʼchirildi — hisobotlar tozalandi`
+      );
       setConfirmOpen(false);
       setConfirmText("");
     } catch (e) {
@@ -200,22 +266,80 @@ const AnalyticsPage = () => {
         </div>
       )}
 
-      {/* Danger zone — admin+: wipe ALL orders → reset every report to zero */}
+      {/* Danger zone — admin+: period-scoped report reset. Partial scopes
+          delete only the chosen window's orders; "Hammasi" wipes everything. */}
       {canWipe && (
         <div className="mt-8 rounded-xl border border-red-200 bg-red-50/60 p-4">
           <h3 className="font-bold text-brand-700 flex items-center gap-2">
-            <GoTrash /> Xavfli hudud
+            <GoTrash /> Xavfli hudud — hisobotlarni tozalash
           </h3>
           <p className="text-sm text-slate-600 mt-1">
-            Barcha savdo hisobotlarini tozalash — bu <b>BARCHA buyurtmalarni</b> (veb va kassa)
-            butunlay oʼchiradi va tahlil/hisobotlarni nolga qaytaradi. Bu amalni{" "}
-            <b>qaytarib boʼlmaydi</b>. Avval maʼlumotlarni CSV ga eksport qilib saqlang.
+            Davrni tanlang — faqat shu davrdagi buyurtmalar (veb va kassa) oʼchiriladi va oʼsha
+            davr hisobotlari nolga qaytadi. Bu amalni <b>qaytarib boʼlmaydi</b>. Avval
+            maʼlumotlarni CSV ga eksport qilib saqlang.
           </p>
+
+          <div className="flex flex-wrap gap-1.5 mt-3">
+            {WIPE_SCOPES.map((s) => (
+              <button
+                key={s.value}
+                type="button"
+                onClick={() => setWipeScope(s.value)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                  wipeScope === s.value
+                    ? s.value === "all"
+                      ? "bg-red-600 text-white border-red-600"
+                      : "bg-brand text-white border-brand"
+                    : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+
+          {wipeScope === "range" && (
+            <div className="flex flex-wrap items-center gap-2 mt-2.5">
+              <input
+                type="date"
+                value={wipeFrom}
+                max={wipeTo}
+                onChange={(e) => setWipeFrom(e.target.value)}
+                aria-label="Boshlanish sanasi"
+                className="h-9 px-2.5 rounded-lg border border-slate-300 bg-white text-sm text-slate-700 outline-none focus:border-brand"
+              />
+              <span className="text-slate-400">—</span>
+              <input
+                type="date"
+                value={wipeTo}
+                min={wipeFrom}
+                onChange={(e) => setWipeTo(e.target.value)}
+                aria-label="Tugash sanasi"
+                className="h-9 px-2.5 rounded-lg border border-slate-300 bg-white text-sm text-slate-700 outline-none focus:border-brand"
+              />
+            </div>
+          )}
+
+          <p className="text-xs mt-2.5">
+            {wipeRangeInvalid ? (
+              <span className="text-red-600 font-semibold">Sana oraligʻi notoʼgʼri — boshlanish sanasi tugash sanasidan katta.</span>
+            ) : wipeWindow ? (
+              <span className={wipeMatchCount === 0 ? "text-slate-400" : "text-red-700 font-semibold"}>
+                {wipePeriodText}: {wipeMatchCount} ta buyurtma oʼchiriladi · boshqa davrlar saqlanadi
+              </span>
+            ) : (
+              <span className="text-red-700 font-semibold">
+                BARCHA {orders.length}{orders.length >= 1000 ? "+" : ""} ta buyurtma oʼchiriladi
+              </span>
+            )}
+          </p>
+
           <button
             onClick={() => { setConfirmText(""); setConfirmOpen(true); }}
-            className="mt-3 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-red-50 transition-colors"
+            disabled={wipeRangeInvalid || wipeMatchCount === 0}
+            className="mt-3 inline-flex items-center gap-2 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-brand-700 hover:bg-red-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            <GoTrash /> Barcha hisobotlarni oʼchirish
+            <GoTrash /> {wipeWindow ? `Tozalash: ${wipeScopeLabel}` : "Barcha hisobotlarni oʼchirish"}
           </button>
         </div>
       )}
@@ -228,10 +352,16 @@ const AnalyticsPage = () => {
         >
           <div className="w-full max-w-md rounded-2xl bg-white p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
             <h3 className="text-lg font-bold text-brand-700 flex items-center gap-2">
-              <GoTrash /> Barcha hisobotlarni oʼchirish
+              <GoTrash /> {wipeWindow ? `Tozalash: ${wipeScopeLabel}` : "Barcha hisobotlarni oʼchirish"}
             </h3>
             <p className="text-sm text-slate-600 mt-2">
-              {orders.length > 0 ? (
+              {wipeWindow ? (
+                <>
+                  <b>{wipePeriodText}</b> oraligʻidagi <b>{wipeMatchCount}</b> ta buyurtma butunlay
+                  oʼchiriladi. Boshqa davrlardagi buyurtmalar va hisobotlar <b>saqlanadi</b>. Bu
+                  amalni qaytarib boʼlmaydi.
+                </>
+              ) : orders.length > 0 ? (
                 <>Hozir <b>{orders.length}{orders.length >= 1000 ? "+" : ""}</b> ta buyurtma mavjud. Barchasi butunlay oʼchiriladi va qaytarib boʼlmaydi.</>
               ) : (
                 <>Oʼchiriladigan buyurtma topilmadi.</>
@@ -260,7 +390,7 @@ const AnalyticsPage = () => {
                 disabled={wiping || confirmText.trim().toUpperCase() !== "OCHIRISH"}
                 className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-white hover:bg-brand-600 disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                {wiping ? "Oʼchirilmoqda…" : "Butunlay oʼchirish"}
+                {wiping ? "Oʼchirilmoqda…" : wipeWindow ? "Davrni oʼchirish" : "Butunlay oʼchirish"}
               </button>
             </div>
           </div>

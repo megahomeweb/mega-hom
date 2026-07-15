@@ -1,5 +1,5 @@
 import {create} from "zustand";
-import { collection, deleteDoc, doc, addDoc, getDocs, increment, query, orderBy, limit, onSnapshot, serverTimestamp, updateDoc, writeBatch, FieldValue } from "firebase/firestore";
+import { collection, deleteDoc, doc, addDoc, getDocs, increment, query, orderBy, limit, onSnapshot, serverTimestamp, updateDoc, where, writeBatch, FieldValue, Timestamp } from "firebase/firestore";
 import { fireDB } from "@/firebase/FirebaseConfig";
 import { ImageT, Order } from "@/lib/types";
 import { DEFAULT_ORDER_STATUS, OrderStatus, isStockCommitting } from "@/lib/orderStatus";
@@ -54,6 +54,8 @@ interface StoreState {
   updateOrderStatus: (id: string, status: OrderStatus, actor?: string) => Promise<void>;
   deleteOrder: (id: string) => Promise<void>;
   deleteAllOrders: () => Promise<number>;
+  /** Period-scoped report reset: delete orders whose date ∈ [fromMs, toMs). */
+  deleteOrdersInRange: (fromMs: number, toMs: number) => Promise<number>;
 }
 
 // Shared, app-wide live orders listener (module-scoped) — subscribe once instead
@@ -244,6 +246,34 @@ export const useOrderStore = create<StoreState>((set, get) => ({
       await batch.commit();
     }
     set({ orders: [] });
+    return ids.length;
+  },
+
+  // Period-scoped tozalash for the analytics danger zone: removes ONLY the
+  // window's orders (web + kassa), so other periods' history and reports
+  // survive. Same range semantics as the reports themselves ([from, to) on
+  // the order's `date`), same ≤400-doc batching and admin+ rules gate as
+  // deleteAllOrders. Like the full wipe, it does NOT restock products, and
+  // the stockMovements ledger stays — it's append-only audit history (rules
+  // forbid deleting it).
+  deleteOrdersInRange: async (fromMs, toMs) => {
+    const snap = await getDocs(
+      query(
+        collection(fireDB, "orders"),
+        where("date", ">=", Timestamp.fromMillis(fromMs)),
+        where("date", "<", Timestamp.fromMillis(toMs))
+      )
+    );
+    const ids = snap.docs.map((d) => d.id);
+    for (let i = 0; i < ids.length; i += 400) {
+      const batch = writeBatch(fireDB);
+      for (const id of ids.slice(i, i + 400)) batch.delete(doc(fireDB, "orders", id));
+      await batch.commit();
+    }
+    // The live listener also catches up; prune immediately so on-screen
+    // KPIs/charts match the success toast without a refresh beat.
+    const gone = new Set(ids);
+    set((state) => ({ orders: state.orders.filter((o) => !gone.has(o.id)) }));
     return ids.length;
   },
 }));
